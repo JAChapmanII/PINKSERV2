@@ -86,7 +86,7 @@ class FishFunction : public Function {
 		virtual string run(FunctionArguments fargs) {
 			int fcount = 1;
 			if((fargs.message.length() >= 5) && (fargs.message[4] == 'e'))
-				fcount = rand() % 6;
+				fcount = rand() % 6 + 2;
 
 			stringstream ss;
 			for(int i = 0; i < fcount; ++i) {
@@ -111,6 +111,26 @@ class FishFunction : public Function {
 		}
 }; // }}}
 
+// A function to provide artificial love
+class LoveFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			if(fargs.message[1] == '/')
+				return ":(";
+			return "<3";
+		}
+
+		virtual string name() const {
+			return "love / <3";
+		}
+		virtual string help() const {
+			return "Takes no arguments; outputs love.";
+		}
+		virtual string regex() const {
+			return "^</?3( .*)?";
+		}
+}; // }}}
+
 int main(int argc, char **argv) {
 	const string logFileName = "pbrane.log", myNick = "pbrane";
 	const string privmsgRegexExp =
@@ -123,6 +143,7 @@ int main(int argc, char **argv) {
 	map<string, Function *> moduleMap;
 	moduleMap["wave"] = new WaveFunction();
 	moduleMap["fish"] = new FishFunction();
+	moduleMap["love"] = new LoveFunction();
 
 	regex privmsgRegex(privmsgRegexExp, regex::perl);
 	regex joinRegex(privmsgRegexExp, regex::perl);
