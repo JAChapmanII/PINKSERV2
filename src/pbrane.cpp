@@ -291,6 +291,32 @@ class EraseFunction : public Function {
 		}
 }; // }}}
 
+// list all variables {{{
+class ListFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			stringstream ss;
+			unsigned j = 0;
+			for(auto i = (*fargs.siMap).begin(); i != (*fargs.siMap).end(); ++i, ++j) {
+				ss << i->first;
+				if(j != (*fargs.siMap).size() - 1)
+					ss << ", ";
+			}
+
+			return ss.str();
+		}
+
+		virtual string name() const {
+			return "list";
+		}
+		virtual string help() const {
+			return "List stored variables";
+		}
+		virtual string regex() const {
+			return "^\\s*list(\\s.*)?";
+		}
+}; // }}}
+
 // Return one thing or the other {{{
 class OrFunction : public Function {
 	public:
@@ -349,6 +375,7 @@ int main(int argc, char **argv) {
 	moduleMap["++"] = new IncrementFunction();
 	moduleMap["--"] = new DecrementFunction();
 	moduleMap["erase"] = new EraseFunction();
+	moduleMap["list"] = new ListFunction();
 
 	regex privmsgRegex(privmsgRegexExp, regex::perl);
 	regex joinRegex(privmsgRegexExp, regex::perl);
