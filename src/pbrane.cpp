@@ -360,10 +360,12 @@ int main(int argc, char **argv) {
 		"^:([A-Za-z0-9_]*)!([-@~A-Za-z0-9_\\.]*) JOIN :([#A-Za-z0-9_]*)";
 	const string toUsRegexExp = "^(" + myNick + "[:\\,]?\\s+).*";
 	const string toUsRRegexExp = "^(" + myNick + "[:\\,]?\\s+)";
+	const string helpRegexExp = "^\\s*help(\\s+(\\S+))?";
 
 	srand(time(NULL));
 
 	map<string, Function *> moduleMap;
+
 	moduleMap["wave"] = new WaveFunction();
 	moduleMap["fish"] = new FishFunction();
 	moduleMap["love"] = new LoveFunction();
@@ -381,6 +383,7 @@ int main(int argc, char **argv) {
 	regex joinRegex(privmsgRegexExp, regex::perl);
 	regex toUsRegex(toUsRegexExp, regex::perl);
 	regex toUsRRegex(toUsRRegexExp, regex::perl);
+	regex helpRegex(helpRegexExp, regex::perl);
 
 	ofstream log("pbrane.log");
 	if(!log.good()) {
@@ -407,7 +410,7 @@ int main(int argc, char **argv) {
 			log << "  user: " << matches[2] << endl;
 			log << "target: " << matches[3] << endl;
 			log << "   msg: " << matches[4] << endl;
-			string message(matches[4]);
+			string message(matches[4]), nick(matches[1]);
 
 			bool toUs = false;
 			if(regex_match(message, toUsRegex)) {
@@ -425,10 +428,30 @@ int main(int argc, char **argv) {
 			// start out by trying to match the reload command
 			if(toUs && message == (string)"reload") {
 				return 77;
+			} else if(toUs && regex_match(message, matches, helpRegex)) {
+				string function = matches[2], res = "(null)";
+				if(function.empty()) {
+					stringstream ss;
+					unsigned j = 0;
+					for(auto i = moduleMap.begin(); i != moduleMap.end(); ++i, ++j) {
+						ss << i->first;
+						if(j != moduleMap.size() - 1)
+							ss << ", ";
+					}
+					res = ss.str();
+				} else {
+					if(moduleMap.find(function) == moduleMap.end()) {
+						res = "That function does not exist";
+					} else {
+						res = moduleMap[function]->help();
+					}
+				}
+				log << " -> " << rtarget << " :" << nick << ": " << res << endl;
+				cout << "PRIVMSG " << rtarget << " :" << nick << ": " << res << endl;
 			} else {
 				// setup function arguments
 				FunctionArguments fargs;
-				fargs.nick = matches[1];
+				fargs.nick = nick;
 				fargs.user = matches[2];
 				fargs.target = matches[3];
 				fargs.message = message;
