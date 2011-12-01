@@ -2,6 +2,7 @@ SRCDIR=src
 BINS=pbrane
 OBJS=
 
+CXXFLAGS=-std=c++0x
 LDFLAGS=-g -lboost_regex
 
 ifndef nowall
