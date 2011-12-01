@@ -80,7 +80,7 @@ class WaveFunction : public Function {
 		}
 }; // }}}
 
-// A function to output some fish(es)
+// A function to output some fish(es) {{{
 class FishFunction : public Function {
 	public:
 		virtual string run(FunctionArguments fargs) {
@@ -111,7 +111,7 @@ class FishFunction : public Function {
 		}
 }; // }}}
 
-// A function to provide artificial love
+// A function to provide artificial love {{{
 class LoveFunction : public Function {
 	public:
 		virtual string run(FunctionArguments fargs) {
@@ -131,6 +131,55 @@ class LoveFunction : public Function {
 		}
 }; // }}}
 
+// Someone wants a train {{{
+class TrainFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			int ccount = rand() % 8, dir = rand() % 2;
+			stringstream ss;
+			if(dir)
+				ss << "/.==.]";
+			else
+				ss << "{. .}";
+			for(int i = 0; i < ccount; ++i)
+				ss << "[. .]";
+			if(dir)
+				ss << "{. .}";
+			else
+				ss << "[.==.\\";
+
+			return ss.str();
+		}
+
+		virtual string name() const {
+			return "sl";
+		}
+		virtual string help() const {
+			return "Takes no arguments; returns a train.";
+		}
+		virtual string regex() const {
+			return "^sl( .*)?";
+		}
+}; // }}}
+
+// WUB WUB WUB WUB WUB {{{
+class DubstepFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			return "WUB WUB WUB";
+		}
+
+		virtual string name() const {
+			return "dubstep";
+		}
+		virtual string help() const {
+			return "Takes no arguments; rocks.";
+		}
+		virtual string regex() const {
+			return "^dubstep( .*)?";
+		}
+}; // }}}
+
 int main(int argc, char **argv) {
 	const string logFileName = "pbrane.log", myNick = "pbrane";
 	const string privmsgRegexExp =
@@ -144,6 +193,8 @@ int main(int argc, char **argv) {
 	moduleMap["wave"] = new WaveFunction();
 	moduleMap["fish"] = new FishFunction();
 	moduleMap["love"] = new LoveFunction();
+	moduleMap["train"] = new TrainFunction();
+	moduleMap["wub"] = new DubstepFunction();
 
 	regex privmsgRegex(privmsgRegexExp, regex::perl);
 	regex joinRegex(privmsgRegexExp, regex::perl);
