@@ -284,6 +284,29 @@ class EraseFunction : public Function {
 		}
 }; // }}}
 
+// Return one thing or the other {{{
+class OrFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			boost::regex r(this->regex(), regex::perl);
+			string choice = fargs.matches[rand() % 2 + 1];
+			if(regex_match(choice, fargs.matches, r))
+				return this->run(fargs);
+			else
+				return choice;
+		}
+
+		virtual string name() const {
+			return "or";
+		}
+		virtual string help() const {
+			return "Returns one of multiple possibilities";
+		}
+		virtual string regex() const {
+			return "(.*)\\s+or\\s+(.*)";
+		}
+}; // }}}
+
 int main(int argc, char **argv) {
 	const string logFileName = "pbrane.log", myNick = "pbrane";
 	const string privmsgRegexExp =
@@ -293,12 +316,15 @@ int main(int argc, char **argv) {
 	const string toUsRegexExp = "^(" + myNick + "[:\\,]?\\s+).*";
 	const string toUsRRegexExp = "^(" + myNick + "[:\\,]?\\s+)";
 
+	srand(time(NULL));
+
 	map<string, Function *> moduleMap;
 	moduleMap["wave"] = new WaveFunction();
 	moduleMap["fish"] = new FishFunction();
 	moduleMap["love"] = new LoveFunction();
 	moduleMap["train"] = new TrainFunction();
 	moduleMap["wub"] = new DubstepFunction();
+	moduleMap["or"] = new OrFunction();
 
 	moduleMap["set"] = new SetFunction();
 	moduleMap["++"] = new IncrementFunction();
