@@ -31,8 +31,10 @@ struct FunctionArguments {
 	string message;
 	bool toUs;
 
+	map<string, int> *siMap;
+
 	FunctionArguments() :
-			matches(), nick(), user(), target(), message(), toUs(false) {
+		matches(), nick(), user(), target(), message(), toUs(false), siMap(NULL) {
 	}
 }; // }}}
 
@@ -180,6 +182,108 @@ class DubstepFunction : public Function {
 		}
 }; // }}}
 
+// set a variable to something {{{
+class SetFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			string varName = fargs.matches[1];
+			stringstream is(fargs.matches[2]);
+			int value = 0;
+			is >> value;
+
+			(*fargs.siMap)[varName] = value;
+
+			stringstream ss("Set ");
+			ss << varName << " to " << value;
+			return ss.str();
+		}
+
+		virtual string name() const {
+			return "set";
+		}
+		virtual string help() const {
+			return "Sets a variable to be an integer";
+		}
+		virtual string regex() const {
+			return "^\\s*set\\s+(\\w+)\\s+(\\d+).*";
+		}
+}; // }}}
+
+// increment a variable {{{
+class IncrementFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			// prefix operator
+			string varName = fargs.matches[2];
+			if(varName.empty())
+				// postfix operator
+				varName = fargs.matches[3];
+
+			stringstream ss(varName);
+			ss << " is now " << (++((*fargs.siMap)[varName]));
+			return ss.str();
+		}
+
+		virtual string name() const {
+			return "++";
+		}
+		virtual string help() const {
+			return "Increment variable";
+		}
+		virtual string regex() const {
+			return "^\\s*(\\+\\+\\s*(\\w+)|(\\w+)\\s*\\+\\+)( .*)?";
+		}
+}; // }}}
+// decrement a variable {{{
+class DecrementFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			// prefix operator
+			string varName = fargs.matches[2];
+			if(varName.empty())
+				// postfix operator
+				varName = fargs.matches[3];
+
+			stringstream ss(varName);
+			ss << " is now " << (--((*fargs.siMap)[varName]));
+			return ss.str();
+		}
+
+		virtual string name() const {
+			return "--";
+		}
+		virtual string help() const {
+			return "Decrement variable";
+		}
+		virtual string regex() const {
+			return "^\\s*(--\\s*(\\w+)|(\\w+)\\s*--)( .*)?";
+		}
+}; // }}}
+
+// erase a variable {{{
+class EraseFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			string varName = fargs.matches[1];
+
+			int ecount = (*fargs.siMap).erase(varName);
+			if(ecount == 0)
+				return "Variable didn't exist anyway.";
+			else
+				return "Erased " + varName;
+		}
+
+		virtual string name() const {
+			return "erase";
+		}
+		virtual string help() const {
+			return "Erases a variable";
+		}
+		virtual string regex() const {
+			return "^\\s*erase\\s+(\\w+)(\\s.*)?";
+		}
+}; // }}}
+
 int main(int argc, char **argv) {
 	const string logFileName = "pbrane.log", myNick = "pbrane";
 	const string privmsgRegexExp =
@@ -196,6 +300,11 @@ int main(int argc, char **argv) {
 	moduleMap["train"] = new TrainFunction();
 	moduleMap["wub"] = new DubstepFunction();
 
+	moduleMap["set"] = new SetFunction();
+	moduleMap["++"] = new IncrementFunction();
+	moduleMap["--"] = new DecrementFunction();
+	moduleMap["erase"] = new EraseFunction();
+
 	regex privmsgRegex(privmsgRegexExp, regex::perl);
 	regex joinRegex(privmsgRegexExp, regex::perl);
 	regex toUsRegex(toUsRegexExp, regex::perl);
@@ -208,6 +317,8 @@ int main(int argc, char **argv) {
 	}
 
 	log << "pbrane started." << endl;
+
+	map<string, int> siMap;
 
 	// while there is more input coming
 	while(!cin.eof()) {
@@ -250,6 +361,7 @@ int main(int argc, char **argv) {
 				fargs.target = matches[3];
 				fargs.message = message;
 				fargs.toUs = toUs;
+				fargs.siMap = &siMap;
 
 				// loop through setup modules trying to match their regex
 				for(auto mod = moduleMap.begin(); mod != moduleMap.end(); ++mod) {
