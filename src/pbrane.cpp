@@ -219,8 +219,8 @@ class IncrementFunction : public Function {
 				// postfix operator
 				varName = fargs.matches[3];
 
-			stringstream ss(varName);
-			ss << " is now " << (++((*fargs.siMap)[varName]));
+			stringstream ss;
+			ss << varName << " is now " << (++((*fargs.siMap)[varName]));
 			return ss.str();
 		}
 
@@ -244,8 +244,8 @@ class DecrementFunction : public Function {
 				// postfix operator
 				varName = fargs.matches[3];
 
-			stringstream ss(varName);
-			ss << " is now " << (--((*fargs.siMap)[varName]));
+			stringstream ss;
+			ss << varName << " is now " << (--((*fargs.siMap)[varName]));
 			return ss.str();
 		}
 
