@@ -84,7 +84,10 @@ class WaveFunction : public Function {
 class FishFunction : public Function {
 	public:
 		virtual string run(FunctionArguments fargs) {
-			int fcount = (fargs.message[4] == 'e') ? (rand() % 6) : 1;
+			int fcount = 1;
+			if((fargs.message.length() >= 5) && (fargs.message[4] == 'e'))
+				fcount = rand() % 6;
+
 			stringstream ss;
 			for(int i = 0; i < fcount; ++i) {
 				if(rand() % 2)
