@@ -26,9 +26,10 @@ struct FunctionArguments {
 	string user;
 	string target;
 	string message;
+	bool toUs;
 
 	FunctionArguments() :
-			matches(), nick(), user(), target(), message() {
+			matches(), nick(), user(), target(), message(), toUs(false) {
 	}
 }; // }}}
 
@@ -82,20 +83,24 @@ int main(int argc, char **argv) {
 		"^:([A-Za-z0-9_]*)!([-@~A-Za-z0-9_\\.]*) PRIVMSG ([#A-Za-z0-9_]*) :(.*)";
 	const string joinRegexExp =
 		"^:([A-Za-z0-9_]*)!([-@~A-Za-z0-9_\\.]*) JOIN :([#A-Za-z0-9_]*)";
-	const string reloadRegexExp = myNick + "[:,]? +reload";
+	const string toUsRegexExp = "^(" + myNick + "[:\\,]?\\s+).*";
+	const string toUsRRegexExp = "^(" + myNick + "[:\\,]?\\s+)";
 
 	map<string, Function *> moduleMap;
 	moduleMap["wave"] = new WaveFunction();
 
 	regex privmsgRegex(privmsgRegexExp, regex::perl);
 	regex joinRegex(privmsgRegexExp, regex::perl);
-	regex reloadRegex(reloadRegexExp, regex::perl);
+	regex toUsRegex(toUsRegexExp, regex::perl);
+	regex toUsRRegex(toUsRRegexExp, regex::perl);
 
 	ofstream log("pbrane.log");
 	if(!log.good()) {
 		cerr << "Could not open log!" << endl;
 		return 1;
 	}
+
+	log << "pbrane started." << endl;
 
 	// while there is more input coming
 	while(!cin.eof()) {
@@ -114,8 +119,15 @@ int main(int argc, char **argv) {
 			log << "   msg: " << matches[4] << endl;
 			string message(matches[4]);
 
+			bool toUs = false;
+			if(regex_match(message, toUsRegex)) {
+				message = regex_replace(message, toUsRRegex, (string)"");
+				toUs = true;
+				log << "  umsg: " << message << endl;
+			}
+
 			// start out by trying to match the reload command
-			if(regex_match(message, reloadRegex)) {
+			if(toUs && message == (string)"reload") {
 				return 77;
 			} else {
 				// setup function arguments
@@ -124,6 +136,11 @@ int main(int argc, char **argv) {
 				fargs.user = matches[2];
 				fargs.target = matches[3];
 				fargs.message = message;
+				fargs.toUs = toUs;
+
+				string rtarget = fargs.target;
+				if(rtarget == myNick)
+					rtarget = fargs.nick;
 
 				// loop through setup modules trying to match their regex
 				for(auto mod = moduleMap.begin(); mod != moduleMap.end(); ++mod) {
@@ -135,8 +152,8 @@ int main(int argc, char **argv) {
 						// run the module
 						string res = mod->second->run(fargs);
 						// log the output/send the output
-						log << " -> #uakroncs :" << res << endl;
-						cout << "PRIVMSG #uakroncs :" << res << endl;
+						log << " -> " << rtarget << " :" << res << endl;
+						cout << "PRIVMSG " << rtarget << " :" << res << endl;
 						break;
 					}
 				}
