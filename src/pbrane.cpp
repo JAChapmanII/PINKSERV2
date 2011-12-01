@@ -12,6 +12,7 @@ using std::getline;
 using boost::regex;
 using boost::smatch;
 using boost::regex_match;
+using boost::match_extra;
 
 #include <fstream>
 using std::ofstream;
@@ -21,6 +22,12 @@ using std::map;
 
 #include <sstream>
 using std::stringstream;
+
+#include <queue>
+using std::queue;
+
+#include <vector>
+using std::vector;
 
 // Structure used to pass relavent data to Functions {{{
 struct FunctionArguments {
@@ -288,12 +295,24 @@ class EraseFunction : public Function {
 class OrFunction : public Function {
 	public:
 		virtual string run(FunctionArguments fargs) {
+			queue<string> q;
+			q.push(fargs.matches[1]);
+			q.push(fargs.matches[2]);
+
+			vector<string> results;
 			boost::regex r(this->regex(), regex::perl);
-			string choice = fargs.matches[rand() % 2 + 1];
-			if(regex_match(choice, fargs.matches, r))
-				return this->run(fargs);
-			else
-				return choice;
+			smatch matches;
+			while(!q.empty()) {
+				string cur = q.front(); q.pop();
+				if(regex_match(cur, matches, r)) {
+					q.push(matches[1]);
+					q.push(matches[2]);
+				} else {
+					results.push_back(cur);
+				}
+			}
+
+			return results[rand() % results.size()];
 		}
 
 		virtual string name() const {
@@ -393,15 +412,19 @@ int main(int argc, char **argv) {
 				for(auto mod = moduleMap.begin(); mod != moduleMap.end(); ++mod) {
 					regex cmodr(mod->second->regex(), regex::perl);
 					// if this module matches
-					if(regex_match(message, fargs.matches, cmodr)) {
+					if(regex_match(message, fargs.matches, cmodr, match_extra)) {
 						// log that we got a hit
 						log << "module matched: " << mod->first << endl;
 						// run the module
 						string res = mod->second->run(fargs);
-						// log the output/send the output
-						log << " -> " << rtarget << " :" << res << endl;
-						cout << "PRIVMSG " << rtarget << " :" << res << endl;
-						break;
+						if(res.empty()) {
+							log << "module returned nothing, moving on" << endl;
+						} else {
+							// log the output/send the output
+							log << " -> " << rtarget << " :" << res << endl;
+							cout << "PRIVMSG " << rtarget << " :" << res << endl;
+							break;
+						}
 					}
 				}
 			}
