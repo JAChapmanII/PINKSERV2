@@ -73,7 +73,7 @@ class WaveFunction : public Function {
 			return "Takes no arguments; waves.";
 		}
 		virtual string regex() const {
-			return "^(o/|\\o)";
+			return "^(o/|\\\\o)";
 		}
 }; // }}}
 
@@ -126,6 +126,12 @@ int main(int argc, char **argv) {
 				log << "  umsg: " << message << endl;
 			}
 
+			string rtarget = matches[3];
+			if(rtarget == myNick) {
+				rtarget = matches[1];
+				toUs = true;
+			}
+
 			// start out by trying to match the reload command
 			if(toUs && message == (string)"reload") {
 				return 77;
@@ -137,10 +143,6 @@ int main(int argc, char **argv) {
 				fargs.target = matches[3];
 				fargs.message = message;
 				fargs.toUs = toUs;
-
-				string rtarget = fargs.target;
-				if(rtarget == myNick)
-					rtarget = fargs.nick;
 
 				// loop through setup modules trying to match their regex
 				for(auto mod = moduleMap.begin(); mod != moduleMap.end(); ++mod) {
