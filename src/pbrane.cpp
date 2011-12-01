@@ -60,7 +60,7 @@ class Function {
 class WaveFunction : public Function {
 	public:
 		virtual string run(FunctionArguments fargs) {
-			if(fargs.message == (string)"o/")
+			if(fargs.message[0] == 'o')
 				return "\\o";
 			else
 				return "o/";
@@ -73,7 +73,7 @@ class WaveFunction : public Function {
 			return "Takes no arguments; waves.";
 		}
 		virtual string regex() const {
-			return "^(o/|\\\\o)";
+			return "^(o/|\\\\o)( .*)?";
 		}
 }; // }}}
 
