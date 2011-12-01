@@ -19,6 +19,9 @@ using std::ofstream;
 #include <map>
 using std::map;
 
+#include <sstream>
+using std::stringstream;
+
 // Structure used to pass relavent data to Functions {{{
 struct FunctionArguments {
 	smatch matches;
@@ -77,6 +80,34 @@ class WaveFunction : public Function {
 		}
 }; // }}}
 
+// A function to output some fish(es)
+class FishFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			int fcount = (fargs.message[4] == 'e') ? (rand() % 6) : 1;
+			stringstream ss;
+			for(int i = 0; i < fcount; ++i) {
+				if(rand() % 2)
+					ss << "<><";
+				else
+					ss << "><>";
+				if(i != fcount - 1)
+					ss << string(rand() % 3 + 1, ' ');
+			}
+			return ss.str();
+		}
+
+		virtual string name() const {
+			return "fish(es)?";
+		}
+		virtual string help() const {
+			return "Takes no arguments; outputs fish(es).";
+		}
+		virtual string regex() const {
+			return "^fish(es)?( .*)?";
+		}
+}; // }}}
+
 int main(int argc, char **argv) {
 	const string logFileName = "pbrane.log", myNick = "pbrane";
 	const string privmsgRegexExp =
@@ -88,6 +119,7 @@ int main(int argc, char **argv) {
 
 	map<string, Function *> moduleMap;
 	moduleMap["wave"] = new WaveFunction();
+	moduleMap["fish"] = new FishFunction();
 
 	regex privmsgRegex(privmsgRegexExp, regex::perl);
 	regex joinRegex(privmsgRegexExp, regex::perl);
