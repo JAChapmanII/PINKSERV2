@@ -130,7 +130,7 @@ class LoveFunction : public Function {
 		}
 
 		virtual string name() const {
-			return "love / <3";
+			return "</?3";
 		}
 		virtual string help() const {
 			return "Takes no arguments; outputs love.";
@@ -354,6 +354,8 @@ class OrFunction : public Function {
 		}
 }; // }}}
 
+// TODO: markov, is, forget
+
 int main(int argc, char **argv) {
 	const string logFileName = "pbrane.log", myNick = "pbrane";
 	const string privmsgRegexExp =
@@ -436,7 +438,7 @@ int main(int argc, char **argv) {
 					stringstream ss;
 					unsigned j = 0;
 					for(auto i = moduleMap.begin(); i != moduleMap.end(); ++i, ++j) {
-						ss << i->first;
+						ss << i->second->name();
 						if(j != moduleMap.size() - 1)
 							ss << ", ";
 					}
