@@ -321,6 +321,8 @@ class ListFunction : public Function {
 class OrFunction : public Function {
 	public:
 		virtual string run(FunctionArguments fargs) {
+			if(!fargs.toUs)
+				return "";
 			queue<string> q;
 			q.push(fargs.matches[1]);
 			q.push(fargs.matches[2]);
