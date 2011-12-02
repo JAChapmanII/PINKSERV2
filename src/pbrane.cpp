@@ -200,8 +200,8 @@ class SetFunction : public Function {
 
 			(*fargs.siMap)[varName] = value;
 
-			stringstream ss("Set ");
-			ss << varName << " to " << value;
+			stringstream ss;
+			ss << "Set " << varName << " to " << value;
 			return ss.str();
 		}
 
@@ -492,6 +492,11 @@ int main(int argc, char **argv) {
 			// log all the failures
 			log << "no match: " << line << endl;
 		}
+	}
+
+	// free memory associated with modules
+	for(auto i = moduleMap.begin(); i != moduleMap.end(); ++i) {
+		delete i->second;
 	}
 
 	return 0;
