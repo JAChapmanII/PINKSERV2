@@ -3,7 +3,13 @@ BINS=pbrane
 OBJS=
 
 CXXFLAGS=-std=c++0x
-LDFLAGS=-g -lboost_regex
+LDFLAGS=-lboost_regex
+
+ifndef release
+LDFLAGS+=-g
+else
+LDFLAGS+=-O3 -Os
+endif
 
 ifndef nowall
 CXXFLAGS+=-Wextra -pedantic -Wmain -Weffc++ -Wswitch-default -Wswitch-enum
