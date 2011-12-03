@@ -65,6 +65,16 @@ class Function {
 		}
 		virtual void reset() {
 		}
+
+		virtual bool canStore() {
+			return false;
+		}
+		virtual vector<char> *unload() {
+			return NULL;
+		}
+		virtual size_t load(vector<char> *from) {
+			return 0;
+		}
 }; // }}}
 
 
@@ -354,6 +364,108 @@ class OrFunction : public Function {
 		}
 }; // }}}
 
+map<string, map<string, unsigned>> markovModel;
+const unsigned markovOrder = 2;
+
+vector<string> split(string str, string on);
+vector<string> split(string str, string on) {
+	vector<string> results;
+	size_t first = str.find_first_not_of(on);
+	while(first != string::npos) {
+		size_t last = str.find_first_of(on, first + 1);
+		results.push_back(str.substr(first, last - first));
+		if(last == string::npos)
+			break;
+		first = str.find_first_not_of(on, last + 1);
+	}
+	return results;
+}
+
+void insert(string text);
+void markov_push(vector<string> words, unsigned order);
+string fetch(string seed);
+
+void markov_push(vector<string> words, unsigned order) {
+	if(words.size() < order)
+		return;
+
+	// insert first sets of chains
+	for(unsigned s = 0; s < words.size() - order; ++s) {
+		string start = words[s];
+		for(unsigned i = 1; i < order; ++i)
+			start += (string)" " + words[s + i];
+		markovModel[start][words[s + order]]++;
+	}
+
+	// insert last few words -> null mapping
+	string start = words[words.size() - order];
+	for(unsigned i = 1; i < order; ++i)
+		start += (string)" " + words[words.size() - order + i];
+	markovModel[start][""]++;
+}
+void insert(string text) {
+	vector<string> words = split(text, " \t");
+	for(unsigned o = 1; o <= markovOrder; ++o)
+		markov_push(words, o);
+}
+
+string fetch(string seed) {
+	if(markovModel[seed].empty())
+		return "";
+	unsigned total = 0;
+	map<string, unsigned> seedMap = markovModel[seed];
+	for(auto i = seedMap.begin(); i != seedMap.end(); ++i)
+		total += i->second;
+	unsigned r = rand() % total;
+	auto i = seedMap.begin();
+	while(r > i->second) {
+		r -= i->second;
+		++i;
+	}
+	return i->first;
+}
+
+// Handles returning markov chains {{{
+class MarkovFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			string init = fargs.matches[1];
+			vector<string> words = split(init, " \t");
+			string start;
+			if(words.size() < markovOrder) {
+				start = words[0];
+				for(unsigned i = 1; i < words.size(); ++i)
+					start += (string)" " + words[i];
+			} else {
+				start = words[words.size() - markovOrder];
+				for(unsigned i = 1; i < markovOrder; ++i)
+					start += (string)" " + words[words.size() - markovOrder + i];
+			}
+
+			stringstream chain, seed;
+			chain << init;
+			seed << start;
+
+			string next;
+			while(!(next = fetch(seed.str())).empty()) {
+				chain << " " << next;
+				seed << " " << next;
+				seed >> next;
+			}
+			return chain.str();
+		}
+
+		virtual string name() const {
+			return "markov";
+		}
+		virtual string help() const {
+			return "Returns a markov chain.";
+		}
+		virtual string regex() const {
+			return "\\s*markov\\s+(.*)";
+		}
+}; // }}}
+
 // TODO: markov, is, forget
 
 int main(int argc, char **argv) {
@@ -365,6 +477,8 @@ int main(int argc, char **argv) {
 	const string toUsRegexExp = "^(" + myNick + "[:\\,]?\\s+).*";
 	const string toUsRRegexExp = "^(" + myNick + "[:\\,]?\\s+)";
 	const string helpRegexExp = "^\\s*help(\\s+(\\S+))?";
+
+	split("  This    is a sequence     of \t words . ", " \t");
 
 	srand(time(NULL));
 
@@ -382,6 +496,8 @@ int main(int argc, char **argv) {
 	moduleMap["--"] = new DecrementFunction();
 	moduleMap["erase"] = new EraseFunction();
 	moduleMap["list"] = new ListFunction();
+
+	moduleMap["markov"] = new MarkovFunction();
 
 	regex privmsgRegex(privmsgRegexExp, regex::perl);
 	regex joinRegex(privmsgRegexExp, regex::perl);
@@ -462,6 +578,7 @@ int main(int argc, char **argv) {
 				fargs.toUs = toUs;
 				fargs.siMap = &siMap;
 
+				bool matched = false;
 				// loop through setup modules trying to match their regex
 				for(auto mod = moduleMap.begin(); mod != moduleMap.end(); ++mod) {
 					regex cmodr(mod->second->regex(), regex::perl);
@@ -477,9 +594,14 @@ int main(int argc, char **argv) {
 							// log the output/send the output
 							log << " -> " << rtarget << " :" << res << endl;
 							cout << "PRIVMSG " << rtarget << " :" << res << endl;
+							matched = true;
 							break;
 						}
 					}
+				}
+
+				if(!matched) {
+					insert(message);
 				}
 			}
 		// if the current line is a JOIN...
