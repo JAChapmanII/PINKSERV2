@@ -4,6 +4,8 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+using std::skipws;
+
 #include <string>
 using std::string;
 using std::getline;
@@ -431,27 +433,29 @@ class MarkovFunction : public Function {
 		virtual string run(FunctionArguments fargs) {
 			string init = fargs.matches[1];
 			vector<string> words = split(init, " \t");
-			string start;
-			if(words.size() < markovOrder) {
-				start = words[0];
-				for(unsigned i = 1; i < words.size(); ++i)
-					start += (string)" " + words[i];
-			} else {
-				start = words[words.size() - markovOrder];
-				for(unsigned i = 1; i < markovOrder; ++i)
-					start += (string)" " + words[words.size() - markovOrder + i];
-			}
 
-			stringstream chain, seed;
-			chain << init;
-			seed << start;
+			string start, next;
+			do {
+				start = "";
+				if(words.size() < markovOrder) {
+					start = words[0];
+					for(unsigned i = 1; i < words.size(); ++i)
+						start += (string)" " + words[i];
+				} else {
+					start = words[words.size() - markovOrder];
+					for(unsigned i = 1; i < markovOrder; ++i)
+						start += (string)" " + words[words.size() - markovOrder + i];
+				}
 
-			string next;
-			while(!(next = fetch(seed.str())).empty()) {
-				chain << " " << next;
-				seed << " " << next;
-				seed >> next;
-			}
+				next = fetch(start);
+				if(!next.empty())
+					words.push_back(next);
+			} while(!next.empty());
+
+			stringstream chain;
+			chain << words[0];
+			for(unsigned i = 1; i < words.size(); ++i)
+				chain << " " << words[i];
 			return chain.str();
 		}
 
