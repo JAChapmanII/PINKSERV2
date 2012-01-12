@@ -1,0 +1,16 @@
+pbrane is a simple IRC bot written in C++.
+
+Building:
+	First of all, you may wish to change some constants in the source itself.
+	At some point I need to move this into a config as jbotc does it.
+
+	Then run:
+		make
+
+Running:
+	This can be as simple as
+		./pbrane
+
+	This works much the same way as jbotc. See its README for more information
+	and to see how to get pbrane connected to an IRC channel.
+
