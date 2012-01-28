@@ -470,16 +470,52 @@ class MarkovFunction : public Function {
 		}
 }; // }}}
 
+// list chain count {{{
+class ChainCountFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			string init = fargs.matches[1];
+			vector<string> words = split(init, " \t");
+
+			string start = "";
+			if(words.size() < markovOrder) {
+				start = words[0];
+				for(unsigned i = 1; i < words.size(); ++i)
+					start += (string)" " + words[i];
+			} else {
+				start = words[words.size() - markovOrder];
+				for(unsigned i = 1; i < markovOrder; ++i)
+					start += (string)" " + words[words.size() - markovOrder + i];
+			}
+
+			stringstream ss;
+			ss << "Chains starting with: " << start << ": "
+				<< markovModel[start].size() << " [1/" << markovModel.size() << "]";
+
+			return ss.str();
+		}
+
+		virtual string name() const {
+			return "ccount";
+		}
+		virtual string help() const {
+			return "Return number of markov chains";
+		}
+		virtual string regex() const {
+			return "^\\s*ccount(\\s.*)?";
+		}
+}; // }}}
+
 // TODO: markov, is, forget
 
 int main(int argc, char **argv) {
 	const string logFileName = "pbrane.log", myNick = "pbrane";
 	const string privmsgRegexExp =
-		"^:([A-Za-z0-9_]*)!([-@~A-Za-z0-9_\\.]*) PRIVMSG ([#A-Za-z0-9_]*) :(.*)";
+		"^:([A-Za-z0-9_]*)!([-/@~A-Za-z0-9_\\.]*) PRIVMSG ([#A-Za-z0-9_]*) :(.*)";
 	const string joinRegexExp =
-		"^:([A-Za-z0-9_]*)!([-@~A-Za-z0-9_\\.]*) JOIN :([#A-Za-z0-9_]*)";
-	const string toUsRegexExp = "^(" + myNick + "[:\\,]?\\s+).*";
-	const string toUsRRegexExp = "^(" + myNick + "[:\\,]?\\s+)";
+		"^:([A-Za-z0-9_]*)!([-/@~A-Za-z0-9_\\.]*) JOIN :([#A-Za-z0-9_]*)";
+	const string toUsRegexExp = "^(" + myNick + "[L:\\,]?\\s+).*";
+	const string toUsRRegexExp = "^(" + myNick + "[L:\\,]?\\s+)";
 	const string helpRegexExp = "^\\s*help(\\s+(\\S+))?";
 
 	split("  This    is a sequence     of \t words . ", " \t");
@@ -502,6 +538,7 @@ int main(int argc, char **argv) {
 	moduleMap["list"] = new ListFunction();
 
 	moduleMap["markov"] = new MarkovFunction();
+	moduleMap["ccount"] = new ChainCountFunction();
 
 	regex privmsgRegex(privmsgRegexExp, regex::perl);
 	regex joinRegex(privmsgRegexExp, regex::perl);
