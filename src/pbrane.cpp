@@ -616,12 +616,13 @@ int main(int argc, char **argv) {
 		// if the current line is a PRIVMSG...
 		if(regex_match(line, matches, privmsgRegex)) {
 			// log all the things!
-			log << "pmsg: " << matches[0] << endl;
-			log << "  nick: " << matches[1] << endl;
-			log << "  user: " << matches[2] << endl;
-			log << "target: " << matches[3] << endl;
-			log << "   msg: " << matches[4] << endl;
-			string message(matches[4]), nick(matches[1]);
+			//log << "pmsg: " << matches[0] << endl;
+			//log << "  nick: " << matches[1] << endl;
+			//log << "  user: " << matches[2] << endl;
+			//log << "target: " << matches[3] << endl;
+			//log << "   msg: " << matches[4] << endl;
+			log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
+			string message(matches[4]), nick(matches[1]), omessage(matches[4]);
 
 			bool toUs = false;
 			if(regex_match(message, toUsRegex)) {
