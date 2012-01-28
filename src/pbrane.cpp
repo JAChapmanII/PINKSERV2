@@ -489,9 +489,15 @@ class ChainCountFunction : public Function {
 					start += (string)" " + words[words.size() - markovOrder + i];
 			}
 
+			map<string, unsigned> seedMap = markovModel[start];
+			unsigned total = 0;
+			for(auto i = seedMap.begin(); i != seedMap.end(); ++i)
+				total += i->second;
+
 			stringstream ss;
 			ss << "Chains starting with: " << start << ": "
-				<< markovModel[start].size() << " [1/" << markovModel.size() << "]";
+				<< markovModel[start].size() << " ["
+				<< total << ", " << markovModel.size() << "]";
 
 			return ss.str();
 		}
@@ -592,6 +598,8 @@ int main(int argc, char **argv) {
 				break;
 			insert(line);
 			lcount++;
+			if(lcount % 50000 == 0)
+				log << "\t" << lcount << "..." << endl;
 		}
 		log << "\t" << markovFileName << ": read " << lcount << " lines" << endl;
 	}
