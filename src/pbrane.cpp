@@ -32,6 +32,11 @@ using std::queue;
 #include <vector>
 using std::vector;
 
+#include <algorithm>
+using std::find;
+
+vector<string> lastLog;
+
 // Structure used to pass relavent data to Functions {{{
 struct FunctionArguments {
 	smatch matches;
@@ -384,6 +389,11 @@ vector<string> split(string str, string on) {
 	return results;
 }
 
+template<typename T> bool contains(vector<T> vec, T val);
+template<typename T> bool contains(vector<T> vec, T val) {
+	return (find(vec.begin(), vec.end(), val) != vec.end());
+}
+
 void insert(string text);
 void markov_push(vector<string> words, unsigned order);
 string fetch(string seed);
@@ -539,9 +549,47 @@ class YesFunction : public Function {
 		string m_nick;
 }; // }}}
 
+// regex all the things! {{{
+class ReplaceFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			string m2 = fargs.matches[1], m4 = fargs.matches[2];
+
+			for(auto i = lastLog.rbegin(); i != lastLog.rend(); ++i) {
+				string str = *i;
+				vector<string> words = split(str, " \t");
+				if(contains(words, m2)) {
+					stringstream ss;
+					for(auto j = words.begin(); j != words.end(); ++j) {
+						if(*j == m2)
+							ss << m4;
+						else
+							ss << *j;
+						if(j != words.end() - 1)
+							ss << " ";
+					}
+					return ss.str();
+				}
+			}
+
+			return "error: not matched";
+		}
+
+		virtual string name() const {
+			return "replace";
+		}
+		virtual string help() const {
+			return (string)"Give it two regex, it finds the last message that" +
+				" matches the first and substitutes it with the second";
+		}
+		virtual string regex() const {
+			return "^!s\\s+([^\\s]+)\\s+([^\\s]+)";
+		}
+}; // }}}
+
 int main(int argc, char **argv) {
-	const string logFileName = "pbrane.log", myNick = "pbrane",
-			markovFileName = "pbrane.markov";
+	const string logFileName = "PINKSERV_TWO.log", myNick = "PINKSERV_TWO",
+			markovFileName = "PINKSERV_TWO.markov";
 	const string privmsgRegexExp =
 		"^:([A-Za-z0-9_]*)!([-/@~A-Za-z0-9_\\.]*) PRIVMSG ([#A-Za-z0-9_]*) :(.*)";
 	const string joinRegexExp =
@@ -568,6 +616,7 @@ int main(int argc, char **argv) {
 	moduleMap["--"] = new DecrementFunction();
 	moduleMap["erase"] = new EraseFunction();
 	moduleMap["list"] = new ListFunction();
+	moduleMap["!r"] = new ReplaceFunction();
 
 	moduleMap["markov"] = new MarkovFunction();
 	moduleMap["ccount"] = new ChainCountFunction();
@@ -693,6 +742,7 @@ int main(int argc, char **argv) {
 				}
 
 				if(!matched) {
+					lastLog.push_back(omessage);
 					regex yesCommand(moduleMap["yes"]->regex(), regex::perl);
 					if(toUs || regex_match( message, fargs.matches, yesCommand, match_extra)) {
 						log << " -> " << rtarget << " :yes" << endl;
