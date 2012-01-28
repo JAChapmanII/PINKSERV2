@@ -509,6 +509,30 @@ class ChainCountFunction : public Function {
 
 // TODO: markov, is, forget
 
+// say yes {{{
+class YesFunction : public Function {
+	public:
+		YesFunction(string nick) : m_nick(nick) {
+		}
+
+		virtual string run(FunctionArguments fargs) {
+			return "yes";
+		}
+
+		virtual string name() const {
+			return this->m_nick;
+		}
+		virtual string help() const {
+			return "Say yes when my name is said";
+		}
+		virtual string regex() const {
+			return (string)".*" + this->m_nick + ".*";
+		}
+
+	protected:
+		string m_nick;
+}; // }}}
+
 int main(int argc, char **argv) {
 	const string logFileName = "pbrane.log", myNick = "pbrane",
 			markovFileName = "pbrane.markov";
@@ -541,6 +565,7 @@ int main(int argc, char **argv) {
 
 	moduleMap["markov"] = new MarkovFunction();
 	moduleMap["ccount"] = new ChainCountFunction();
+	moduleMap["yes"] = new YesFunction(myNick);
 
 	regex privmsgRegex(privmsgRegexExp, regex::perl);
 	regex joinRegex(privmsgRegexExp, regex::perl);
@@ -659,6 +684,11 @@ int main(int argc, char **argv) {
 				}
 
 				if(!matched) {
+					regex yesCommand(moduleMap["yes"]->regex(), regex::perl);
+					if(toUs || regex_match( message, fargs.matches, yesCommand, match_extra)) {
+						log << " -> " << rtarget << " :yes" << endl;
+						cout << "PRIVMSG " << rtarget << " :yes" << endl;
+					}
 					insert(message);
 				}
 			}
