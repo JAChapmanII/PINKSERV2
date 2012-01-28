@@ -18,11 +18,14 @@ CXXFLAGS+=-Winline -Wfloat-equal -Wundef -Wcast-align -Wredundant-decls
 CXXFLAGS+=-Winit-self -Wshadow
 endif
 
-all: $(BINS)
+all: $(BINS) cm
 
 pbrane: $(SRCDIR)/pbrane.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
+cm: $(SRCDIR)/cm.o $(SRCDIR)/ircsocket.o
+	$(CXX) -o $@ $^ $(LDFLAGS) -lsfml-network -lsfml-system
+
 clean:
-	rm -rf *.o $(BINS)
+	rm -rf $(SRCDIR)/*.o $(BINS) cm
 
