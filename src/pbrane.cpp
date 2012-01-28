@@ -18,6 +18,7 @@ using boost::match_extra;
 
 #include <fstream>
 using std::ofstream;
+using std::ifstream;
 
 #include <map>
 using std::map;
@@ -509,7 +510,8 @@ class ChainCountFunction : public Function {
 // TODO: markov, is, forget
 
 int main(int argc, char **argv) {
-	const string logFileName = "pbrane.log", myNick = "pbrane";
+	const string logFileName = "pbrane.log", myNick = "pbrane",
+			markovFileName = "pbrane.markov";
 	const string privmsgRegexExp =
 		"^:([A-Za-z0-9_]*)!([-/@~A-Za-z0-9_\\.]*) PRIVMSG ([#A-Za-z0-9_]*) :(.*)";
 	const string joinRegexExp =
@@ -553,6 +555,21 @@ int main(int argc, char **argv) {
 	}
 
 	log << "pbrane started." << endl;
+
+	ifstream in(markovFileName);
+	if(in.good()) {
+		log << "reading markov chain entries" << endl;
+		unsigned lcount = 0;
+		while(!in.eof()) {
+			string line;
+			getline(in, line);
+			if(in.eof() || !in.good())
+				break;
+			insert(line);
+			lcount++;
+		}
+		log << "\t" << markovFileName << ": read " << lcount << " lines" << endl;
+	}
 
 	map<string, int> siMap;
 
