@@ -588,13 +588,17 @@ class ReplaceFunction : public Function {
 
 int main(int argc, char **argv) {
 	srand(time(NULL));
-	const string logFileName = "PINKSERV_TWO.log", myNick = "PINKSERV_TWO",
-			markovFileName = "PINKSERV_TWO.markov";
+	const string logFileName = "PINKSERV_TWO.log",
+			chatLogFileName = "PINKSERV_TWO.clog",
+			errorLogFileName = "PINKSERV_TWO.err",
+			myNick = "PINKSERV_TWO",
+			markovFileName = "PINKSERV_TWO.markov",
+			todoFileName = "TODO";
 
 	const string privmsgRegexExp =
 		"^:([A-Za-z0-9_]*)!([-/@~A-Za-z0-9_\\.]*) PRIVMSG ([#A-Za-z0-9_]*) :(.*)";
 	const string joinRegexExp =
-		"^:([A-Za-z0-9_]*)!([-/@~A-Za-z0-9_\\.]*) JOIN :([#A-Za-z0-9_]*)";
+		"^:([A-Za-z0-9_]*)!([-/@~A-Za-z0-9_\\.]*) JOIN :?([#A-Za-z0-9_]*)";
 	const string toUsRegexExp = "^(" + myNick + "[L:\\,]?\\s+).*";
 	const string toUsRRegexExp = "^(" + myNick + "[L:\\,]?\\s+)";
 	const string helpRegexExp = "^\\s*help(\\s+(\\S+))?";
@@ -633,6 +637,17 @@ int main(int argc, char **argv) {
 		cerr << "Could not open log!" << endl;
 		return 1;
 	}
+	ofstream chatLog(chatLogFileName, fstream::app);
+	if(!chatLog.good()) {
+		cerr << "Could not open chat log!" << endl;
+		return 1;
+	}
+	ofstream errorLog(errorLogFileName, fstream::app);
+	if(!errorLog.good()) {
+		cerr << "Could not open error log!" << endl;
+		return 1;
+	}
+
 
 	log << myNick << " started." << endl;
 
@@ -658,12 +673,15 @@ int main(int argc, char **argv) {
 			insert(line);
 			lcount++;
 			if((double)lcount / tcount * 100 > percent) {
-				log << percent << "...";
+				if(percent % 10 == 0)
+					log << percent;
+				else
+					log << ".";
 				log.flush();
 				percent++;
 			}
 		}
-		log << "\t" << markovFileName << ": read " << lcount << " lines" << endl;
+		log << endl << markovFileName << ": read " << lcount << " lines" << endl;
 	}
 	// }}}
 
@@ -679,14 +697,14 @@ int main(int argc, char **argv) {
 		// if the current line is a PRIVMSG...
 		if(regex_match(line, matches, privmsgRegex)) {
 			// log all the things!
-			log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
+			chatLog << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
 			string message(matches[4]), nick(matches[1]), omessage(matches[4]);
 
 			bool toUs = false;
 			if(regex_match(message, toUsRegex)) {
 				message = regex_replace(message, toUsRRegex, (string)"");
 				toUs = true;
-				log << "  umsg: " << message << endl;
+				chatLog << "  umsg: " << message << endl;
 			}
 
 			string rtarget = matches[3];
@@ -724,6 +742,7 @@ int main(int argc, char **argv) {
 						res = moduleMap[function]->help();
 					}
 				}
+				log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
 				log << " -> " << rtarget << " :" << nick << ": " << res << endl;
 				cout << "PRIVMSG " << rtarget << " :" << nick << ": " << res << endl;
 			} else {
@@ -750,6 +769,7 @@ int main(int argc, char **argv) {
 							log << "module returned nothing, moving on" << endl;
 						} else {
 							// log the output/send the output
+							log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
 							log << " -> " << rtarget << " :" << res << endl;
 							cout << "PRIVMSG " << rtarget << " :" << res << endl;
 							matched = true;
@@ -759,9 +779,10 @@ int main(int argc, char **argv) {
 				}
 
 				if(!matched) {
-					lastLog.push_back(omessage);
+					lastLog.push_back(ChatLine(nick, omessage));
 					regex yesCommand(moduleMap["yes"]->regex(), regex::perl);
 					if(toUs || regex_match( message, fargs.matches, yesCommand, match_extra)) {
+						log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
 						log << " -> " << rtarget << " :yes" << endl;
 						cout << "PRIVMSG " << rtarget << " :yes" << endl;
 					}
@@ -771,12 +792,12 @@ int main(int argc, char **argv) {
 		// if the current line is a JOIN...
 		} else if(regex_match(line, matches, joinRegex)) {
 			// log all the join messages
-			log << matches[1] << " (" << matches[2] << ") has joined "
+			chatLog << matches[1] << " (" << matches[2] << ") has joined "
 				<< matches[3] << endl;
 		// otherwise...
 		} else {
 			// log all the failures
-			log << "no match: " << line << endl;
+			errorLog << "no match: " << line << endl;
 		}
 	}
 
