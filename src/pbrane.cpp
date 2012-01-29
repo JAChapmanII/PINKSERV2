@@ -36,9 +36,19 @@ using std::vector;
 
 #include <algorithm>
 using std::find;
+
+#include <exception>
+using std::exception;
 // }}}
 
-vector<string> lastLog;
+struct ChatLine {
+	string nick;
+	string text;
+	ChatLine(string inick, string itext) :
+			nick(inick), text(itext) {
+	}
+};
+vector<ChatLine> lastLog;
 
 // Structure used to pass relavent data to Functions {{{
 struct FunctionArguments {
@@ -373,6 +383,35 @@ class OrFunction : public Function {
 		}
 }; // }}}
 
+// add something for me to do {{{
+class TodoFunction : public Function {
+	public:
+		TodoFunction(string todoName) : m_file() {
+			this->m_file.open(todoName, fstream::app);
+		}
+
+		virtual string run(FunctionArguments fargs) {
+			if(this->m_file.good()) {
+				this->m_file << fargs.nick << ": " << fargs.matches[1] << endl;
+				return "recorded";
+			}
+			return "error: file error";
+		}
+
+		virtual string name() const {
+			return "todo";
+		}
+		virtual string help() const {
+			return "Adds a string to the todo file.";
+		}
+		virtual string regex() const {
+			return "^!todo\\s+(.*)";
+		}
+
+	protected:
+		ofstream m_file;
+}; // }}}
+
 vector<string> split(string str, string on);
 template<typename T> bool contains(vector<T> vec, T val);
 
@@ -546,14 +585,14 @@ class YesFunction : public Function {
 		string m_nick;
 }; // }}}
 
-// regex all the things! {{{
+// replace all the things! {{{
 class ReplaceFunction : public Function {
 	public:
 		virtual string run(FunctionArguments fargs) {
 			string m2 = fargs.matches[1], m4 = fargs.matches[2];
 
 			for(auto i = lastLog.rbegin(); i != lastLog.rend(); ++i) {
-				string str = *i;
+				string str = i->text;
 				vector<string> words = split(str, " \t");
 				if(contains(words, m2)) {
 					stringstream ss;
@@ -565,7 +604,7 @@ class ReplaceFunction : public Function {
 						if(j != words.end() - 1)
 							ss << " ";
 					}
-					return ss.str();
+					return (string)"<" + i->nick + "> " + ss.str();
 				}
 			}
 
@@ -576,11 +615,42 @@ class ReplaceFunction : public Function {
 			return "replace";
 		}
 		virtual string help() const {
+			return "Replace one word with a string";
+		}
+		virtual string regex() const {
+			return "^!s\\s+([^\\s]+)\\s+(.+)\\s*$";
+		}
+}; // }}}
+// regex all the things! {{{
+class RegexFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			string m2 = fargs.matches[1], m4 = fargs.matches[2];
+
+			try {
+				boost::regex rgx(m2, regex::perl);
+				for(auto i = lastLog.rbegin(); i != lastLog.rend(); ++i) {
+					string str = regex_replace(i->text, rgx, m4,
+							boost::match_default | boost::format_sed );
+					if(str != i->text) {
+						return (string)"<" + i->nick + "> " + str;
+					}
+				}
+				return "error: not matched";
+			} catch(exception &e) {
+				return (string)"error: " + e.what();
+			}
+		}
+
+		virtual string name() const {
+			return "regex";
+		}
+		virtual string help() const {
 			return (string)"Give it two regex, it finds the last message that" +
 				" matches the first and substitutes it with the second";
 		}
 		virtual string regex() const {
-			return "^!s\\s+([^\\s]+)\\s+([^\\s]+)";
+			return "^!s/([^/]+)/([^/]+)/?$";
 		}
 }; // }}}
 
@@ -626,10 +696,13 @@ int main(int argc, char **argv) {
 	moduleMap["erase"] = new EraseFunction();
 	moduleMap["list"] = new ListFunction();
 	moduleMap["!s"] = new ReplaceFunction();
+	moduleMap["!s2"] = new RegexFunction();
 
 	moduleMap["markov"] = new MarkovFunction();
 	moduleMap["ccount"] = new ChainCountFunction();
 	moduleMap["yes"] = new YesFunction(myNick);
+
+	moduleMap["todo"] = new TodoFunction(todoFileName);
 	// }}}
 
 	ofstream log(logFileName, fstream::app);
