@@ -106,6 +106,25 @@ class WaveFunction : public Function {
 			return "^(o/|\\\\o)( .*)?";
 		}
 }; // }}}
+// A function to provide artificial love {{{
+class LoveFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			if(fargs.message[1] == '/')
+				return ":(";
+			return "<3";
+		}
+
+		virtual string name() const {
+			return "</?3";
+		}
+		virtual string help() const {
+			return "Takes no arguments; outputs love.";
+		}
+		virtual string regex() const {
+			return "^</?3( .*)?";
+		}
+}; // }}}
 
 // A function to output some fish(es) {{{
 class FishFunction : public Function {
@@ -134,30 +153,9 @@ class FishFunction : public Function {
 			return "Takes no arguments; outputs fish(es).";
 		}
 		virtual string regex() const {
-			return "^fish(es)?( .*)?";
+			return "^!fish(es)?( .*)?";
 		}
 }; // }}}
-
-// A function to provide artificial love {{{
-class LoveFunction : public Function {
-	public:
-		virtual string run(FunctionArguments fargs) {
-			if(fargs.message[1] == '/')
-				return ":(";
-			return "<3";
-		}
-
-		virtual string name() const {
-			return "</?3";
-		}
-		virtual string help() const {
-			return "Takes no arguments; outputs love.";
-		}
-		virtual string regex() const {
-			return "^</?3( .*)?";
-		}
-}; // }}}
-
 // Someone wants a train {{{
 class TrainFunction : public Function {
 	public:
@@ -185,7 +183,7 @@ class TrainFunction : public Function {
 			return "Takes no arguments; returns a train.";
 		}
 		virtual string regex() const {
-			return "^sl( .*)?";
+			return "^!sl( .*)?";
 		}
 }; // }}}
 
@@ -203,7 +201,7 @@ class DubstepFunction : public Function {
 			return "Takes no arguments; rocks.";
 		}
 		virtual string regex() const {
-			return "^dubstep( .*)?";
+			return "^(!dubstep|WUB|wub)( .*)?";
 		}
 }; // }}}
 
@@ -230,7 +228,7 @@ class SetFunction : public Function {
 			return "Sets a variable to be an integer";
 		}
 		virtual string regex() const {
-			return "^\\s*set\\s+(\\w+)\\s+(\\d+).*";
+			return "^!set\\s+(\\w+)\\s+(\\d+).*";
 		}
 }; // }}}
 
@@ -305,7 +303,7 @@ class EraseFunction : public Function {
 			return "Erases a variable";
 		}
 		virtual string regex() const {
-			return "^\\s*erase\\s+(\\w+)(\\s.*)?";
+			return "^!erase\\s+(\\w+)(\\s.*)?";
 		}
 }; // }}}
 
@@ -331,7 +329,7 @@ class ListFunction : public Function {
 			return "List stored variables";
 		}
 		virtual string regex() const {
-			return "^\\s*list(\\s.*)?";
+			return "^!list(\\s.*)?";
 		}
 }; // }}}
 
@@ -477,7 +475,7 @@ class MarkovFunction : public Function {
 			return "Returns a markov chain.";
 		}
 		virtual string regex() const {
-			return "\\s*markov\\s+(.*)";
+			return "^!markov\\s+(.*)";
 		}
 }; // }}}
 
@@ -519,7 +517,7 @@ class ChainCountFunction : public Function {
 			return "Return number of markov chains";
 		}
 		virtual string regex() const {
-			return "^\\s*ccount(\\s.*)?";
+			return "^!c+ount(\\s.*)?";
 		}
 }; // }}}
 
