@@ -596,8 +596,6 @@ int main(int argc, char **argv) {
 	const string toUsRRegexExp = "^(" + myNick + "[L:\\,]?\\s+)";
 	const string helpRegexExp = "^\\s*help(\\s+(\\S+))?";
 
-	split("  This    is a sequence     of \t words . ", " \t");
-
 	srand(time(NULL));
 
 	map<string, Function *> moduleMap;
