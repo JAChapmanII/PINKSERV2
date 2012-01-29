@@ -616,7 +616,7 @@ int main(int argc, char **argv) {
 	moduleMap["--"] = new DecrementFunction();
 	moduleMap["erase"] = new EraseFunction();
 	moduleMap["list"] = new ListFunction();
-	moduleMap["!r"] = new ReplaceFunction();
+	moduleMap["!s"] = new ReplaceFunction();
 
 	moduleMap["markov"] = new MarkovFunction();
 	moduleMap["ccount"] = new ChainCountFunction();
@@ -702,7 +702,15 @@ int main(int argc, char **argv) {
 					res = ss.str();
 				} else {
 					if(moduleMap.find(function) == moduleMap.end()) {
-						res = "That function does not exist";
+						bool isName = false;
+						for(auto i = moduleMap.begin(); i != moduleMap.end(); ++i) {
+							if(i->second->name() == function) {
+								isName = true;
+								res = i->second->help();
+							}
+						}
+						if(!isName)
+							res = "That function does not exist";
 					} else {
 						res = moduleMap[function]->help();
 					}
