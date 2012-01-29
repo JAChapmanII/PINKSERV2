@@ -1,3 +1,4 @@
+// std includes {{{
 #include <iostream>
 using std::cin;
 using std::cout;
@@ -19,6 +20,7 @@ using boost::match_extra;
 #include <fstream>
 using std::ofstream;
 using std::ifstream;
+using std::fstream;
 
 #include <map>
 using std::map;
@@ -34,6 +36,7 @@ using std::vector;
 
 #include <algorithm>
 using std::find;
+// }}}
 
 vector<string> lastLog;
 
@@ -370,11 +373,10 @@ class OrFunction : public Function {
 		}
 }; // }}}
 
-map<string, map<string, unsigned>> markovModel;
-const unsigned markovOrder = 2;
-
 vector<string> split(string str, string on);
-vector<string> split(string str, string on) {
+template<typename T> bool contains(vector<T> vec, T val);
+
+vector<string> split(string str, string on) { // {{{
 	vector<string> results;
 	size_t first = str.find_first_not_of(on);
 	while(first != string::npos) {
@@ -385,18 +387,19 @@ vector<string> split(string str, string on) {
 		first = str.find_first_not_of(on, last + 1);
 	}
 	return results;
-}
-
-template<typename T> bool contains(vector<T> vec, T val);
-template<typename T> bool contains(vector<T> vec, T val) {
+} // }}}
+template<typename T> bool contains(vector<T> vec, T val) { // {{{
 	return (find(vec.begin(), vec.end(), val) != vec.end());
-}
+} // }}}
+
+map<string, map<string, unsigned>> markovModel;
+const unsigned markovOrder = 2;
 
 void insert(string text);
 void markov_push(vector<string> words, unsigned order);
 string fetch(string seed);
 
-void markov_push(vector<string> words, unsigned order) {
+void markov_push(vector<string> words, unsigned order) { // {{{
 	if(words.size() < order)
 		return;
 
@@ -413,14 +416,13 @@ void markov_push(vector<string> words, unsigned order) {
 	for(unsigned i = 1; i < order; ++i)
 		start += (string)" " + words[words.size() - order + i];
 	markovModel[start][""]++;
-}
-void insert(string text) {
+} // }}}
+void insert(string text) { // {{{
 	vector<string> words = split(text, " \t");
 	for(unsigned o = 1; o <= markovOrder; ++o)
 		markov_push(words, o);
-}
-
-string fetch(string seed) {
+} // }}}
+string fetch(string seed) { // {{{
 	if(markovModel[seed].empty())
 		return "";
 	unsigned total = 0;
@@ -434,7 +436,7 @@ string fetch(string seed) {
 		++i;
 	}
 	return i->first;
-}
+} // }}}
 
 // Handles returning markov chains {{{
 class MarkovFunction : public Function {
@@ -478,7 +480,6 @@ class MarkovFunction : public Function {
 			return "^!markov\\s+(.*)";
 		}
 }; // }}}
-
 // list chain count {{{
 class ChainCountFunction : public Function {
 	public:
@@ -520,8 +521,6 @@ class ChainCountFunction : public Function {
 			return "^!c+ount(\\s.*)?";
 		}
 }; // }}}
-
-// TODO: markov, is, forget
 
 // say yes {{{
 class YesFunction : public Function {
@@ -585,9 +584,13 @@ class ReplaceFunction : public Function {
 		}
 }; // }}}
 
+// TODO: is, forget
+
 int main(int argc, char **argv) {
+	srand(time(NULL));
 	const string logFileName = "PINKSERV_TWO.log", myNick = "PINKSERV_TWO",
 			markovFileName = "PINKSERV_TWO.markov";
+
 	const string privmsgRegexExp =
 		"^:([A-Za-z0-9_]*)!([-/@~A-Za-z0-9_\\.]*) PRIVMSG ([#A-Za-z0-9_]*) :(.*)";
 	const string joinRegexExp =
@@ -596,10 +599,16 @@ int main(int argc, char **argv) {
 	const string toUsRRegexExp = "^(" + myNick + "[L:\\,]?\\s+)";
 	const string helpRegexExp = "^\\s*help(\\s+(\\S+))?";
 
-	srand(time(NULL));
+	// create primary regex objects {{{
+	regex privmsgRegex(privmsgRegexExp, regex::perl);
+	regex joinRegex(privmsgRegexExp, regex::perl);
+	regex toUsRegex(toUsRegexExp, regex::perl);
+	regex toUsRRegex(toUsRRegexExp, regex::perl);
+	regex helpRegex(helpRegexExp, regex::perl);
+	// }}}
 
+	// create module map {{{
 	map<string, Function *> moduleMap;
-
 	moduleMap["wave"] = new WaveFunction();
 	moduleMap["fish"] = new FishFunction();
 	moduleMap["love"] = new LoveFunction();
@@ -617,25 +626,30 @@ int main(int argc, char **argv) {
 	moduleMap["markov"] = new MarkovFunction();
 	moduleMap["ccount"] = new ChainCountFunction();
 	moduleMap["yes"] = new YesFunction(myNick);
+	// }}}
 
-	regex privmsgRegex(privmsgRegexExp, regex::perl);
-	regex joinRegex(privmsgRegexExp, regex::perl);
-	regex toUsRegex(toUsRegexExp, regex::perl);
-	regex toUsRRegex(toUsRRegexExp, regex::perl);
-	regex helpRegex(helpRegexExp, regex::perl);
-
-	ofstream log("pbrane.log");
+	ofstream log(logFileName, fstream::app);
 	if(!log.good()) {
 		cerr << "Could not open log!" << endl;
 		return 1;
 	}
 
-	log << "pbrane started." << endl;
+	log << myNick << " started." << endl;
 
+	// load markov file if it exists {{{
 	ifstream in(markovFileName);
 	if(in.good()) {
 		log << "reading markov chain entries" << endl;
-		unsigned lcount = 0;
+		string fline;
+		getline(in, fline);
+		stringstream ss;
+		ss << fline;
+		unsigned lcount = 0, tcount = 0;
+		ss >> tcount;
+		log << "\tsupposed total count: " << tcount << endl;
+		log << "\t";
+
+		unsigned percent = 0;
 		while(!in.eof()) {
 			string line;
 			getline(in, line);
@@ -643,11 +657,15 @@ int main(int argc, char **argv) {
 				break;
 			insert(line);
 			lcount++;
-			if(lcount % 50000 == 0)
-				log << "\t" << lcount << "..." << endl;
+			if((double)lcount / tcount * 100 > percent) {
+				log << percent << "...";
+				log.flush();
+				percent++;
+			}
 		}
 		log << "\t" << markovFileName << ": read " << lcount << " lines" << endl;
 	}
+	// }}}
 
 	map<string, int> siMap;
 
@@ -661,11 +679,6 @@ int main(int argc, char **argv) {
 		// if the current line is a PRIVMSG...
 		if(regex_match(line, matches, privmsgRegex)) {
 			// log all the things!
-			//log << "pmsg: " << matches[0] << endl;
-			//log << "  nick: " << matches[1] << endl;
-			//log << "  user: " << matches[2] << endl;
-			//log << "target: " << matches[3] << endl;
-			//log << "   msg: " << matches[4] << endl;
 			log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
 			string message(matches[4]), nick(matches[1]), omessage(matches[4]);
 
