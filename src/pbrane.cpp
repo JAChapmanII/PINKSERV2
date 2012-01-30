@@ -217,6 +217,30 @@ class DubstepFunction : public Function {
 			return "^(!dubstep|WUB|wub)( .*)?";
 		}
 }; // }}}
+// lg {{{
+class BinaryLogFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			string str = fargs.matches[1];
+			stringstream ss;
+			ss << str;
+			double val = 0;
+			ss >> val;
+			stringstream outss;
+			outss << fargs.nick << ": " << log(val) << endl;
+			return outss.str();
+		}
+
+		virtual string name() const {
+			return "lg";
+		}
+		virtual string help() const {
+			return "Returns log base 2";
+		}
+		virtual string regex() const {
+			return "^!lg\\s+(.*)";
+		}
+}; // }}}
 
 // set a variable to something {{{
 class SetFunction : public Function {
@@ -650,7 +674,7 @@ class RegexFunction : public Function {
 				" matches the first and substitutes it with the second";
 		}
 		virtual string regex() const {
-			return "^!s/([^/]+)/([^/]+)/?$";
+			return "^!s/([^/]+)/([^/]*)/?$";
 		}
 }; // }}}
 
@@ -703,6 +727,8 @@ int main(int argc, char **argv) {
 	moduleMap["yes"] = new YesFunction(myNick);
 
 	moduleMap["todo"] = new TodoFunction(todoFileName);
+
+	moduleMap["lg"] = new BinaryLogFunction();
 	// }}}
 
 	ofstream log(logFileName, fstream::app);
