@@ -586,7 +586,7 @@ class MarkovFunction : public Function {
 class ChainCountFunction : public Function {
 	public:
 		virtual string run(FunctionArguments fargs) {
-			string init = fargs.matches[1];
+			string init = fargs.matches[2], cs = fargs.matches[1];
 			vector<string> words = split(init, " \t");
 
 			string start = "";
@@ -606,9 +606,16 @@ class ChainCountFunction : public Function {
 				total += i->second;
 
 			stringstream ss;
-			ss << "Chains starting with: " << start << ": "
-				<< markovModel[start].size() << " ["
-				<< total << ", " << markovModel.size() << "]";
+			ss << "Chains starting with: " << start << ": ("
+				<< markovModel[start].size() << ", " << total << ") ["
+				<< markovModel.size() << "]";
+
+			if(cs.length() > 2) {
+				unsigned long totalEnds = 0;
+				for(auto i = markovModel.begin(); i != markovModel.end(); ++i)
+					totalEnds += i->second.size();
+				ss << " {" << totalEnds << "}";
+			}
 
 			return ss.str();
 		}
@@ -620,7 +627,7 @@ class ChainCountFunction : public Function {
 			return "Return number of markov chains";
 		}
 		virtual string regex() const {
-			return "^!c+ount(\\s.*)?";
+			return "^!(c+)ount\\s+(.+)";
 		}
 }; // }}}
 
