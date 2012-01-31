@@ -899,7 +899,9 @@ int main(int argc, char **argv) {
 	moduleMap["!s2"] = new RegexFunction();
 
 	moduleMap["!azn"] = new PredefinedRegexFunction(
-			"azn", "([^aoeuh])(\\s|\\s*$)", "\\1u\\2");
+			"azn", "([b-df-hj-mp-tv-z])([^a-z]|$)", "\\1u\\2");
+	((PredefinedRegexFunction *)moduleMap["!azn"])->push(
+		"([B-DF-HJ-MP-TV-Z])([^A-Z]|$)", "\\1U\\2");
 	moduleMap["!desu"] = new PredefinedRegexFunction("desu", "\\S+", "desu");
 	moduleMap["!cthulhu"] = new PredefinedRegexFunction("cthulhu", "[oe]", "f'th");
 	((PredefinedRegexFunction *)moduleMap["!cthulhu"])->push("[ia]", "gh");
