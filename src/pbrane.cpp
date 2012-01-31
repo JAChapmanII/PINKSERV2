@@ -41,36 +41,6 @@ using std::find;
 using std::exception;
 // }}}
 
-struct ChatLine {
-	string nick;
-	string text;
-	ChatLine(string inick, string itext) :
-			nick(inick), text(itext) {
-	}
-};
-vector<ChatLine> lastLog;
-vector<string> ignoreList;
-
-vector<string> split(string str, string on);
-template<typename T> bool contains(vector<T> vec, T val);
-
-vector<string> split(string str, string on) { // {{{
-	vector<string> results;
-	size_t first = str.find_first_not_of(on);
-	while(first != string::npos) {
-		size_t last = str.find_first_of(on, first + 1);
-		results.push_back(str.substr(first, last - first));
-		if(last == string::npos)
-			break;
-		first = str.find_first_not_of(on, last + 1);
-	}
-	return results;
-} // }}}
-template<typename T> bool contains(vector<T> vec, T val) { // {{{
-	return (find(vec.begin(), vec.end(), val) != vec.end());
-} // }}}
-
-
 // Structure used to pass relavent data to Functions {{{
 struct FunctionArguments {
 	smatch matches;
@@ -88,7 +58,6 @@ struct FunctionArguments {
 		fromOwner(false), siMap(NULL) {
 	}
 }; // }}}
-
 // Base class for all other functions {{{
 class Function {
 	public:
@@ -120,7 +89,40 @@ class Function {
 			return 0;
 		}
 }; // }}}
+struct ChatLine { // {{{
+	string nick;
+	string text;
+	ChatLine(string inick, string itext) :
+			nick(inick), text(itext) {
+	}
+}; // }}}
 
+map<string, Function *> moduleMap;
+vector<ChatLine> lastLog;
+vector<string> ignoreList;
+
+vector<string> split(string str, string on);
+template<typename T> bool contains(vector<T> vec, T val);
+template<typename K, typename V> bool contains(map<K, V> map, K key);
+
+vector<string> split(string str, string on) { // {{{
+	vector<string> results;
+	size_t first = str.find_first_not_of(on);
+	while(first != string::npos) {
+		size_t last = str.find_first_of(on, first + 1);
+		results.push_back(str.substr(first, last - first));
+		if(last == string::npos)
+			break;
+		first = str.find_first_not_of(on, last + 1);
+	}
+	return results;
+} // }}}
+template<typename T> bool contains(vector<T> vec, T val) { // {{{
+	return (find(vec.begin(), vec.end(), val) != vec.end());
+} // }}}
+template<typename K, typename V> bool contains(map<K, V> map, K key) { // {{{
+	return (map.find(key) != map.end());
+} // }}}
 
 // ignore {{{
 class IgnoreFunction : public Function {
@@ -717,31 +719,35 @@ class RegexFunction : public Function {
 
 class PredefinedRegexFunction : public Function { // {{{
 	public:
+		PredefinedRegexFunction(string name) : m_name(name), m_first(),
+				m_second(), m_replaces() {
+		}
 		PredefinedRegexFunction(string name, vector<string> first,
 				vector<string> second) : m_name(name), m_first(), m_second(),
-						m_replaces(), m_good(true) {
+						m_replaces() {
 			for(unsigned i = 0; i < first.size(); ++i)
 				this->push(first[i], second[i]);
 		}
 		PredefinedRegexFunction(string name, string first, string second) :
-				m_name(name), m_first(), m_second(), m_replaces(), m_good(true) {
+				m_name(name), m_first(), m_second(), m_replaces() {
 			this->push(first, second);
 		}
 
-		void push(string first, string second) {
+		string push(string first, string second) {
 			try {
 				boost::regex reg(first, regex::perl);
 				this->m_first.push_back(first);
 				this->m_replaces.push_back(reg);
 				this->m_second.push_back(second);
 			} catch(exception &e) {
-				this->m_good = false;
+				return e.what();
 			}
+			return "";
 		}
 
 		virtual string run(FunctionArguments fargs) {
-			if(!this->m_good)
-				return fargs.nick + ": regex in firsts invalid";
+			if(this->m_replaces.empty())
+				return fargs.nick + ": no regex in replaces";
 
 			string m2 = fargs.matches[1];
 			if(m2.empty())
@@ -781,7 +787,64 @@ class PredefinedRegexFunction : public Function { // {{{
 		vector<string> m_first;
 		vector<string> m_second;
 		vector<boost::regex> m_replaces;
-		bool m_good;
+}; // }}}
+// add predefined regex {{{
+class PushFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			string name = fargs.matches[1], first = fargs.matches[2],
+					 second = fargs.matches[3];
+
+			if(contains(this->m_functions, name)) {
+				if(first.empty() && second.empty()) {
+					auto it = find(this->m_functions.begin(),
+							this->m_functions.end(), name);
+					if(it == this->m_functions.end())
+						return fargs.nick + ": " + name + " does not exist";
+					this->m_functions.erase(it);
+					auto it2 = moduleMap.find(name);
+					if(it2 == moduleMap.end())
+						return fargs.nick + ": " + name + " not found in moduleMap";
+					moduleMap.erase(it2);
+					return fargs.nick + ": " + name + " erased";
+				}
+				if(first.empty())
+					return fargs.nick + ": error: first is empty";
+				PredefinedRegexFunction *func = (PredefinedRegexFunction *)moduleMap[name];
+				string ret = func->push(first, second);
+				if(ret.empty())
+					return fargs.nick + ": added new regex to " + name;
+				return fargs.nick + ": error: " + ret;
+			} else {
+				if(contains(moduleMap, name))
+					return fargs.nick + ": error: function by that name already exists";
+				PredefinedRegexFunction *func = new PredefinedRegexFunction(name);
+				if(func == NULL)
+					return fargs.nick + ": error: couldn't create new object";
+				string ret = func->push(first, second);
+				if(!ret.empty()) {
+					delete func;
+					return fargs.nick + ": error: " + ret;
+				}
+				this->m_functions.push_back(name);
+				moduleMap[name] = func;
+				return fargs.nick + ": " + name + " added to module map";
+			}
+
+			return fargs.nick + ": error: shouldn't have gotten here";
+		}
+
+		virtual string name() const {
+			return "push";
+		}
+		virtual string help() const {
+			return "Dynamically adds a PredefinedRegex function to the module map";
+		}
+		virtual string regex() const {
+			return "^!push/(\\w+)/([^/]*)/([^/]*)/?$";
+		}
+	protected:
+		vector<string> m_functions;
 }; // }}}
 
 // TODO: is, forget
@@ -813,7 +876,6 @@ int main(int argc, char **argv) {
 	// }}}
 
 	// create module map {{{
-	map<string, Function *> moduleMap;
 	moduleMap["o/"] = new WaveFunction();
 	moduleMap["!fish"] = new FishFunction();
 	moduleMap["<3"] = new LoveFunction();
@@ -834,6 +896,7 @@ int main(int argc, char **argv) {
 	moduleMap["!desu"] = new PredefinedRegexFunction("desu", "\\S+", "desu");
 	moduleMap["!cthulhu"] = new PredefinedRegexFunction("cthulhu", "[oe]", "f'th");
 	((PredefinedRegexFunction *)moduleMap["!cthulhu"])->push("[ia]", "gh");
+	moduleMap["!push"] = new PushFunction();
 
 	moduleMap["!markov"] = new MarkovFunction();
 	moduleMap["!count"] = new ChainCountFunction();
