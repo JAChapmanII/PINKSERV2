@@ -2,13 +2,20 @@
 using std::cerr;
 using std::endl;
 
+#include <string>
+using std::string;
+
 #include "ircsocket.hpp"
 
 #include <SFML/System/Sleep.hpp>
 using sf::Sleep;
 
 int main(int argc, char **argv) {
-	IRCSocket isock("irc.slashnet.org", 6667, "pbrane");
+	string server = "irc.slashnet.org";
+	if(argc > 1)
+		server = argv[1];
+
+	IRCSocket isock(server, 6667, "pbrane");
 
 	cerr << "connecting" << endl;
 	if(isock.connect() < 0) {
