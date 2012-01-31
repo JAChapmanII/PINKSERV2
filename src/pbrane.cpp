@@ -49,6 +49,27 @@ struct ChatLine {
 	}
 };
 vector<ChatLine> lastLog;
+vector<string> ignoreList;
+
+vector<string> split(string str, string on);
+template<typename T> bool contains(vector<T> vec, T val);
+
+vector<string> split(string str, string on) { // {{{
+	vector<string> results;
+	size_t first = str.find_first_not_of(on);
+	while(first != string::npos) {
+		size_t last = str.find_first_of(on, first + 1);
+		results.push_back(str.substr(first, last - first));
+		if(last == string::npos)
+			break;
+		first = str.find_first_not_of(on, last + 1);
+	}
+	return results;
+} // }}}
+template<typename T> bool contains(vector<T> vec, T val) { // {{{
+	return (find(vec.begin(), vec.end(), val) != vec.end());
+} // }}}
+
 
 // Structure used to pass relavent data to Functions {{{
 struct FunctionArguments {
@@ -58,11 +79,13 @@ struct FunctionArguments {
 	string target;
 	string message;
 	bool toUs;
+	bool fromOwner;
 
 	map<string, int> *siMap;
 
 	FunctionArguments() :
-		matches(), nick(), user(), target(), message(), toUs(false), siMap(NULL) {
+		matches(), nick(), user(), target(), message(), toUs(false),
+		fromOwner(false), siMap(NULL) {
 	}
 }; // }}}
 
@@ -98,6 +121,41 @@ class Function {
 		}
 }; // }}}
 
+
+// ignore {{{
+class IgnoreFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			if(!fargs.fromOwner)
+				return "";
+
+			string nstring = fargs.matches[1], nick = fargs.matches[2];
+			if(nstring.empty()) {
+				if(!contains(ignoreList, nick)) {
+					ignoreList.push_back(nick);
+					return fargs.nick + ": ignored " + nick;
+				}
+				return fargs.nick + ": " + nick + " already ignored";
+			} else {
+				if(!contains(ignoreList, nick)) {
+					return fargs.nick + ": user isn't ignored currently";
+				}
+				auto it = find(ignoreList.begin(), ignoreList.end(), nick);
+				ignoreList.erase(it);
+				return fargs.nick + ": " + nick + " no longer ignored";
+			}
+		}
+
+		virtual string name() const {
+			return "ignore";
+		}
+		virtual string help() const {
+			return "Ignore a user";
+		}
+		virtual string regex() const {
+			return "^!ignore\\s+(!)?(.*)";
+		}
+}; // }}}
 
 // A function to wave to people {{{
 class WaveFunction : public Function {
@@ -144,7 +202,7 @@ class FishFunction : public Function {
 	public:
 		virtual string run(FunctionArguments fargs) {
 			int fcount = 1;
-			if((fargs.message.length() >= 5) && (fargs.message[4] == 'e'))
+			if((fargs.message.length() >= 5) && (fargs.message[5] == 'e'))
 				fcount = rand() % 6 + 2;
 
 			stringstream ss;
@@ -268,6 +326,54 @@ class SetFunction : public Function {
 			return "^!set\\s+(\\w+)\\s+(\\d+).*";
 		}
 }; // }}}
+// erase a variable {{{
+class EraseFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			string varName = fargs.matches[1];
+
+			int ecount = (*fargs.siMap).erase(varName);
+			if(ecount == 0)
+				return "Variable didn't exist anyway.";
+			else
+				return "Erased " + varName;
+		}
+
+		virtual string name() const {
+			return "erase";
+		}
+		virtual string help() const {
+			return "Erases a variable";
+		}
+		virtual string regex() const {
+			return "^!erase\\s+(\\w+)(\\s.*)?";
+		}
+}; // }}}
+// list all variables {{{
+class ListFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			stringstream ss;
+			unsigned j = 0;
+			for(auto i = (*fargs.siMap).begin(); i != (*fargs.siMap).end(); ++i, ++j) {
+				ss << i->first;
+				if(j != (*fargs.siMap).size() - 1)
+					ss << ", ";
+			}
+
+			return ss.str();
+		}
+
+		virtual string name() const {
+			return "list";
+		}
+		virtual string help() const {
+			return "List stored variables";
+		}
+		virtual string regex() const {
+			return "^!list(\\s.*)?";
+		}
+}; // }}}
 
 // increment a variable {{{
 class IncrementFunction : public Function {
@@ -320,56 +426,6 @@ class DecrementFunction : public Function {
 		}
 }; // }}}
 
-// erase a variable {{{
-class EraseFunction : public Function {
-	public:
-		virtual string run(FunctionArguments fargs) {
-			string varName = fargs.matches[1];
-
-			int ecount = (*fargs.siMap).erase(varName);
-			if(ecount == 0)
-				return "Variable didn't exist anyway.";
-			else
-				return "Erased " + varName;
-		}
-
-		virtual string name() const {
-			return "erase";
-		}
-		virtual string help() const {
-			return "Erases a variable";
-		}
-		virtual string regex() const {
-			return "^!erase\\s+(\\w+)(\\s.*)?";
-		}
-}; // }}}
-
-// list all variables {{{
-class ListFunction : public Function {
-	public:
-		virtual string run(FunctionArguments fargs) {
-			stringstream ss;
-			unsigned j = 0;
-			for(auto i = (*fargs.siMap).begin(); i != (*fargs.siMap).end(); ++i, ++j) {
-				ss << i->first;
-				if(j != (*fargs.siMap).size() - 1)
-					ss << ", ";
-			}
-
-			return ss.str();
-		}
-
-		virtual string name() const {
-			return "list";
-		}
-		virtual string help() const {
-			return "List stored variables";
-		}
-		virtual string regex() const {
-			return "^!list(\\s.*)?";
-		}
-}; // }}}
-
 // Return one thing or the other {{{
 class OrFunction : public Function {
 	public:
@@ -417,9 +473,9 @@ class TodoFunction : public Function {
 		virtual string run(FunctionArguments fargs) {
 			if(this->m_file.good()) {
 				this->m_file << fargs.nick << ": " << fargs.matches[1] << endl;
-				return "recorded";
+				return fargs.nick + ": recorded";
 			}
-			return "error: file error";
+			return fargs.nick + ": error: file error";
 		}
 
 		virtual string name() const {
@@ -435,25 +491,6 @@ class TodoFunction : public Function {
 	protected:
 		ofstream m_file;
 }; // }}}
-
-vector<string> split(string str, string on);
-template<typename T> bool contains(vector<T> vec, T val);
-
-vector<string> split(string str, string on) { // {{{
-	vector<string> results;
-	size_t first = str.find_first_not_of(on);
-	while(first != string::npos) {
-		size_t last = str.find_first_of(on, first + 1);
-		results.push_back(str.substr(first, last - first));
-		if(last == string::npos)
-			break;
-		first = str.find_first_not_of(on, last + 1);
-	}
-	return results;
-} // }}}
-template<typename T> bool contains(vector<T> vec, T val) { // {{{
-	return (find(vec.begin(), vec.end(), val) != vec.end());
-} // }}}
 
 map<string, map<string, unsigned>> markovModel;
 const unsigned markovOrder = 2;
@@ -632,7 +669,7 @@ class ReplaceFunction : public Function {
 				}
 			}
 
-			return "error: not matched";
+			return fargs.nick + ": error: not matched";
 		}
 
 		virtual string name() const {
@@ -655,14 +692,14 @@ class RegexFunction : public Function {
 				boost::regex rgx(m2, regex::perl);
 				for(auto i = lastLog.rbegin(); i != lastLog.rend(); ++i) {
 					string str = regex_replace(i->text, rgx, m4,
-							boost::match_default | boost::format_sed );
+							boost::match_default | boost::format_sed);
 					if(str != i->text) {
 						return (string)"<" + i->nick + "> " + str;
 					}
 				}
-				return "error: not matched";
+				return fargs.nick + ": error: not matched";
 			} catch(exception &e) {
-				return (string)"error: " + e.what();
+				return fargs.nick + ": error: " + e.what();
 			}
 		}
 
@@ -678,16 +715,86 @@ class RegexFunction : public Function {
 		}
 }; // }}}
 
+class PredefinedRegexFunction : public Function { // {{{
+	public:
+		PredefinedRegexFunction(string name, vector<string> first,
+				vector<string> second) : m_name(name), m_first(), m_second(),
+						m_replaces(), m_good(true) {
+			for(unsigned i = 0; i < first.size(); ++i)
+				this->push(first[i], second[i]);
+		}
+		PredefinedRegexFunction(string name, string first, string second) :
+				m_name(name), m_first(), m_second(), m_replaces(), m_good(true) {
+			this->push(first, second);
+		}
+
+		void push(string first, string second) {
+			try {
+				boost::regex reg(first, regex::perl);
+				this->m_first.push_back(first);
+				this->m_replaces.push_back(reg);
+				this->m_second.push_back(second);
+			} catch(exception &e) {
+				this->m_good = false;
+			}
+		}
+
+		virtual string run(FunctionArguments fargs) {
+			if(!this->m_good)
+				return fargs.nick + ": regex in firsts invalid";
+
+			string m2 = fargs.matches[1];
+			if(m2.empty())
+				m2 = ".*";
+
+			try {
+				boost::regex matchreg(m2, regex::perl);
+				for(auto i = lastLog.rbegin(); i != lastLog.rend(); ++i) {
+					if(regex_match(i->text, matchreg)) {
+						string str = i->text;
+						for(unsigned j = 0; j < this->m_replaces.size(); ++j) {
+							str = regex_replace(str, this->m_replaces[j],
+									this->m_second[j], boost::match_default | boost::format_sed);
+						}
+						return (string)"<" + i->nick + "> " + str;
+					}
+				}
+				return fargs.nick + ": error: not matched";
+			} catch(exception &e) {
+				return fargs.nick + ": error: " + e.what();
+			}
+			return fargs.nick + ": what the fuck I skipped the try/catch block!?";
+		}
+
+		virtual string name() const {
+			return this->m_name;
+		}
+		virtual string help() const {
+			return "Makes something sound " + this->m_name + "-ish";
+		}
+		virtual string regex() const {
+			return "^!" + this->m_name + "(?:\\s+(.*))?";
+		}
+
+	protected:
+		string m_name;
+		vector<string> m_first;
+		vector<string> m_second;
+		vector<boost::regex> m_replaces;
+		bool m_good;
+}; // }}}
+
 // TODO: is, forget
 
 int main(int argc, char **argv) {
 	srand(time(NULL));
-	const string logFileName = "PINKSERV_TWO.log",
-			chatLogFileName = "PINKSERV_TWO.clog",
-			errorLogFileName = "PINKSERV_TWO.err",
-			myNick = "PINKSERV_TWO",
-			markovFileName = "PINKSERV_TWO.markov",
-			todoFileName = "TODO";
+	const string logFileName = "PINKSERV2.log",
+			chatLogFileName = "PINKSERV2.chat",
+			errorLogFileName = "PINKSERV2.err",
+			myNick = "PINKSERV2",
+			markovFileName = "PINKSERV2.markov",
+			todoFileName = "TODO",
+			ownerNick = "jac";
 
 	const string privmsgRegexExp =
 		"^:([A-Za-z0-9_]*)!([-/@~A-Za-z0-9_\\.]*) PRIVMSG ([#A-Za-z0-9_]*) :(.*)";
@@ -707,28 +814,35 @@ int main(int argc, char **argv) {
 
 	// create module map {{{
 	map<string, Function *> moduleMap;
-	moduleMap["wave"] = new WaveFunction();
-	moduleMap["fish"] = new FishFunction();
-	moduleMap["love"] = new LoveFunction();
-	moduleMap["train"] = new TrainFunction();
-	moduleMap["wub"] = new DubstepFunction();
+	moduleMap["o/"] = new WaveFunction();
+	moduleMap["!fish"] = new FishFunction();
+	moduleMap["<3"] = new LoveFunction();
+	moduleMap["!sl"] = new TrainFunction();
+	moduleMap["!dubstep"] = new DubstepFunction();
 	moduleMap["or"] = new OrFunction();
 
-	moduleMap["set"] = new SetFunction();
+	moduleMap["!set"] = new SetFunction();
 	moduleMap["++"] = new IncrementFunction();
 	moduleMap["--"] = new DecrementFunction();
-	moduleMap["erase"] = new EraseFunction();
-	moduleMap["list"] = new ListFunction();
+	moduleMap["!erase"] = new EraseFunction();
+	moduleMap["!list"] = new ListFunction();
 	moduleMap["!s"] = new ReplaceFunction();
 	moduleMap["!s2"] = new RegexFunction();
 
-	moduleMap["markov"] = new MarkovFunction();
-	moduleMap["ccount"] = new ChainCountFunction();
+	moduleMap["!azn"] = new PredefinedRegexFunction(
+			"azn", "([^aoeuh])(\\s|\\s*$)", "\\1u\\2");
+	moduleMap["!desu"] = new PredefinedRegexFunction("desu", "\\S+", "desu");
+	moduleMap["!cthulhu"] = new PredefinedRegexFunction("cthulhu", "[oe]", "f'th");
+	((PredefinedRegexFunction *)moduleMap["!cthulhu"])->push("[ia]", "gh");
+
+	moduleMap["!markov"] = new MarkovFunction();
+	moduleMap["!count"] = new ChainCountFunction();
 	moduleMap["yes"] = new YesFunction(myNick);
 
-	moduleMap["todo"] = new TodoFunction(todoFileName);
+	moduleMap["!todo"] = new TodoFunction(todoFileName);
+	moduleMap["!ignore"] = new IgnoreFunction();
 
-	moduleMap["lg"] = new BinaryLogFunction();
+	moduleMap["!lg"] = new BinaryLogFunction();
 	// }}}
 
 	ofstream log(logFileName, fstream::app);
@@ -853,26 +967,30 @@ int main(int argc, char **argv) {
 				fargs.message = message;
 				fargs.toUs = toUs;
 				fargs.siMap = &siMap;
+				if(fargs.nick == ownerNick)
+					fargs.fromOwner = true;
 
 				bool matched = false;
 				// loop through setup modules trying to match their regex
-				for(auto mod = moduleMap.begin(); mod != moduleMap.end(); ++mod) {
-					regex cmodr(mod->second->regex(), regex::perl);
-					// if this module matches
-					if(regex_match(message, fargs.matches, cmodr, match_extra)) {
-						// log that we got a hit
-						log << "module matched: " << mod->first << endl;
-						// run the module
-						string res = mod->second->run(fargs);
-						if(res.empty()) {
-							log << "module returned nothing, moving on" << endl;
-						} else {
-							// log the output/send the output
-							log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
-							log << " -> " << rtarget << " :" << res << endl;
-							cout << "PRIVMSG " << rtarget << " :" << res << endl;
-							matched = true;
-							break;
+				if(!contains(ignoreList, fargs.nick)) {
+					for(auto mod = moduleMap.begin(); mod != moduleMap.end(); ++mod) {
+						regex cmodr(mod->second->regex(), regex::perl);
+						// if this module matches
+						if(regex_match(message, fargs.matches, cmodr, match_extra)) {
+							// log that we got a hit
+							log << "module matched: " << mod->first << endl;
+							// run the module
+							string res = mod->second->run(fargs);
+							if(res.empty()) {
+								log << "module returned nothing, moving on" << endl;
+							} else {
+								// log the output/send the output
+								log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
+								log << " -> " << rtarget << " :" << res << endl;
+								cout << "PRIVMSG " << rtarget << " :" << res << endl;
+								matched = true;
+								break;
+							}
 						}
 					}
 				}
@@ -880,7 +998,9 @@ int main(int argc, char **argv) {
 				if(!matched) {
 					lastLog.push_back(ChatLine(nick, omessage));
 					regex yesCommand(moduleMap["yes"]->regex(), regex::perl);
-					if(toUs || regex_match( message, fargs.matches, yesCommand, match_extra)) {
+					if(!contains(ignoreList, fargs.nick) && (toUs ||
+								regex_match(message, fargs.matches, yesCommand,
+									match_extra))) {
 						log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
 						log << " -> " << rtarget << " :yes" << endl;
 						cout << "PRIVMSG " << rtarget << " :yes" << endl;
