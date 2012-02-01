@@ -952,8 +952,8 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-
 	log << myNick << " started." << endl;
+	map<string, int> siMap;
 
 	// load markov file if it exists {{{
 	ifstream in(markovFileName);
@@ -987,9 +987,56 @@ int main(int argc, char **argv) {
 		}
 		log << endl << markovFileName << ": read " << lcount << " lines" << endl;
 	}
+	in.close();
 	// }}}
+	// load old pushes if they exists {{{
+	in.open(pushFileName);
+	if(in.good()) {
+		log << "reading old push entries" << endl;
 
-	map<string, int> siMap;
+		FunctionArguments fargs;
+		fargs.nick = ownerNick;
+		fargs.user = (string)"~" + ownerNick;
+		fargs.target = myNick;
+		fargs.toUs = true;
+		fargs.siMap = NULL;
+		fargs.fromOwner = true;
+		regex mreg(moduleMap["push"]->regex(), regex::perl);
+
+		unsigned lcount = 0;
+		while(!in.eof()) {
+			string line;
+			getline(in, line);
+			if(in.eof() || !in.good())
+				break;
+			lcount++;
+
+			// if this module matches
+			if(regex_match(line, fargs.matches, mreg, match_extra)) {
+				fargs.message = line;
+				string res = moduleMap["push"]->run(fargs);
+				if(!res.empty()) {
+					// log the output/send the output
+					log << " ?> " << fargs.target << " :" << res << endl;
+				}
+			}
+		}
+		log << endl << pushFileName << ": read " << lcount << " lines" << endl;
+
+		stringstream ss;
+		ss << "Read " << lcount << " lines ";
+		unsigned j = 0;
+		for(auto i = moduleMap.begin(); i != moduleMap.end(); ++i, ++j) {
+			ss << i->second->name();
+			if(j != moduleMap.size() - 1)
+				ss << ", ";
+		}
+		string res = ss.str();
+		log << " -> " << ownerNick << " : " << res << endl;
+		cout << "PRIVMSG " << ownerNick << " :" << res << endl;
+	}
+	in.close();
+	// }}}
 
 	// while there is more input coming
 	while(!cin.eof()) {
