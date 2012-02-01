@@ -132,20 +132,36 @@ class IgnoreFunction : public Function {
 				return "";
 
 			string nstring = fargs.matches[1], nick = fargs.matches[2];
-			if(nstring.empty()) {
-				if(!contains(ignoreList, nick)) {
-					ignoreList.push_back(nick);
-					return fargs.nick + ": ignored " + nick;
+			if(nstring.empty() && nick.empty()) {
+				if(ignoreList.empty())
+					return fargs.nick + ": not ignoring anyone";
+
+				stringstream ss;
+				for(unsigned i = 0; i < ignoreList.size(); ++i) {
+					ss << ignoreList[i];
+					if(i != ignoreList.size() - 1)
+						ss << ", ";
 				}
-				return fargs.nick + ": " + nick + " already ignored";
-			} else {
-				if(!contains(ignoreList, nick)) {
-					return fargs.nick + ": user isn't ignored currently";
-				}
-				auto it = find(ignoreList.begin(), ignoreList.end(), nick);
-				ignoreList.erase(it);
-				return fargs.nick + ": " + nick + " no longer ignored";
+				return fargs.nick + ": " + ss.str();
 			}
+
+			if(nstring.empty()) {
+				if(contains(ignoreList, nick))
+					return fargs.nick + ": " + nick + " already ignored";
+
+				ignoreList.push_back(nick);
+				return fargs.nick + ": ignored " + nick;
+			}
+
+			if(!contains(ignoreList, nick))
+				return fargs.nick + ": user isn't ignored currently";
+
+			auto it = find(ignoreList.begin(), ignoreList.end(), nick);
+			if(*it != nick)
+				return fargs.nick + ": erorr, it not nick!?";
+
+			ignoreList.erase(it);
+			return fargs.nick + ": " + nick + " no longer ignored ";
 		}
 
 		virtual string name() const {
@@ -155,7 +171,7 @@ class IgnoreFunction : public Function {
 			return "Ignore a user";
 		}
 		virtual string regex() const {
-			return "^!ignore\\s+(!)?(.*)";
+			return "^!ignore(?:\\s+(!)?(.*))?$";
 		}
 }; // }}}
 
