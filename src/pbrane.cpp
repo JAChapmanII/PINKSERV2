@@ -290,7 +290,7 @@ class DubstepFunction : public Function {
 			return "Takes no arguments; rocks.";
 		}
 		virtual string regex() const {
-			return "^(!dubstep|WUB|wub)( .*)?";
+			return "^(!dubstep|WUB|wub|DUBSTEP|dubstep)( .*)?";
 		}
 }; // }}}
 // lg {{{
