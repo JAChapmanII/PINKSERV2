@@ -881,8 +881,9 @@ int main(int argc, char **argv) {
 			errorLogFileName = "PINKSERV2.err",
 			myNick = "PINKSERV2",
 			markovFileName = "PINKSERV2.markov",
+			pushFileName = "PINKSERV2.push",
 			todoFileName = "TODO",
-			ownerNick = "jac";
+			ownerNick = "jac", channelName = "#pokengine";
 
 	const string privmsgRegexExp =
 		"^:([A-Za-z0-9_]*)!([-/@~A-Za-z0-9_\\.]*) PRIVMSG ([#A-Za-z0-9_]*) :(.*)";
@@ -902,37 +903,37 @@ int main(int argc, char **argv) {
 
 	// create module map {{{
 	moduleMap["o/"] = new WaveFunction();
-	moduleMap["!fish"] = new FishFunction();
+	moduleMap["fish"] = new FishFunction();
 	moduleMap["<3"] = new LoveFunction();
-	moduleMap["!sl"] = new TrainFunction();
-	moduleMap["!dubstep"] = new DubstepFunction();
+	moduleMap["sl"] = new TrainFunction();
+	moduleMap["dubstep"] = new DubstepFunction();
 	moduleMap["or"] = new OrFunction();
 
-	moduleMap["!set"] = new SetFunction();
+	moduleMap["set"] = new SetFunction();
 	moduleMap["++"] = new IncrementFunction();
 	moduleMap["--"] = new DecrementFunction();
-	moduleMap["!erase"] = new EraseFunction();
-	moduleMap["!list"] = new ListFunction();
-	moduleMap["!s"] = new ReplaceFunction();
-	moduleMap["!s2"] = new RegexFunction();
+	moduleMap["erase"] = new EraseFunction();
+	moduleMap["list"] = new ListFunction();
+	moduleMap["s"] = new ReplaceFunction();
+	moduleMap["s2"] = new RegexFunction();
 
-	moduleMap["!azn"] = new PredefinedRegexFunction(
-			"azn", "([b-df-hj-mp-tv-z])([^a-z]|$)", "\\1u\\2");
-	((PredefinedRegexFunction *)moduleMap["!azn"])->push(
-		"([B-DF-HJ-MP-TV-Z])([^A-Z]|$)", "\\1U\\2");
-	moduleMap["!desu"] = new PredefinedRegexFunction("desu", "\\S+", "desu");
-	moduleMap["!cthulhu"] = new PredefinedRegexFunction("cthulhu", "[oe]", "f'th");
-	((PredefinedRegexFunction *)moduleMap["!cthulhu"])->push("[ia]", "gh");
-	moduleMap["!push"] = new PushFunction();
+	moduleMap["azn"] = new PredefinedRegexFunction(
+			"azn", "([b-df-hj-mp-tv-z])([^a-zA-Z]|$)", "\\1u\\2");
+	((PredefinedRegexFunction *)moduleMap["azn"])->push(
+		"([B-DF-HJ-MP-TV-Z])([^A-Za-z]|$)", "\\1U\\2");
+	moduleMap["desu"] = new PredefinedRegexFunction("desu", "\\S+", "desu");
+	moduleMap["cthulhu"] = new PredefinedRegexFunction("cthulhu", "[oe]", "f'th");
+	((PredefinedRegexFunction *)moduleMap["cthulhu"])->push("[ia]", "gh");
+	moduleMap["push"] = new PushFunction();
 
-	moduleMap["!markov"] = new MarkovFunction();
-	moduleMap["!count"] = new ChainCountFunction();
+	moduleMap["markov"] = new MarkovFunction();
+	moduleMap["count"] = new ChainCountFunction();
 	moduleMap["yes"] = new YesFunction(myNick);
 
-	moduleMap["!todo"] = new TodoFunction(todoFileName);
-	moduleMap["!ignore"] = new IgnoreFunction();
+	moduleMap["todo"] = new TodoFunction(todoFileName);
+	moduleMap["ignore"] = new IgnoreFunction();
 
-	moduleMap["!lg"] = new BinaryLogFunction();
+	moduleMap["lg"] = new BinaryLogFunction();
 	// }}}
 
 	ofstream log(logFileName, fstream::app);
