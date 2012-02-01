@@ -719,7 +719,7 @@ class RegexFunction : public Function {
 				boost::regex rgx(m2, regex::perl);
 				for(auto i = lastLog.rbegin(); i != lastLog.rend(); ++i) {
 					string str = regex_replace(i->text, rgx, m4,
-							boost::match_default | boost::format_sed);
+							boost::match_default | boost::format_perl);
 					if(str != i->text) {
 						return (string)"<" + i->nick + "> " + str;
 					}
@@ -782,12 +782,13 @@ class PredefinedRegexFunction : public Function { // {{{
 				boost::regex matchreg(m2, regex::perl);
 				for(auto i = lastLog.rbegin(); i != lastLog.rend(); ++i) {
 					if(regex_match(i->text, matchreg)) {
-						string str = i->text;
+						string str = i->text, nick = i->nick;
 						for(unsigned j = 0; j < this->m_replaces.size(); ++j) {
 							str = regex_replace(str, this->m_replaces[j],
-									this->m_second[j], boost::match_default | boost::format_sed);
+									this->m_second[j], boost::match_default | boost::format_perl);
 						}
-						return (string)"<" + i->nick + "> " + str;
+						lastLog.push_back(ChatLine(nick, str));
+						return (string)"<" + nick + "> " + str;
 					}
 				}
 				return fargs.nick + ": error: not matched";
