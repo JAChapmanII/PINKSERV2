@@ -41,6 +41,8 @@ using std::find;
 using std::exception;
 // }}}
 
+const unsigned maxLineLength = 512;
+
 // Structure used to pass relavent data to Functions {{{
 struct FunctionArguments {
 	smatch matches;
@@ -1072,6 +1074,8 @@ int main(int argc, char **argv) {
 							if(res.empty()) {
 								log << "module returned nothing, moving on" << endl;
 							} else {
+								if(res.length() > maxLineLength)
+									res = res.substr(0, maxLineLength);
 								// log the output/send the output
 								log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
 								log << " -> " << rtarget << " :" << res << endl;
