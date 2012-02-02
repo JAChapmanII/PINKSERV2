@@ -1,3 +1,40 @@
-Include the topic in lastLog
-Allow !s to take quoted arguments
+Connection manager
+	get it at least running a binary and connecting it to 1 network/channel
+	connecting to multiple channels
+	connecting to multiple networks
+	handle more of the IRC protocol (more errors, identifying, etc)
+
+pbrane
+	include the topic in lastLog
+	split modules off into more files
+	get the modules to write/read for data persistency
+	multiple "masters", one owner
+	rate limit
+	handle ACTIONs better
+
+General
+	non-hard coded configuration
+	dynamic nick changing
+
+Modules
+	!s: accept quoted arguments, have mechanism for going back further than
+		last match
+	Add russion roulette
+	Add tell function
+	Add GABEN mode
+	say goodnight to people
+	say hello to people
+	Have PredefinedRegexFunction match the replacement regex too
+	fix .* matching twice while .+ works properly
+	play wit PkgnBotX 
+	prevent bot fights better
+	allow "articifial" flag to work on own output
+	bias markov towards longer strings
+	!botsnack
+
+Requests:
+	Cacapulse: !gaga
+	randomly yell <USERNAME> IS A SPY after <user> posts (5% chance)
+	ZeldaFan: insult people on leaving channel
+	Golurk: AnNoYiNgIfIeR
 
