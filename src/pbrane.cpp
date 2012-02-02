@@ -173,7 +173,7 @@ class IgnoreFunction : public Function {
 			return "Ignore a user";
 		}
 		virtual string regex() const {
-			return "^!ignore(?:\\s+(!)?(.*))?$";
+			return "^!ignore(?:\\s+(!)?(\\S+))?";
 		}
 }; // }}}
 
