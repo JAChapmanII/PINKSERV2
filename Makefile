@@ -2,7 +2,8 @@ SRCDIR=src
 BINS=pbrane
 OBJS=
 
-CXXFLAGS=-std=c++0x
+CXXFLAGS=
+#-std=c++0x
 LDFLAGS=-lboost_regex
 
 ifndef release

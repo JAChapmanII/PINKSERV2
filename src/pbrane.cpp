@@ -158,7 +158,7 @@ class IgnoreFunction : public Function {
 			if(!contains(ignoreList, nick))
 				return fargs.nick + ": user isn't ignored currently";
 
-			auto it = find(ignoreList.begin(), ignoreList.end(), nick);
+			vector<string>::iterator it = find(ignoreList.begin(), ignoreList.end(), nick);
 			if(*it != nick)
 				return fargs.nick + ": erorr, it not nick!?";
 
@@ -375,7 +375,8 @@ class ListFunction : public Function {
 		virtual string run(FunctionArguments fargs) {
 			stringstream ss;
 			unsigned j = 0;
-			for(auto i = (*fargs.siMap).begin(); i != (*fargs.siMap).end(); ++i, ++j) {
+			for(map<string, int>::iterator i = (*fargs.siMap).begin();
+					i != (*fargs.siMap).end(); ++i, ++j) {
 				ss << i->first;
 				if(j != (*fargs.siMap).size() - 1)
 					ss << ", ";
@@ -487,7 +488,7 @@ class OrFunction : public Function {
 class TodoFunction : public Function {
 	public:
 		TodoFunction(string todoName) : m_file() {
-			this->m_file.open(todoName, fstream::app);
+			this->m_file.open(todoName.c_str(), fstream::app);
 		}
 
 		virtual string run(FunctionArguments fargs) {
@@ -512,7 +513,7 @@ class TodoFunction : public Function {
 		ofstream m_file;
 }; // }}}
 
-map<string, map<string, unsigned>> markovModel;
+map<string, map<string, unsigned> > markovModel;
 const unsigned markovOrder = 2;
 
 void insert(string text);
@@ -547,10 +548,10 @@ string fetch(string seed) { // {{{
 		return "";
 	unsigned total = 0;
 	map<string, unsigned> seedMap = markovModel[seed];
-	for(auto i = seedMap.begin(); i != seedMap.end(); ++i)
+	for(map<string, unsigned>::iterator i = seedMap.begin(); i != seedMap.end(); ++i)
 		total += i->second;
 	unsigned r = rand() % total;
-	auto i = seedMap.begin();
+	map<string, unsigned>::iterator i = seedMap.begin();
 	while(r > i->second) {
 		r -= i->second;
 		++i;
@@ -620,7 +621,7 @@ class ChainCountFunction : public Function {
 
 			map<string, unsigned> seedMap = markovModel[start];
 			unsigned total = 0;
-			for(auto i = seedMap.begin(); i != seedMap.end(); ++i)
+			for(map<string, unsigned>::iterator i = seedMap.begin(); i != seedMap.end(); ++i)
 				total += i->second;
 
 			stringstream ss;
@@ -630,7 +631,8 @@ class ChainCountFunction : public Function {
 
 			if(cs.length() > 2) {
 				unsigned long totalEnds = 0;
-				for(auto i = markovModel.begin(); i != markovModel.end(); ++i)
+				for(map<string, map<string, unsigned> >::iterator i = markovModel.begin();
+						i != markovModel.end(); ++i)
 					totalEnds += i->second.size();
 				ss << " {" << totalEnds << "}";
 			}
@@ -679,12 +681,13 @@ class ReplaceFunction : public Function {
 		virtual string run(FunctionArguments fargs) {
 			string m2 = fargs.matches[1], m4 = fargs.matches[2];
 
-			for(auto i = lastLog.rbegin(); i != lastLog.rend(); ++i) {
+			for(vector<ChatLine>::reverse_iterator i = lastLog.rbegin();
+					i != lastLog.rend(); ++i) {
 				string str = i->text;
 				vector<string> words = split(str, " \t");
 				if(contains(words, m2)) {
 					stringstream ss;
-					for(auto j = words.begin(); j != words.end(); ++j) {
+					for(vector<string>::iterator j = words.begin(); j != words.end(); ++j) {
 						if(*j == m2)
 							ss << m4;
 						else
@@ -717,7 +720,8 @@ class RegexFunction : public Function {
 
 			try {
 				boost::regex rgx(m2, regex::perl);
-				for(auto i = lastLog.rbegin(); i != lastLog.rend(); ++i) {
+				for(vector<ChatLine>::reverse_iterator i = lastLog.rbegin();
+						i != lastLog.rend(); ++i) {
 					string str = regex_replace(i->text, rgx, m4,
 							boost::match_default | boost::format_perl);
 					if(str != i->text) {
@@ -780,7 +784,7 @@ class PredefinedRegexFunction : public Function { // {{{
 
 			try {
 				boost::regex matchreg(m2, regex::perl);
-				for(auto i = lastLog.rbegin(); i != lastLog.rend(); ++i) {
+				for(vector<ChatLine>::reverse_iterator i = lastLog.rbegin(); i != lastLog.rend(); ++i) {
 					if(regex_match(i->text, matchreg)) {
 						string str = i->text, nick = i->nick;
 						for(unsigned j = 0; j < this->m_replaces.size(); ++j) {
@@ -823,12 +827,12 @@ class PushFunction : public Function {
 
 			if(contains(this->m_functions, name)) {
 				if(first.empty() && second.empty()) {
-					auto it = find(this->m_functions.begin(),
+					vector<string>::iterator it = find(this->m_functions.begin(),
 							this->m_functions.end(), name);
 					if(it == this->m_functions.end())
 						return fargs.nick + ": " + name + " does not exist";
 					this->m_functions.erase(it);
-					auto it2 = moduleMap.find(name);
+					map<string, Function *>::iterator it2 = moduleMap.find(name);
 					if(it2 == moduleMap.end())
 						return fargs.nick + ": " + name + " not found in moduleMap";
 					moduleMap.erase(it2);
@@ -937,17 +941,17 @@ int main(int argc, char **argv) {
 	moduleMap["lg"] = new BinaryLogFunction();
 	// }}}
 
-	ofstream log(logFileName, fstream::app);
+	ofstream log(logFileName.c_str(), fstream::app);
 	if(!log.good()) {
 		cerr << "Could not open log!" << endl;
 		return 1;
 	}
-	ofstream chatLog(chatLogFileName, fstream::app);
+	ofstream chatLog(chatLogFileName.c_str(), fstream::app);
 	if(!chatLog.good()) {
 		cerr << "Could not open chat log!" << endl;
 		return 1;
 	}
-	ofstream errorLog(errorLogFileName, fstream::app);
+	ofstream errorLog(errorLogFileName.c_str(), fstream::app);
 	if(!errorLog.good()) {
 		cerr << "Could not open error log!" << endl;
 		return 1;
@@ -957,7 +961,7 @@ int main(int argc, char **argv) {
 	map<string, int> siMap;
 
 	// load markov file if it exists {{{
-	ifstream in(markovFileName);
+	ifstream in(markovFileName.c_str());
 	if(in.good()) {
 		log << "reading markov chain entries" << endl;
 		string fline;
@@ -991,7 +995,7 @@ int main(int argc, char **argv) {
 	in.close();
 	// }}}
 	// load old pushes if they exists {{{
-	in.open(pushFileName);
+	in.open(pushFileName.c_str());
 	if(in.good()) {
 		log << "reading old push entries" << endl;
 
@@ -1027,7 +1031,8 @@ int main(int argc, char **argv) {
 		stringstream ss;
 		ss << "Read " << lcount << " lines ";
 		unsigned j = 0;
-		for(auto i = moduleMap.begin(); i != moduleMap.end(); ++i, ++j) {
+		for(map<string, Function *>::iterator i = moduleMap.begin();
+				i != moduleMap.end(); ++i, ++j) {
 			ss << i->second->name();
 			if(j != moduleMap.size() - 1)
 				ss << ", ";
@@ -1073,7 +1078,8 @@ int main(int argc, char **argv) {
 				if(function.empty()) {
 					stringstream ss;
 					unsigned j = 0;
-					for(auto i = moduleMap.begin(); i != moduleMap.end(); ++i, ++j) {
+					for(map<string, Function *>::iterator i = moduleMap.begin();
+							i != moduleMap.end(); ++i, ++j) {
 						ss << i->second->name();
 						if(j != moduleMap.size() - 1)
 							ss << ", ";
@@ -1082,7 +1088,8 @@ int main(int argc, char **argv) {
 				} else {
 					if(moduleMap.find(function) == moduleMap.end()) {
 						bool isName = false;
-						for(auto i = moduleMap.begin(); i != moduleMap.end(); ++i) {
+						for(map<string, Function *>::iterator i = moduleMap.begin();
+								i != moduleMap.end(); ++i) {
 							if(i->second->name() == function) {
 								isName = true;
 								res = i->second->help();
@@ -1112,7 +1119,8 @@ int main(int argc, char **argv) {
 				bool matched = false;
 				// loop through setup modules trying to match their regex
 				if(!contains(ignoreList, fargs.nick)) {
-					for(auto mod = moduleMap.begin(); mod != moduleMap.end(); ++mod) {
+					for(map<string, Function *>::iterator mod = moduleMap.begin();
+							mod != moduleMap.end(); ++mod) {
 						regex cmodr(mod->second->regex(), regex::perl);
 						// if this module matches
 						if(regex_match(message, fargs.matches, cmodr, match_extra)) {
@@ -1162,7 +1170,7 @@ int main(int argc, char **argv) {
 	}
 
 	// free memory associated with modules
-	for(auto i = moduleMap.begin(); i != moduleMap.end(); ++i) {
+	for(map<string, Function *>::iterator i = moduleMap.begin(); i != moduleMap.end(); ++i) {
 		delete i->second;
 	}
 
