@@ -692,6 +692,7 @@ class ReplaceFunction : public Function {
 						if(j != words.end() - 1)
 							ss << " ";
 					}
+					lastLog.push_back(ChatLine(i->nick, ss.str()));
 					return (string)"<" + i->nick + "> " + ss.str();
 				}
 			}
@@ -721,6 +722,7 @@ class RegexFunction : public Function {
 					string str = regex_replace(i->text, rgx, m4,
 							boost::match_default | boost::format_perl);
 					if(str != i->text) {
+						lastLog.push_back(ChatLine(i->nick, str));
 						return (string)"<" + i->nick + "> " + str;
 					}
 				}
