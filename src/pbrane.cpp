@@ -374,11 +374,12 @@ class ListFunction : public Function {
 	public:
 		virtual string run(FunctionArguments fargs) {
 			stringstream ss;
-			unsigned j = 0;
-			for(auto i = (*fargs.siMap).begin(); i != (*fargs.siMap).end(); ++i, ++j) {
-				ss << i->first;
-				if(j != (*fargs.siMap).size() - 1)
+			unsigned j = 0, last = (*fargs.siMap).size() - 1;
+			for(auto i : (*fargs.siMap)) {
+				ss << i.first;
+				if(j != last)
 					ss << ", ";
+				++j;
 			}
 
 			return ss.str();
@@ -547,8 +548,8 @@ string fetch(string seed) { // {{{
 		return "";
 	unsigned total = 0;
 	map<string, unsigned> seedMap = markovModel[seed];
-	for(auto i = seedMap.begin(); i != seedMap.end(); ++i)
-		total += i->second;
+	for(auto i : seedMap)
+		total += i.second;
 	unsigned r = rand() % total;
 	auto i = seedMap.begin();
 	while(r > i->second) {
@@ -620,8 +621,8 @@ class ChainCountFunction : public Function {
 
 			map<string, unsigned> seedMap = markovModel[start];
 			unsigned total = 0;
-			for(auto i = seedMap.begin(); i != seedMap.end(); ++i)
-				total += i->second;
+			for(auto i : seedMap)
+				total += i.second;
 
 			stringstream ss;
 			ss << "Chains starting with: " << start << ": ("
@@ -630,8 +631,8 @@ class ChainCountFunction : public Function {
 
 			if(cs.length() > 2) {
 				unsigned long totalEnds = 0;
-				for(auto i = markovModel.begin(); i != markovModel.end(); ++i)
-					totalEnds += i->second.size();
+				for(auto i : markovModel)
+					totalEnds += i.second.size();
 				ss << " {" << totalEnds << "}";
 			}
 
@@ -720,7 +721,7 @@ class RegexFunction : public Function {
 				boost::regex rgx(m2, regex::perl);
 				for(auto i = lastLog.rbegin(); i != lastLog.rend(); ++i) {
 					string str = regex_replace(i->text, rgx, m4,
-							boost::match_default | boost::format_perl);
+							boost::match_default | boost::format_all);
 					if(str != i->text) {
 						lastLog.push_back(ChatLine(i->nick, str));
 						return (string)"<" + i->nick + "> " + str;
@@ -787,7 +788,7 @@ class PredefinedRegexFunction : public Function { // {{{
 						string str = i->text, nick = i->nick;
 						for(unsigned j = 0; j < this->m_replaces.size(); ++j) {
 							str = regex_replace(str, this->m_replaces[j],
-									this->m_second[j], boost::match_default | boost::format_perl);
+									this->m_second[j], boost::match_default | boost::format_all);
 						}
 						lastLog.push_back(ChatLine(nick, str));
 						return (string)"<" + nick + "> " + str;
@@ -869,7 +870,65 @@ class PushFunction : public Function {
 			return "Dynamically adds a PredefinedRegex function to the module map";
 		}
 		virtual string regex() const {
-			return "^!push/(\\w+)/([^/]*)/([^/]*)/?$";
+			return "^!push/([^/]+)/([^/]*)/([^/]*)/?$";
+		}
+	protected:
+		vector<string> m_functions;
+}; // }}}
+// add predefined regex {{{
+class PushXMLFunction : public Function {
+	public:
+		virtual string run(FunctionArguments fargs) {
+			string name = fargs.matches[1], first = fargs.matches[2],
+					 second = fargs.matches[3];
+
+			if(contains(this->m_functions, name)) {
+				if(first.empty() && second.empty()) {
+					auto it = find(this->m_functions.begin(),
+							this->m_functions.end(), name);
+					if(it == this->m_functions.end())
+						return fargs.nick + ": " + name + " does not exist";
+					this->m_functions.erase(it);
+					auto it2 = moduleMap.find(name);
+					if(it2 == moduleMap.end())
+						return fargs.nick + ": " + name + " not found in moduleMap";
+					moduleMap.erase(it2);
+					return fargs.nick + ": " + name + " erased";
+				}
+				if(first.empty())
+					return fargs.nick + ": error: first is empty";
+				PredefinedRegexFunction *func = (PredefinedRegexFunction *)moduleMap[name];
+				string ret = func->push(first, second);
+				if(ret.empty())
+					return fargs.nick + ": added new regex to " + name;
+				return fargs.nick + ": error: " + ret;
+			} else {
+				if(contains(moduleMap, name))
+					return fargs.nick + ": error: function by that name already exists";
+				PredefinedRegexFunction *func = new PredefinedRegexFunction(name);
+				if(func == NULL)
+					return fargs.nick + ": error: couldn't create new object";
+				string ret = func->push(first, second);
+				if(!ret.empty()) {
+					delete func;
+					return fargs.nick + ": error: " + ret;
+				}
+				this->m_functions.push_back(name);
+				moduleMap[name] = func;
+				return fargs.nick + ": " + name + " added to module map";
+			}
+
+			return fargs.nick + ": error: shouldn't have gotten here";
+		}
+
+		virtual string name() const {
+			return "push";
+		}
+		virtual string help() const {
+			return "Dynamically adds a PredefinedRegex function to the module map";
+		}
+		virtual string regex() const {
+			return "^!push~([^~]+)~([^~]*)~([^~]*)~?$";
 		}
 	protected:
 		vector<string> m_functions;
@@ -928,6 +987,7 @@ int main(int argc, char **argv) {
 	moduleMap["cthulhu"] = new PredefinedRegexFunction("cthulhu", "[oe]", "f'th");
 	((PredefinedRegexFunction *)moduleMap["cthulhu"])->push("[ia]", "gh");
 	moduleMap["push"] = new PushFunction();
+	moduleMap["push2"] = new PushXMLFunction();
 
 	moduleMap["markov"] = new MarkovFunction();
 	moduleMap["count"] = new ChainCountFunction();
@@ -1028,11 +1088,12 @@ int main(int argc, char **argv) {
 
 		stringstream ss;
 		ss << "Read " << lcount << " lines ";
-		unsigned j = 0;
-		for(auto i = moduleMap.begin(); i != moduleMap.end(); ++i, ++j) {
-			ss << i->second->name();
-			if(j != moduleMap.size() - 1)
+		unsigned j = 0, last = moduleMap.size() - 1;
+		for(auto i : moduleMap) {
+			ss << i.second->name();
+			if(j != last)
 				ss << ", ";
+			++j;
 		}
 		string res = ss.str();
 		log << " -> " << ownerNick << " : " << res << endl;
