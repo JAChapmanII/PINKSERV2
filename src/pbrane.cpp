@@ -99,7 +99,8 @@ int main(int argc, char **argv) {
 	map<string, int> siMap;
 
 	// while there is more input coming
-	while(!cin.eof()) {
+	int done = 0;
+	while(!cin.eof() && !done) {
 		// read the current line of input
 		string line;
 		getline(cin, line);
@@ -126,7 +127,8 @@ int main(int argc, char **argv) {
 
 			// start out by trying to match the reload command
 			if(toUs && message == (string)"reload") {
-				return 77;
+				done = 78;
+				break;
 			} else if(toUs && regex_match(message, matches, helpRegex)) {
 				string function = matches[2], res = "(null)";
 				if(function.empty()) {
@@ -221,6 +223,6 @@ int main(int argc, char **argv) {
 	// free memory associated with modules
 	modules::deinit(config::brainFileName);
 
-	return 0;
+	return done - 1;
 }
 
