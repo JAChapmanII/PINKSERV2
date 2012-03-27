@@ -140,8 +140,13 @@ bool global::parse(global::ChatLine line) {
 	if(!matched)
 		lastLog.push_back(line);
 
-	for(auto module : modules::map)
-		module.second->passive(line, matched);
+	for(auto module : modules::map) {
+		string res = module.second->passive(line, matched);
+		if(!res.empty()) {
+			log("module (passive) matched " + module.first);
+			send(otarget, res);
+		}
+	}
 
 	return matched;
 }

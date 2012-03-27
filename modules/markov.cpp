@@ -14,6 +14,7 @@ using std::vector;
 #include <sstream>
 using std::stringstream;
 
+#include "config.hpp"
 #include "util.hpp"
 using util::split;
 using util::join;
@@ -163,9 +164,14 @@ string count(string initial) { // {{{
 string MarkovFunction::run(FunctionArguments fargs) { // {{{
 	return recover(fargs.matches[1]);
 } // }}}
-void MarkovFunction::passive(global::ChatLine line, bool parsed) { // {{{
+std::string MarkovFunction::passive(global::ChatLine line, bool parsed) { // {{{
 	if(!parsed && !line.text.empty())
 		insert(line.text);
+	double r = (double)rand() / RAND_MAX;
+	if(r < config::markovResponseChance) {
+		return recover(line.text);
+	}
+	return "";
 } // }}}
 string MarkovFunction::name() const { // {{{
 	return "markov";

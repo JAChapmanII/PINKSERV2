@@ -19,8 +19,18 @@ class OnRegexFunction : public Function {
 		std::istream &input(std::istream &in);
 
 		std::vector<std::string> m_triggers;
+		std::vector<std::string> m_scopes;
 		std::vector<boost::regex> m_regex;
 		std::vector<global::ChatLine> m_lines;
+};
+
+// explain
+class ExplainFunction : public Function {
+	public:
+		virtual std::string run(FunctionArguments fargs);
+		virtual std::string name() const;
+		virtual std::string help() const;
+		virtual std::string regex() const;
 };
 
 #endif // MODULES_SCRIPT_HPP

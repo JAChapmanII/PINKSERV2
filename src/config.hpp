@@ -13,6 +13,7 @@ namespace config {
 	extern std::string todoFileName;
 	extern std::string brainFileName;
 	extern unsigned int maxLineLength;
+	extern double markovResponseChance;
 
 	namespace regex {
 		extern std::string user;

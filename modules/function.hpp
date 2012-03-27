@@ -45,10 +45,10 @@ class Function {
 				return "";
 			return "";
 		}
-		virtual void passive(global::ChatLine line, bool handled) {
+		virtual std::string passive(global::ChatLine line, bool handled) {
 			if(handled || line.text.empty())
-				return;
-			return;
+				return "";
+			return "";
 		}
 
 

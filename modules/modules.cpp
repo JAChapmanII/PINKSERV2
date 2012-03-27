@@ -59,10 +59,10 @@ bool modules::init(std::string fileName) {
 	map["help"] = new HelpFunction();
 
 	map["on"] = new OnRegexFunction();
-
-	cerr << "module map created" << endl;
+	map["explain"] = new ExplainFunction();
 
 	ifstream in(fileName, fstream::binary);
+	cerr << "module init: ";
 	while(!in.eof() && in.good()) {
 		int length = in.get();
 		if(!in.good()) {
@@ -83,11 +83,12 @@ bool modules::init(std::string fileName) {
 		if(f != NULL) {
 			in >> *f;
 		} else {
-			cerr << "unable to find function! " << name << endl;
+			cerr << " (unable to find function! " << name << ") " << endl;
 			break;
 		}
-		cerr << "read: \"" << name << "\" " << " - " << name.length() << endl;
+		cerr << " " << name;
 	}
+	cerr << endl;
 	return true;
 }
 
@@ -118,6 +119,7 @@ ChainCountFunction
 
 bool modules::deinit(std::string fileName) {
 	ofstream out(fileName, fstream::binary | fstream::trunc);
+	cerr << "module deinit: ";
 	if(out.good()) {
 		for(auto m : map) {
 			string name = m.second->name();
@@ -126,10 +128,11 @@ bool modules::deinit(std::string fileName) {
 			for(int i = 0; i < length; ++i)
 				out << name[i];
 			out << (*m.second);
-			cerr << "outed: \"" << name << "\" " << (int)length << endl;
+			cerr << " " << name;
 		}
 	} else
-		cerr << "out not good" << endl;
+		cerr << "out not good";
+	cerr << endl;
 
 	for(auto m : map)
 		delete m.second;
