@@ -72,4 +72,14 @@ class YesFunction : public Function {
 		std::string m_nick;
 };
 
+// Say something
+class SayFunction : public Function {
+	public:
+		virtual std::string run(FunctionArguments fargs);
+		virtual std::string name() const;
+		virtual std::string help() const;
+		virtual std::string regex() const;
+};
+
+
 #endif // MODULES_SIMPLE_HPP

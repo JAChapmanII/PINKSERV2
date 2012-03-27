@@ -165,3 +165,17 @@ string YesFunction::regex() const { // {{{
 	return (string)".*" + this->m_nick + ".*";
 } // }}}
 
+
+string SayFunction::run(FunctionArguments fargs) { // {{{
+	return fargs.matches[1];
+} // }}}
+string SayFunction::name() const { // {{{
+	return "say";
+} // }}}
+string SayFunction::help() const { // {{{
+	return "Say something";
+} // }}}
+string SayFunction::regex() const { // {{{
+	return "^!say\\s(.+)";
+} // }}}
+
