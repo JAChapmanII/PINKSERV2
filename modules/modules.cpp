@@ -33,6 +33,7 @@ bool modules::init(std::string fileName) {
 	map["sl"] = new TrainFunction();
 	map["dubstep"] = new DubstepFunction();
 	map["or"] = new OrFunction();
+	map["yes"] = new YesFunction(config::nick);
 
 	map["set"] = new SetFunction();
 	map["++"] = new IncrementFunction();
@@ -40,20 +41,18 @@ bool modules::init(std::string fileName) {
 	map["erase"] = new EraseFunction();
 	map["value"] = new ValueFunction();
 	map["list"] = new ListFunction();
+	map["lg"] = new BinaryLogFunction();
 
 	map["s"] = new RegexFunction();
-
 	map["push"] = new PushFunction();
-	map["push2"] = new PushXMLFunction();
+	map["rlist"] = new ListRegexesFunction();
 
 	map["markov"] = new MarkovFunction();
 	map["count"] = new ChainCountFunction();
-	map["yes"] = new YesFunction(config::nick);
 
 	map["todo"] = new TodoFunction(config::todoFileName);
-	map["ignore"] = new IgnoreFunction();
 
-	map["lg"] = new BinaryLogFunction();
+	map["ignore"] = new IgnoreFunction();
 
 	ifstream in(fileName, fstream::binary);
 	while(!in.eof() && in.good()) {

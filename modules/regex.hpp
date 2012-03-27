@@ -29,6 +29,9 @@ class PredefinedRegexFunction : public Function {
 		virtual std::string help() const;
 		virtual std::string regex() const;
 	protected:
+		std::ostream &output(std::ostream &out);
+		std::istream &input(std::istream &in);
+
 		std::string m_name;
 		std::vector<std::string> m_first;
 		std::vector<std::string> m_second;
@@ -38,18 +41,33 @@ class PredefinedRegexFunction : public Function {
 // add predefined regex
 class PushFunction : public Function {
 	public:
-		PushFunction();
 		virtual std::string run(FunctionArguments fargs);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
 	protected:
-		std::vector<std::string> m_functions;
+		std::ostream &output(std::ostream &out);
+		std::istream &input(std::istream &in);
 };
-// add predefined regex
-class PushXMLFunction : public PushFunction {
+
+// invoke a predefined regex
+class InvokeFunction : public Function {
 	public:
+		virtual std::string run(FunctionArguments fargs);
+		virtual std::string name() const;
+		virtual std::string help() const;
 		virtual std::string regex() const;
 };
+
+// list the predefined regexes
+class ListRegexesFunction : public Function {
+	public:
+		virtual std::string run(FunctionArguments fargs);
+		virtual std::string name() const;
+		virtual std::string help() const;
+		virtual std::string regex() const;
+};
+
+
 
 #endif // MODULES_REGEX_HPP

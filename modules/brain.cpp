@@ -29,8 +29,10 @@ ostream &brain::write(ostream &out, const string &variable) {
 	return out;
 }
 istream &brain::read(istream &in, string &variable) {
-	unsigned char length = in.get();
+	int length = in.get();
 	variable = "";
+	if(length < 0)
+		return in;
 	for(int i = 0; i < length; ++i) {
 		int c = in.get();
 		if(c != -1)
