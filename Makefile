@@ -1,8 +1,18 @@
-SRCDIR=src
-BINS=pbrane
-OBJS=
+SDIR=src
+ODIR=obj
+MDIR=modules
+BDIR=.
 
-CXXFLAGS=-std=c++0x
+BINS=$(BDIR)/pbrane
+
+MOBJS=$(ODIR)/modules.o $(ODIR)/function.o
+MOBJS+=$(ODIR)/markov.o $(ODIR)/math.o $(ODIR)/regex.o
+MOBJS+=$(ODIR)/simple.o $(ODIR)/todo.o
+
+OBJS=$(MOBJS) $(ODIR)/util.o $(ODIR)/global.o $(ODIR)/config.o
+
+
+CXXFLAGS=-std=c++0x -Imodules -Isrc
 LDFLAGS=-lboost_regex
 
 ifndef release
@@ -18,14 +28,23 @@ CXXFLAGS+=-Winline -Wfloat-equal -Wundef -Wcast-align -Wredundant-decls
 CXXFLAGS+=-Winit-self -Wshadow
 endif
 
-all: $(BINS) cm
+all: dir $(BINS) 
+	# cm
+dir:
+	mkdir -p $(SDIR) $(ODIR) $(BDIR)
 
-pbrane: $(SRCDIR)/pbrane.o
+$(BDIR)/pbrane: $(ODIR)/pbrane.o $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-cm: $(SRCDIR)/cm.o $(SRCDIR)/ircsocket.o
+$(BDIR)/cm: $(ODIR)/cm.o $(ODIR)/ircsocket.o
 	$(CXX) -o $@ $^ $(LDFLAGS) -lsfml-network -lsfml-system
 
+$(ODIR)/%.o: $(SDIR)/%.cpp
+	$(CXX) -c -o $@ $^ $(CXXFLAGS)
+$(ODIR)/%.o: $(MDIR)/%.cpp
+	$(CXX) -c -o $@ $^ $(CXXFLAGS)
+
 clean:
-	rm -rf $(SRCDIR)/*.o $(BINS) cm
+	rm -rf $(ODIR)/*.o $(BINS) cm
+
 
