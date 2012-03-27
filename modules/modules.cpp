@@ -1,6 +1,15 @@
 #include "modules.hpp"
 using std::string;
 
+#include <iostream>
+using std::cerr;
+using std::endl;
+
+#include <fstream>
+using std::ifstream;
+using std::ofstream;
+using std::fstream;
+
 #include "config.hpp"
 
 // module includes
@@ -13,7 +22,7 @@ using std::string;
 std::map<string, Function *> modules::map;
 static bool modules_inited = false;
 
-bool modules::init() {
+bool modules::init(std::string fileName) {
 	if(modules_inited)
 		return true;
 
@@ -43,6 +52,23 @@ bool modules::init() {
 	map["todo"] = new TodoFunction(config::todoFileName);
 
 	map["lg"] = new BinaryLogFunction();
+
+	ifstream in(fileName, fstream::binary);
+	while(!in.eof() && in.good()) {
+		int length = in.get();
+		if(!in.good()) {
+			break;
+		}
+		string name;
+		for(int i = 0; i < length; ++i) {
+			int c = in.get();
+			if(!in.good()) {
+				break;
+			}
+			name += (string)"" + (char)c;
+		}
+		cerr << "read: \"" << name << "\" " << " - " << name.length() << endl;
+	}
 }
 
 /*
@@ -70,8 +96,21 @@ MarkovFunction
 ChainCountFunction
 */
 
-bool modules::deinit() {
-	for(auto i : map)
-		delete i.second;
+bool modules::deinit(std::string fileName) {
+	ofstream out(fileName, fstream::binary | fstream::trunc);
+	if(out.good()) {
+		for(auto m : map) {
+			string name = m.second->name();
+			unsigned char length = name.length();
+			out << length;
+			for(int i = 0; i < length; ++i)
+				out << name[i];
+			cerr << "outed: \"" << name << "\" " << (int)length << endl;
+		}
+	} else
+		cerr << "out not good" << endl;
+
+	for(auto m : map)
+		delete m.second;
 }
 

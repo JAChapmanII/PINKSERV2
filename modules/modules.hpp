@@ -8,8 +8,8 @@
 namespace modules {
 	extern std::map<std::string, Function *> map;
 
-	bool init();
-	bool deinit();
+	bool init(std::string fileName);
+	bool deinit(std::string fileName);
 }
 
 #endif // MODULES_HPP

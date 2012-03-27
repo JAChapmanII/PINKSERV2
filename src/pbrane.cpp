@@ -39,6 +39,7 @@ using std::exception;
 // }}}
 
 #include "global.hpp"
+#include "config.hpp"
 #include "util.hpp"
 using util::contains;
 using util::join;
@@ -114,7 +115,7 @@ int main(int argc, char **argv) {
 	const string toUsRRegexExp = "^(" + myNick + "[L:\\,]?\\s+)";
 	const string helpRegexExp = "^\\s*help(\\s+(\\S+))?";
 
-	modules::init();
+	modules::init(config::brainFileName);
 	modules::map["ignore"] = new IgnoreFunction();
 
 	// create primary regex objects {{{
@@ -263,7 +264,7 @@ int main(int argc, char **argv) {
 	}
 
 	// free memory associated with modules
-	modules::deinit();
+	modules::deinit(config::brainFileName);
 
 	return 0;
 }
