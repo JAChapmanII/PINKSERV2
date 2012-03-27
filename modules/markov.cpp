@@ -19,43 +19,6 @@ using std::stringstream;
 #include "util.hpp"
 using util::split;
 
-/*
-	// load markov file if it exists {{{
-	ifstream in(markovFileName);
-	if(in.good()) {
-		log << "reading markov chain entries" << endl;
-		string fline;
-		getline(in, fline);
-		stringstream ss;
-		ss << fline;
-		unsigned lcount = 0, tcount = 0;
-		ss >> tcount;
-		log << "\tsupposed total count: " << tcount << endl;
-		log << "\t";
-
-		unsigned percent = 0;
-		while(!in.eof()) {
-			string line;
-			getline(in, line);
-			if(in.eof() || !in.good())
-				break;
-			insert(line);
-			lcount++;
-			if((double)lcount / tcount * 100 > percent) {
-				if(percent % 10 == 0)
-					log << percent;
-				else
-					log << ".";
-				log.flush();
-				percent++;
-			}
-		}
-		log << endl << markovFileName << ": read " << lcount << " lines" << endl;
-	}
-	in.close();
-	// }}}
-*/
-
 ostream &ssummOut(ostream &out, map<string, map<string, unsigned>> ssumm);
 istream &ssummIn(istream &in, map<string, map<string, unsigned>> &ssumm);
 
