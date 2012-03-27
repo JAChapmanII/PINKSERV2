@@ -69,5 +69,4 @@ class ListRegexesFunction : public Function {
 };
 
 
-
 #endif // MODULES_REGEX_HPP

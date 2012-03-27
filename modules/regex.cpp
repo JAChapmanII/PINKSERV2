@@ -122,7 +122,8 @@ string PredefinedRegexFunction::name() const { // {{{
 	return this->m_name;
 } // }}}
 string PredefinedRegexFunction::help() const { // {{{
-	return "Makes something sound " + this->m_name + "-ish";
+	return this->m_name + " replaces \"" + this->m_first[0] + "\" with \"" +
+		this->m_second[0] + "\" and maybe others";
 } // }}}
 string PredefinedRegexFunction::regex() const { // {{{
 	return "^!" + this->m_name + "(?:\\s+(.*))?";
@@ -255,6 +256,14 @@ string InvokeFunction::regex() const {
 
 
 string ListRegexesFunction::run(FunctionArguments fargs) { // {{{
+	string function = fargs.matches[2];
+	if(!function.empty()) {
+		if(!contains(prfs, function))
+			return fargs.nick + ": that function doesn't exist";
+		else
+			return fargs.nick + ": " + prfs[function]->help();
+	}
+
 	string list;
 	for(auto i : prfs)
 		list += i.second->name() + ", ";
@@ -267,6 +276,6 @@ string ListRegexesFunction::help() const { // {{{
 	return "List the predefined regex functions";
 } // }}}
 string ListRegexesFunction::regex() const { // {{{
-	return "^!rlist(\\s+.*)?";
+	return "^!rlist(\\s+(\\S+)?)?";
 } // }}}
 
