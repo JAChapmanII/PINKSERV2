@@ -100,6 +100,13 @@ string IgnoreFunction::regex() const {
 
 int main(int argc, char **argv) {
 	srand(time(NULL));
+	if(argc > 1) {
+		stringstream ss;
+		ss << argv[1];
+		int seed;
+		ss >> seed;
+		srand(seed);
+	}
 	const string logFileName = "PINKSERV2.log",
 			chatLogFileName = "PINKSERV2.chat",
 			errorLogFileName = "PINKSERV2.err",
@@ -117,6 +124,10 @@ int main(int argc, char **argv) {
 
 	modules::init(config::brainFileName);
 	modules::map["ignore"] = new IgnoreFunction();
+	cerr << "loaded: ";
+	for(auto module : modules::map)
+		cerr << module.second->name() << " ";
+	cerr << endl;
 
 	// create primary regex objects {{{
 	regex privmsgRegex(privmsgRegexExp, regex::perl);
@@ -144,7 +155,6 @@ int main(int argc, char **argv) {
 
 	log << myNick << " started." << endl;
 	map<string, int> siMap;
-
 
 	// while there is more input coming
 	while(!cin.eof()) {
@@ -250,6 +260,9 @@ int main(int argc, char **argv) {
 					}
 					//insert(message);
 				}
+
+				for(auto module : modules::map)
+					module.second->passive(global::ChatLine(nick, matches[4]), matched);
 			}
 		// if the current line is a JOIN...
 		} else if(regex_match(line, matches, joinRegex)) {

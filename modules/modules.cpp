@@ -69,6 +69,7 @@ bool modules::init(std::string fileName) {
 		}
 		cerr << "read: \"" << name << "\" " << " - " << name.length() << endl;
 	}
+	return true;
 }
 
 /*
@@ -112,5 +113,6 @@ bool modules::deinit(std::string fileName) {
 
 	for(auto m : map)
 		delete m.second;
+	return true;
 }
 

@@ -127,6 +127,10 @@ string MarkovFunction::run(FunctionArguments fargs) { // {{{
 		chain << " " << words[i];
 	return chain.str();
 } // }}}
+void MarkovFunction::passive(global::ChatLine line, bool parsed) {
+	if(!parsed)
+		insert(line.text);
+}
 string MarkovFunction::name() const { // {{{
 	return "markov";
 } // }}}

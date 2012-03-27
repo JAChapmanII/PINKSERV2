@@ -7,6 +7,7 @@
 class MarkovFunction : public Function {
 	public:
 		virtual std::string run(FunctionArguments fargs);
+		virtual void passive(global::ChatLine line, bool parsed);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;

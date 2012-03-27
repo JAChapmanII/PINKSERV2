@@ -46,6 +46,7 @@ class PredefinedRegexFunction : public Function {
 // add predefined regex
 class PushFunction : public Function {
 	public:
+		PushFunction();
 		virtual std::string run(FunctionArguments fargs);
 		virtual std::string name() const;
 		virtual std::string help() const;

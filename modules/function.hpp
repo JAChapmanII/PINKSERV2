@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <boost/regex.hpp>
+#include "global.hpp"
 
 // Structure used to pass relavent data to Functions
 struct FunctionArguments {
@@ -40,8 +41,16 @@ class Function {
 		virtual ~Function() {}
 
 		virtual std::string run(FunctionArguments fargs) {
+			if(!fargs.toUs)
+				return "";
 			return "";
 		}
+		virtual void passive(global::ChatLine line, bool handled) {
+			if(handled || line.text.empty())
+				return;
+			return;
+		}
+
 
 		virtual std::string name() const {
 			return "Base function";
@@ -56,11 +65,17 @@ class Function {
 		}
 
 		friend std::ostream& operator<<(std::ostream &out, Function &function) {
+			if(function.name().empty()) {
+				;//
+			}
 			out << (unsigned char)0x00;
 			return out;
 		}
 		friend std::istream& operator>>(std::istream &in, Function &function) {
 			unsigned char null;
+			if(function.name().empty()) {
+				;//
+			}
 			in >> null;
 			return in;
 		}

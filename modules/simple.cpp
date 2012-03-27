@@ -75,6 +75,7 @@ string FishFunction::regex() const { // {{{
 
 
 string TrainFunction::run(FunctionArguments fargs) { // {{{
+	string extra = fargs.matches[1];
 	int ccount = rand() % 8, dir = rand() % 2;
 	stringstream ss;
 	if(dir)
@@ -102,6 +103,7 @@ string TrainFunction::regex() const { // {{{
 
 
 string DubstepFunction::run(FunctionArguments fargs) { // {{{
+	string extra = fargs.matches[2];
 	return "WUB WUB WUB";
 } // }}}
 string DubstepFunction::name() const { // {{{

@@ -195,6 +195,8 @@ string PredefinedRegexFunction::regex() const { // {{{
 } // }}}
 
 
+PushFunction::PushFunction() : m_functions() { // {{{
+} // }}}
 string PushFunction::run(FunctionArguments fargs) { // {{{
 	string fname = fargs.matches[1], first = fargs.matches[2],
 			 second = fargs.matches[3];
