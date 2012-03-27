@@ -31,7 +31,7 @@ static map<string, PredefinedRegexFunction *> prfs;
 // strip \r and \n from the output
 string cleanWith(string dirty);
 string cleanWith(string dirty) { // {{{
-	boost::regex clean("(\\r|\\n)", regex::perl);
+	boost::regex clean("(\\r|\\n|\\\\r|\\\\n)", regex::perl);
 	return regex_replace(dirty, clean, "",
 			boost::match_default | boost::format_all);
 } // }}}
