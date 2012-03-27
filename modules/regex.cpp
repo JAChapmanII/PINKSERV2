@@ -254,6 +254,6 @@ string ListRegexesFunction::help() const { // {{{
 	return "List the predefined regex functions";
 } // }}}
 string ListRegexesFunction::regex() const { // {{{
-	return "^!rlist(\\s+.*)";
+	return "^!rlist(\\s+.*)?";
 } // }}}
 
