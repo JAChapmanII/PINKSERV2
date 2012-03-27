@@ -39,7 +39,7 @@ using util::contains;
 #include "modules.hpp"
 #include "function.hpp"
 
-unsigned const maxLineLength = 256;
+unsigned const maxLineLength = 512;
 
 int main(int argc, char **argv) {
 	srand(time(NULL));
@@ -182,6 +182,22 @@ int main(int argc, char **argv) {
 								if(res.length() > maxLineLength)
 									res = res.substr(0, maxLineLength);
 								// log the output/send the output
+								log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
+								log << " -> " << rtarget << " :" << res << endl;
+								cout << "PRIVMSG " << rtarget << " :" << res << endl;
+								matched = true;
+								break;
+							}
+						}
+					}
+					if(!matched) {
+						for(auto mod : modules::map) {
+							string res = mod.second->secondary(fargs);
+							if(!res.empty()) {
+								log << "module (secondary) matched " << mod.first << endl;
+								if(res.length() > maxLineLength)
+									res = res.substr(0, maxLineLength);
+
 								log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
 								log << " -> " << rtarget << " :" << res << endl;
 								cout << "PRIVMSG " << rtarget << " :" << res << endl;
