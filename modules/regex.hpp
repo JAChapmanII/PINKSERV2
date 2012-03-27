@@ -5,14 +5,6 @@
 #include <vector>
 #include <boost/regex.hpp>
 
-// replace all the things!
-class ReplaceFunction : public Function {
-	public:
-		virtual std::string run(FunctionArguments fargs);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
-};
 // regex all the things!
 class RegexFunction : public Function {
 	public:

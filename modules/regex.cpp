@@ -68,39 +68,6 @@ using util::contains;
 	// }}}
 */
 
-string ReplaceFunction::run(FunctionArguments fargs) { // {{{
-	string m2 = fargs.matches[1], m4 = fargs.matches[2];
-
-	for(auto i = global::lastLog.rbegin(); i != global::lastLog.rend(); ++i) {
-		string str = i->text;
-		vector<string> words = split(str, " \t");
-		if(contains(words, m2)) {
-			stringstream ss;
-			for(auto j = words.begin(); j != words.end(); ++j) {
-				if(*j == m2)
-					ss << m4;
-				else
-					ss << *j;
-				if(j != words.end() - 1)
-					ss << " ";
-			}
-			global::lastLog.push_back(global::ChatLine(i->nick, ss.str()));
-			return (string)"<" + i->nick + "> " + ss.str();
-		}
-	}
-
-	return fargs.nick + ": error: not matched";
-} // }}}
-string ReplaceFunction::name() const { // {{{
-	return "replace";
-} // }}}
-string ReplaceFunction::help() const { // {{{
-	return "Replace one word with a string";
-} // }}}
-string ReplaceFunction::regex() const { // {{{
-	return "^!s\\s+([^\\s]+)\\s+(.+)\\s*$";
-} // }}}
-
 
 string RegexFunction::run(FunctionArguments fargs) { // {{{
 	string m2 = fargs.matches[1], m4 = fargs.matches[2];
