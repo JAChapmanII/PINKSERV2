@@ -11,6 +11,9 @@ class MarkovFunction : public Function {
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
+	protected:
+		std::ostream &output(std::ostream &out);
+		std::istream &input(std::istream &in);
 };
 // list chain count
 class ChainCountFunction : public Function {

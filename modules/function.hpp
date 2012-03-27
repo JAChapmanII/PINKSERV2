@@ -65,18 +65,17 @@ class Function {
 		}
 
 		friend std::ostream& operator<<(std::ostream &out, Function &function) {
-			if(function.name().empty()) {
-				;//
-			}
-			out << (unsigned char)0x00;
-			return out;
+			return function.output(out);
 		}
 		friend std::istream& operator>>(std::istream &in, Function &function) {
-			unsigned char null;
-			if(function.name().empty()) {
-				;//
-			}
-			in >> null;
+			return function.input(in);
+		}
+
+	protected:
+		virtual std::ostream &output(std::ostream &out) {
+			return out;
+		}
+		virtual std::istream &input(std::istream &in) {
 			return in;
 		}
 };

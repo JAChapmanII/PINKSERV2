@@ -13,6 +13,7 @@ using std::fstream;
 #include "config.hpp"
 
 // module includes
+#include "core.hpp"
 #include "markov.hpp"
 #include "math.hpp"
 #include "regex.hpp"
@@ -50,6 +51,7 @@ bool modules::init(std::string fileName) {
 	map["yes"] = new YesFunction(config::nick);
 
 	map["todo"] = new TodoFunction(config::todoFileName);
+	map["ignore"] = new IgnoreFunction();
 
 	map["lg"] = new BinaryLogFunction();
 
@@ -66,6 +68,16 @@ bool modules::init(std::string fileName) {
 				break;
 			}
 			name += (string)"" + (char)c;
+		}
+		Function *f = NULL;
+		for(auto module : map)
+			if(module.second->name() == name)
+				f = module.second;
+		if(f != NULL) {
+			in >> *f;
+		} else {
+			cerr << "unable to find function! " << name << endl;
+			break;
 		}
 		cerr << "read: \"" << name << "\" " << " - " << name.length() << endl;
 	}
@@ -106,6 +118,7 @@ bool modules::deinit(std::string fileName) {
 			out << length;
 			for(int i = 0; i < length; ++i)
 				out << name[i];
+			out << (*m.second);
 			cerr << "outed: \"" << name << "\" " << (int)length << endl;
 		}
 	} else
