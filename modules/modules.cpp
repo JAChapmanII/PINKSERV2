@@ -17,6 +17,7 @@ using std::fstream;
 #include "markov.hpp"
 #include "math.hpp"
 #include "regex.hpp"
+#include "script.hpp"
 #include "simple.hpp"
 #include "todo.hpp"
 
@@ -55,6 +56,9 @@ bool modules::init(std::string fileName) {
 	map["todo"] = new TodoFunction(config::todoFileName);
 
 	map["ignore"] = new IgnoreFunction();
+	map["help"] = new HelpFunction();
+
+	map["on"] = new OnRegexFunction();
 
 	ifstream in(fileName, fstream::binary);
 	while(!in.eof() && in.good()) {

@@ -12,4 +12,14 @@ class IgnoreFunction : public Function {
 		virtual std::string regex() const;
 };
 
+// help
+class HelpFunction : public Function {
+	public:
+		virtual std::string run(FunctionArguments fargs);
+		virtual std::string name() const;
+		virtual std::string help() const;
+		virtual std::string regex() const;
+};
+
+
 #endif // MODULES_CORE_HPP

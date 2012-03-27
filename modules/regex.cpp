@@ -45,7 +45,7 @@ string RegexFunction::run(FunctionArguments fargs) { // {{{
 			string str = regex_replace(i->text, rregex, with,
 					boost::match_default | boost::format_all);
 			if(str != i->text) {
-				global::lastLog.push_back(global::ChatLine(i->nick, str));
+				global::lastLog.push_back(global::ChatLine(i->nick, fargs.target, str, false));
 				return (string)"<" + i->nick + "> " + str;
 			}
 		}
@@ -108,7 +108,7 @@ string PredefinedRegexFunction::run(FunctionArguments fargs) { // {{{
 					str = regex_replace(str, this->m_replaces[j],
 							this->m_second[j], boost::match_default | boost::format_all);
 				}
-				global::lastLog.push_back(global::ChatLine(nick, str));
+				global::lastLog.push_back(global::ChatLine(nick, fargs.target, str, false));
 				return (string)"<" + nick + "> " + str;
 			}
 		}

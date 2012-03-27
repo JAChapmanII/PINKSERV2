@@ -7,7 +7,7 @@ BINS=$(BDIR)/pbrane
 
 MOBJS=$(ODIR)/modules.o $(ODIR)/function.o $(ODIR)/brain.o
 MOBJS+=$(ODIR)/markov.o $(ODIR)/math.o $(ODIR)/regex.o
-MOBJS+=$(ODIR)/simple.o $(ODIR)/todo.o $(ODIR)/core.o
+MOBJS+=$(ODIR)/simple.o $(ODIR)/script.o $(ODIR)/todo.o $(ODIR)/core.o
 
 OBJS=$(MOBJS) $(ODIR)/util.o $(ODIR)/global.o $(ODIR)/config.o
 

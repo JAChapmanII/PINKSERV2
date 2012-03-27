@@ -5,6 +5,7 @@ using std::string;
 #include "util.hpp"
 using util::join;
 using util::contains;
+#include "modules.hpp"
 
 string IgnoreFunction::run(FunctionArguments fargs) {
 	if(!fargs.fromOwner)
@@ -44,5 +45,34 @@ string IgnoreFunction::help() const {
 }
 string IgnoreFunction::regex() const {
 	return "^!ignore(?:\\s+(!)?(\\S+))?";
+}
+
+
+string HelpFunction::run(FunctionArguments fargs) {
+	string func = fargs.matches[2];
+	if(func.empty()) {
+		string res;
+		for(auto i : modules::map)
+			res += i.second->name() + ", ";
+		return res.substr(0, res.length() - 2);
+	}
+
+	if(contains(modules::map, func))
+		return fargs.nick + ": " + modules::map[func]->help();
+	for(auto i : modules::map) {
+		if(i.second->name() == func)
+			return fargs.nick + ": " + i.second->help();
+	}
+
+	return fargs.nick + ": that function does not exist";
+}
+string HelpFunction::name() const {
+	return "help";
+}
+string HelpFunction::help() const {
+	return "Do you really need to ask?";
+}
+string HelpFunction::regex() const {
+	return "^!help(\\s+(\\S+)?)?";
 }
 

@@ -12,23 +12,18 @@
 struct FunctionArguments {
 	boost::smatch matches;
 	std::string nick;
-	std::string user;
 	std::string target;
 	std::string message;
 	bool toUs;
 	bool fromOwner;
 
-	std::map<std::string, int> *siMap;
-
 	FunctionArguments() :
-			matches(), nick(), user(), target(), message(), toUs(false),
-			fromOwner(false), siMap(NULL) {
+			matches(), nick(), target(), message(), toUs(false), fromOwner(false) {
 	}
 
 	FunctionArguments(FunctionArguments &rhs) :
-			matches(rhs.matches), nick(rhs.nick), user(rhs.user),
-			target(rhs.target), message(rhs.message), toUs(rhs.toUs),
-			fromOwner(rhs.fromOwner), siMap(rhs.siMap) {
+			matches(rhs.matches), nick(rhs.nick), target(rhs.target),
+			message(rhs.message), toUs(rhs.toUs), fromOwner(rhs.fromOwner) {
 	}
 
 	private:

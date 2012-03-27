@@ -37,7 +37,7 @@ string SetFunction::run(FunctionArguments fargs) { // {{{
 	int value = 0;
 	is >> value;
 
-	(*fargs.siMap)[varName] = value;
+	global::siMap[varName] = value;
 
 	stringstream ss;
 	ss << "Set " << varName << " to " << value;
@@ -57,7 +57,7 @@ string SetFunction::regex() const { // {{{
 string EraseFunction::run(FunctionArguments fargs) { // {{{
 	string varName = fargs.matches[1];
 
-	int ecount = (*fargs.siMap).erase(varName);
+	int ecount = global::siMap.erase(varName);
 	if(ecount == 0)
 		return "Variable didn't exist anyway.";
 	else
@@ -75,9 +75,12 @@ string EraseFunction::regex() const { // {{{
 
 
 string ListFunction::run(FunctionArguments fargs) { // {{{
+	if(fargs.nick.empty()) {
+		;//
+	}
 	stringstream ss;
-	unsigned j = 0, last = (*fargs.siMap).size() - 1;
-	for(auto i : (*fargs.siMap)) {
+	unsigned j = 0, last = global::siMap.size() - 1;
+	for(auto i : global::siMap) {
 		ss << i.first;
 		if(j != last)
 			ss << ", ";
@@ -99,11 +102,11 @@ string ListFunction::regex() const { // {{{
 
 string ValueFunction::run(FunctionArguments fargs) { // {{{
 	string var = fargs.matches[1];
-	if(!contains((*fargs.siMap), var))
+	if(!contains(global::siMap, var))
 		return "That variable does not exist";
 
 	stringstream ss;
-	ss << var << " == " << (*fargs.siMap)[var];
+	ss << var << " == " << global::siMap[var];
 	return ss.str();
 } // }}}
 string ValueFunction::name() const { // {{{
@@ -125,7 +128,7 @@ string IncrementFunction::run(FunctionArguments fargs) { // {{{
 		varName = fargs.matches[3];
 
 	stringstream ss;
-	ss << varName << " is now " << (++((*fargs.siMap)[varName]));
+	ss << varName << " is now " << (++(global::siMap[varName]));
 	return ss.str();
 } // }}}
 string IncrementFunction::name() const { // {{{
@@ -147,7 +150,7 @@ string DecrementFunction::run(FunctionArguments fargs) { // {{{
 		varName = fargs.matches[3];
 
 	stringstream ss;
-	ss << varName << " is now " << (--((*fargs.siMap)[varName]));
+	ss << varName << " is now " << (--(global::siMap[varName]));
 	return ss.str();
 } // }}}
 string DecrementFunction::name() const { // {{{
