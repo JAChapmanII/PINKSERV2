@@ -15,6 +15,10 @@ class OnRegexFunction : public Function {
 		virtual std::string help() const;
 		virtual std::string regex() const;
 	protected:
+		std::ostream &output(std::ostream &out);
+		std::istream &input(std::istream &in);
+
+		std::vector<std::string> m_triggers;
 		std::vector<boost::regex> m_regex;
 		std::vector<global::ChatLine> m_lines;
 };

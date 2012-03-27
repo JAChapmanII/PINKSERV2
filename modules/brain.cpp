@@ -2,6 +2,7 @@
 using std::ostream;
 using std::istream;
 using std::string;
+using global::ChatLine;
 
 #include <arpa/inet.h>
 
@@ -41,4 +42,18 @@ istream &brain::read(istream &in, string &variable) {
 	return in;
 }
 
+ostream &brain::write(ostream &out, ChatLine &variable) {
+	write(out, variable.nick);
+	write(out, variable.target);
+	write(out, variable.text);
+	out << (unsigned char)variable.real;
+	return out;
+}
+istream &brain::read(istream &in, ChatLine &variable) {
+	read(in, variable.nick);
+	read(in, variable.target);
+	read(in, variable.text);
+	variable.real = in.get();
+	return in;
+}
 

@@ -60,6 +60,8 @@ bool modules::init(std::string fileName) {
 
 	map["on"] = new OnRegexFunction();
 
+	cerr << "module map created" << endl;
+
 	ifstream in(fileName, fstream::binary);
 	while(!in.eof() && in.good()) {
 		int length = in.get();

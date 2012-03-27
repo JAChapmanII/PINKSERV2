@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <map>
+#include "global.hpp"
 
 namespace brain {
 	std::ostream &write(std::ostream &out, unsigned &variable);
@@ -11,6 +12,9 @@ namespace brain {
 
 	std::ostream &write(std::ostream &out, const std::string &variable);
 	std::istream &read(std::istream &in, std::string &variable);
+
+	std::ostream &write(std::ostream &out, global::ChatLine &variable);
+	std::istream &read(std::istream &in, global::ChatLine &variable);
 
 	template<typename K, typename V> std::ostream &write(
 			std::ostream &out, std::map<K, V> &variable);
