@@ -3,21 +3,32 @@ using std::vector;
 using std::string;
 
 vector<string> util::split(string str, string on) { // {{{
-	vector<string> results;
-	size_t first = str.find_first_not_of(on);
-	while(first != string::npos) {
-		size_t last = str.find_first_of(on, first + 1);
-		results.push_back(str.substr(first, last - first));
-		if(last == string::npos)
-			break;
-		first = str.find_first_not_of(on, last + 1);
+	vector<string> fields;
+	size_t fsep = 0;
+	while((fsep = str.find_first_of(on)) != string::npos) {
+		fields.push_back(str.substr(0, fsep));
+		str = str.substr(fsep + 1);
 	}
-	return results;
+	if(!str.empty())
+		fields.push_back(str);
+	return fields;
 } // }}}
 string util::join(vector<string> strs, string with) { // {{{
+	if(strs.empty())
+		return "";
 	string res;
 	for(string str : strs)
 		res += str + with;
 	return res.substr(0, res.length() - with.length());
+} // }}}
+
+vector<string> util::subvector(vector<string> vec, size_t s, size_t n) { // {{{
+	vector<string> res;
+	if(s >= vec.size())
+		return res;
+	if(s + n >= vec.size())
+		n = vec.size() - s;
+	res.insert(res.begin(), vec.begin() + s, vec.begin() + s + n);
+	return res;
 } // }}}
 
