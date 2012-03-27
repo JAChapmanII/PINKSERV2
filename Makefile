@@ -16,9 +16,9 @@ CXXFLAGS=-std=c++0x -Imodules -Isrc
 LDFLAGS=-lboost_regex
 
 ifndef release
-LDFLAGS+=-g
+CXXFLAGS+=-g
 else
-LDFLAGS+=-O3 -Os
+CXXFLAGS+=-O3 -Os
 endif
 
 ifndef nowall
