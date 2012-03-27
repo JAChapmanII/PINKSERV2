@@ -14,22 +14,10 @@ using std::vector;
 #include <sstream>
 using std::stringstream;
 
-#include <arpa/inet.h>
-
 #include "util.hpp"
 using util::split;
 
-ostream &ssummOut(ostream &out, map<string, map<string, unsigned>> ssumm);
-istream &ssummIn(istream &in, map<string, map<string, unsigned>> &ssumm);
-
-ostream &sumOut(ostream &out, map<string, unsigned> sum);
-istream &sumIn(istream &in, map<string, unsigned> &sum);
-
-ostream &sOut(ostream &out, string s);
-istream &sIn(istream &in, string &s);
-
-ostream &uOut(ostream &out, unsigned u);
-istream &uIn(istream &in, unsigned &u);
+#include "brain.hpp"
 
 map<string, map<string, unsigned>> markovModel;
 const unsigned markovOrder = 2;
@@ -120,11 +108,11 @@ string MarkovFunction::regex() const { // {{{
 	return "^!markov\\s+(.*)";
 } // }}}
 ostream &MarkovFunction::output(ostream &out) {
-	ssummOut(out, markovModel);
+	brain::write(out, markovModel);
 	return out;
 }
 istream &MarkovFunction::input(istream &in) {
-	ssummIn(in, markovModel);
+	brain::read(in, markovModel);
 	return in;
 }
 
@@ -173,82 +161,4 @@ string ChainCountFunction::regex() const { // {{{
 	return "^!(c+)ount\\s+(.+)";
 } // }}}
 
-
-ostream &ssummOut(ostream &out, map<string, map<string, unsigned>> ssumm) { // {{{
-	uOut(out, ssumm.size());
-	for(auto i : ssumm) {
-		sOut(out, i.first);
-		sumOut(out, i.second);
-	}
-	return out;
-} // }}}
-istream &ssummIn(istream &in, map<string, map<string, unsigned>> &ssumm) { // {{{
-	unsigned size = 0;
-	uIn(in, size);
-	for(unsigned i = 0; i < size; ++i) {
-		string initial;
-		map<string, unsigned> sum;
-
-		sIn(in, initial);
-		sumIn(in, sum);
-		ssumm[initial] = sum;
-	}
-	return in;
-} // }}}
-
-ostream &sumOut(ostream &out, map<string, unsigned> sum) { // {{{
-	uOut(out, sum.size());
-	for(auto i : sum) {
-		sOut(out, i.first);
-		uOut(out, i.second);
-	}
-	return out;
-} // }}}
-istream &sumIn(istream &in, map<string, unsigned> &sum) { // {{{
-	unsigned size = 0;
-	uIn(in, size);
-	for(unsigned i = 0; i < size; ++i) {
-		string end;
-		unsigned count;
-
-		sIn(in, end);
-		uIn(in, count);
-		sum[end] = count;
-	}
-	return in;
-} // }}}
-
-ostream &sOut(ostream &out, string s) { // {{{
-	unsigned char length = s.length();
-	out << length;
-	for(int i = 0; i < length; ++i)
-		out << s[i];
-	return out;
-} // }}}
-istream &sIn(istream &in, string &s) { // {{{
-	unsigned char length = in.get();
-	s = "";
-	for(int i = 0; i < length; ++i) {
-		int c = in.get();
-		if(c != -1)
-			s += (char)c;
-	}
-	return in;
-} // }}}
-
-ostream &uOut(ostream &out, unsigned u) { // {{{
-	uint32_t no = htonl(u);
-	unsigned char *noc = (unsigned char *)&no;
-	for(int i = 0; i < 4; ++i)
-		out << noc[i];
-	return out;
-} // }}}
-istream &uIn(istream &in, unsigned &u) { // {{{
-	unsigned char noc[4];
-	for(int i = 0; i < 4; ++i)
-		noc[i] = in.get();
-	uint32_t no = *(uint32_t *)noc;
-	u = ntohl(no);
-	return in;
-} // }}}
 

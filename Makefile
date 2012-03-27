@@ -5,7 +5,7 @@ BDIR=.
 
 BINS=$(BDIR)/pbrane
 
-MOBJS=$(ODIR)/modules.o $(ODIR)/function.o
+MOBJS=$(ODIR)/modules.o $(ODIR)/function.o $(ODIR)/brain.o
 MOBJS+=$(ODIR)/markov.o $(ODIR)/math.o $(ODIR)/regex.o
 MOBJS+=$(ODIR)/simple.o $(ODIR)/todo.o $(ODIR)/core.o
 
