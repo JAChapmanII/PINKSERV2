@@ -53,7 +53,7 @@ class PushFunction : public Function {
 // invoke a predefined regex
 class InvokeFunction : public Function {
 	public:
-		virtual std::string run(FunctionArguments fargs);
+		virtual std::string secondary(FunctionArguments fargs);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;

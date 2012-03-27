@@ -12,6 +12,10 @@ using std::exception;
 #include <map>
 using std::map;
 
+#include <boost/regex.hpp>
+using boost::regex_match;
+using boost::match_extra;
+
 #include "util.hpp"
 using util::split;
 using util::contains;
@@ -219,22 +223,31 @@ istream &PushFunction::input(istream &in) { // {{{
 
 		PredefinedRegexFunction *f = new PredefinedRegexFunction(fname);
 		in >> *f;
+		prfs[fname] = f;
 	}
 	return in;
 } // }}}
 
 
-string InvokeFunction::run(FunctionArguments fargs) {
-	if(fargs.nick.empty()) {
-		; //
+string InvokeFunction::secondary(FunctionArguments fargs) {
+	for(auto i : prfs) {
+		boost::regex cmodr(i.second->regex(), regex::perl);
+		// if this prf matches
+		if(regex_match(fargs.message, fargs.matches, cmodr, match_extra)) {
+			// run the module
+			string res = i.second->run(fargs);
+			if(!res.empty()) {
+				return res;
+			}
+		}
 	}
 	return "";
 }
 string InvokeFunction::name() const {
-	return "";
+	return "invoke";
 }
 string InvokeFunction::help() const {
-	return "";
+	return "Magically called for !push'd functions :)";
 }
 string InvokeFunction::regex() const {
 	return "";

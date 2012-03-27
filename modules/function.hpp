@@ -45,6 +45,11 @@ class Function {
 				return "";
 			return "";
 		}
+		virtual std::string secondary(FunctionArguments fargs) {
+			if(!fargs.toUs)
+				return "";
+			return "";
+		}
 		virtual void passive(global::ChatLine line, bool handled) {
 			if(handled || line.text.empty())
 				return;

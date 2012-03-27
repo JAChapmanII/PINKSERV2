@@ -46,6 +46,7 @@ bool modules::init(std::string fileName) {
 	map["s"] = new RegexFunction();
 	map["push"] = new PushFunction();
 	map["rlist"] = new ListRegexesFunction();
+	map["invoke"] = new InvokeFunction();
 
 	map["markov"] = new MarkovFunction();
 	map["count"] = new ChainCountFunction();
