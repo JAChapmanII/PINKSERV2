@@ -169,7 +169,9 @@ std::string MarkovFunction::passive(global::ChatLine line, bool parsed) { // {{{
 		insert(line.text);
 	double r = (double)rand() / RAND_MAX;
 	if(r < config::markovResponseChance) {
-		return recover(line.text);
+		string res = recover(line.text);
+		if(res != line.text)
+			return res;
 	}
 	return "";
 } // }}}
