@@ -7,6 +7,7 @@ namespace config {
 	extern std::string nick;
 	extern std::string owner;
 	extern std::string reload;
+	extern std::string die;
 	extern std::string logFileName;
 	extern std::string errFileName;
 	extern std::string chatFileName;

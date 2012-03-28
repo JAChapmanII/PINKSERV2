@@ -5,13 +5,14 @@ namespace config {
 	string nick = "PINKSERV2";
 	string owner = "jac";
 	string reload = nick + ": reload";
+	string die = nick + ": die";
 	string logFileName = nick + ".log";
 	string errFileName = nick + ".err";
 	string chatFileName = nick + ".chat";
 	string todoFileName = nick + ".todo";
 	string brainFileName = nick + ".brain";
 	unsigned int maxLineLength = 512;
-	double markovResponseChance = 0.08;
+	double markovResponseChance = 0.04;
 
 	namespace regex {
 		string user = "([A-Za-z0-9_]*)";

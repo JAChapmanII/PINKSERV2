@@ -77,6 +77,11 @@ int main(int argc, char **argv) {
 				done = 78;
 				break;
 			}
+			// next try to just die
+			if(message == config::die) {
+				global::log("dieing ---------------");
+				return 77;
+			}
 
 			global::parse(global::ChatLine(nick, target, message));
 		// if the current line is a JOIN...
