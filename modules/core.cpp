@@ -31,7 +31,7 @@ string IgnoreFunction::run(FunctionArguments fargs) {
 
 	auto it = find(global::ignoreList.begin(), global::ignoreList.end(), nick);
 	if(*it != nick)
-		return fargs.nick + ": erorr, it not nick!?";
+		return fargs.nick + ": error, it not nick!?";
 
 	global::ignoreList.erase(it);
 	return fargs.nick + ": " + nick + " no longer ignored ";
