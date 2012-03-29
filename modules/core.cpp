@@ -107,6 +107,7 @@ string ShutupFunction::regex() const { // {{{
 	return "^!shutup(\\s+(\\d+))?";
 } // }}}
 
+
 string UnShutupFunction::run(FunctionArguments fargs) { // {{{
 	global::minSpeakTime = time(NULL) - 1;
 	return fargs.nick + ": OK! :D";
