@@ -1,13 +1,18 @@
 #include "core.hpp"
 using std::string;
 
+#include <sstream>
+using std::stringstream;
+
+#include <ctime>
+
 #include "global.hpp"
 #include "util.hpp"
 using util::join;
 using util::contains;
 #include "modules.hpp"
 
-string IgnoreFunction::run(FunctionArguments fargs) {
+string IgnoreFunction::run(FunctionArguments fargs) { // {{{
 	if(!fargs.fromOwner)
 		return "";
 
@@ -20,7 +25,7 @@ string IgnoreFunction::run(FunctionArguments fargs) {
 
 	if(nstring.empty()) {
 		if(contains(global::ignoreList, nick))
-			return fargs.nick + ": " + nick + " already ignored";
+			return ""; //fargs.nick + ": " + nick + " already ignored";
 
 		global::ignoreList.push_back(nick);
 		return fargs.nick + ": ignored " + nick;
@@ -35,20 +40,20 @@ string IgnoreFunction::run(FunctionArguments fargs) {
 
 	global::ignoreList.erase(it);
 	return fargs.nick + ": " + nick + " no longer ignored ";
-}
+} // }}}
 
-string IgnoreFunction::name() const {
+string IgnoreFunction::name() const { // {{{
 	return "ignore";
-}
-string IgnoreFunction::help() const {
+} // }}}
+string IgnoreFunction::help() const { // {{{
 	return "Ignore a user";
-}
-string IgnoreFunction::regex() const {
+} // }}}
+string IgnoreFunction::regex() const { // {{{
 	return "^!ignore(?:\\s+(!)?(\\S+))?";
-}
+} // }}}
 
 
-string HelpFunction::run(FunctionArguments fargs) {
+string HelpFunction::run(FunctionArguments fargs) { // {{{
 	string func = fargs.matches[2];
 	if(func.empty()) {
 		string res;
@@ -65,14 +70,54 @@ string HelpFunction::run(FunctionArguments fargs) {
 	}
 
 	return fargs.nick + ": that function does not exist";
-}
-string HelpFunction::name() const {
+} // }}}
+string HelpFunction::name() const { // {{{
 	return "help";
-}
-string HelpFunction::help() const {
+} // }}}
+string HelpFunction::help() const { // {{{
 	return "Do you really need to ask?";
-}
-string HelpFunction::regex() const {
+} // }}}
+string HelpFunction::regex() const { // {{{
 	return "^!help(\\s+(\\S+)?)?";
-}
+} // }}}
+
+
+string ShutupFunction::run(FunctionArguments fargs) { // {{{
+	unsigned t = 5;
+	string num = fargs.matches[2];
+	stringstream ss;
+	if(!num.empty()) {
+		ss << num;
+		ss >> t;
+		if(t > 60)
+			t = 60;
+		ss.clear();
+	}
+	global::minSpeakTime = time(NULL) + t*60;
+	ss << fargs.nick << ": right-y-oh! shutting up for " << t << " minutes";
+	return ss.str();
+} // }}}
+string ShutupFunction::name() const { // {{{
+	return "shutup";
+} // }}}
+string ShutupFunction::help() const { // {{{
+	return "Make me shutup for a few minutes";
+} // }}}
+string ShutupFunction::regex() const { // {{{
+	return "^!shutup(\\s+(\\d+))?";
+} // }}}
+
+string UnShutupFunction::run(FunctionArguments fargs) { // {{{
+	global::minSpeakTime = time(NULL) - 1;
+	return fargs.nick + ": OK! :D";
+} // }}}
+string UnShutupFunction::name() const { // {{{
+	return "unshutup";
+} // }}}
+string UnShutupFunction::help() const { // {{{
+	return "Get me to talk again";
+} // }}}
+string UnShutupFunction::regex() const { // {{{
+	return "!unshutup";
+} // }}}
 

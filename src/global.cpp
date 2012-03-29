@@ -16,6 +16,8 @@ using boost::smatch;
 using boost::regex_match;
 using boost::match_extra;
 
+#include <ctime>
+
 #include "config.hpp"
 #include "function.hpp"
 #include "modules.hpp"
@@ -29,6 +31,7 @@ static ofstream chatFile;
 vector<global::ChatLine> global::lastLog;
 vector<string> global::ignoreList;
 map<string, int> global::siMap;
+unsigned global::minSpeakTime = 0;
 
 bool global::init() {
 	return true;
@@ -156,6 +159,9 @@ void global::send(string target, string line) {
 		line = line.substr(0, config::maxLineLength);
 		log("    (line had to be shortened)");
 	}
-	cout << "PRIVMSG " << target << " :" << line << endl;
+	if(time(NULL) < minSpeakTime)
+		log("    (didn't really send it, we're being quiet)");
+	else
+		cout << "PRIVMSG " << target << " :" << line << endl;
 }
 

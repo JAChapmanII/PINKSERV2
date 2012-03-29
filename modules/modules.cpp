@@ -58,6 +58,8 @@ bool modules::init(std::string fileName) {
 
 	map["ignore"] = new IgnoreFunction();
 	map["help"] = new HelpFunction();
+	map["shutup"] = new ShutupFunction();
+	map["unshutup"] = new UnShutupFunction();
 
 	map["on"] = new OnRegexFunction();
 	map["explain"] = new ExplainFunction();
