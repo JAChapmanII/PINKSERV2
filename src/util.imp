@@ -1,4 +1,13 @@
 
+template<typename T, typename F>
+		std::vector<T> util::filter(std::vector<T> vec, F func) {
+	std::vector<T> res;
+	for(auto i : vec)
+		if(func(i))
+			res.push_back(i);
+	return res;
+}
+
 template<typename T> bool
 		util::contains(std::vector<T> vec, T val) { // {{{
 	return (find(vec.begin(), vec.end(), val) != vec.end());
