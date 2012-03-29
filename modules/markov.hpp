@@ -24,4 +24,13 @@ class ChainCountFunction : public Function {
 		virtual std::string regex() const;
 };
 
+// autocorrect function
+class CorrectionFunction : public Function {
+	public:
+		virtual std::string passive(global::ChatLine line, bool parsed);
+		virtual std::string name() const;
+		virtual std::string help() const;
+};
+
+
 #endif // MODULES_MARKOV_HPP

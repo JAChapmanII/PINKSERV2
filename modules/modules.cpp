@@ -52,6 +52,7 @@ bool modules::init(std::string fileName) {
 
 	map["markov"] = new MarkovFunction();
 	map["count"] = new ChainCountFunction();
+	map["correct"] = new CorrectionFunction();
 
 	map["todo"] = new TodoFunction(config::todoFileName);
 

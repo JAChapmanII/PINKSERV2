@@ -15,6 +15,7 @@ namespace config {
 	extern std::string brainFileName;
 	extern unsigned int maxLineLength;
 	extern double markovResponseChance;
+	extern double correctionResponseChance;
 
 	namespace regex {
 		extern std::string user;

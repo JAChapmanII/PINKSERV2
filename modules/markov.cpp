@@ -19,6 +19,9 @@ using std::stringstream;
 using util::split;
 using util::join;
 using util::subvector;
+using util::contains;
+using util::trim;
+using util::filter;
 
 #include "brain.hpp"
 
@@ -32,6 +35,8 @@ void push(vector<string> words, unsigned order);
 string fetch(string seed);
 string recover(string initial);
 string count(string initial);
+unsigned occurrences(string seed);
+double probability(string seed, string end);
 
 // insert each possible map for a set of words using a specific order
 void push(vector<string> words, unsigned order) { // {{{
@@ -128,6 +133,17 @@ string recover(string initial) { // {{{
 	return join(chain, " ");
 } // }}}
 
+// count the occurrences of a seed
+unsigned occurrences(string seed) { // {{{
+	if(!contains(markovModel, seed))
+		return 0;
+	map<string, unsigned> seedMap = markovModel[seed];
+	unsigned total = 0;
+	for(auto i : seedMap)
+		total += i.second;
+	return total;
+} // }}}
+
 // list chain count
 string count(string initial) { // {{{
 	vector<string> chain = split(initial);
@@ -139,10 +155,7 @@ string count(string initial) { // {{{
 		seed = join(subvector(chain, chain.size() - markovOrder, markovOrder));
 
 	// count occurences of the seed string
-	map<string, unsigned> seedMap = markovModel[seed];
-	unsigned total = 0;
-	for(auto i : seedMap)
-		total += i.second;
+	unsigned total = occurrences(seed);
 
 	// count total endpoints for all seeds
 	unsigned long totalEnds = 0;
@@ -159,6 +172,13 @@ string count(string initial) { // {{{
 		<< totalEnds << "]";
 
 	return ss.str();
+} // }}}
+
+// determine the probability that a chain would occur
+double probability(string seed, string end) { // {{{
+	if(!contains(markovModel, seed) || !contains(markovModel[seed], end))
+		return 0;
+	return (double)markovModel[seed][end] / occurrences(seed);
 } // }}}
 
 string MarkovFunction::run(FunctionArguments fargs) { // {{{
@@ -204,4 +224,67 @@ string ChainCountFunction::help() const { // {{{
 string ChainCountFunction::regex() const { // {{{
 	return "^!c+ount\\s+(.+)";
 } // }}}
+
+
+string CorrectionFunction::passive(global::ChatLine line, bool parsed) { // {{{
+	if(parsed)
+		return "";
+	double r = (double)rand() / RAND_MAX;
+	if(r < config::correctionResponseChance) {
+		vector<string> words = split(line.text);
+		words = filter(words, [](string s){ return !s.empty(); });
+		if(words.size() < markovOrder + 1)
+			return "";
+		global::log("--------------------------------------------------------");
+		string prefix = "";
+		unsigned last = words.size() - (markovOrder + 1);
+		for(int i = 0; i < last; prefix += words[i] + " ", ++i) {
+			vector<string> currentPhrase = subvector(words, i, markovOrder);
+			string seed = join(currentPhrase), target = words[i + markovOrder];
+
+			unsigned ocount = occurrences(seed);
+			if(ocount == 0) {
+				global::log("OCCURENCE OF THIS SEED IS 0");
+				continue;
+			}
+
+			global::log("current prefix: \"" + prefix + "\"");
+			global::log("seed: \"" + seed + "\", target: \"" + target + "\"");
+
+			double p = 0.0, ap = 1.0/ocount;
+			if(contains(markovModel[seed], target))
+				p = (double)markovModel[seed][target] / ocount;
+
+			stringstream ss;
+			ss << "p: " << p << ", ap: " << ap;
+			global::log(ss.str());
+
+			if((ap > 0) && (p < ap * .60)) {
+				string res = line.nick + ": did you mean " + trim(prefix);
+				if(!prefix.empty())
+					res += " ";
+				res += recover(join(currentPhrase, " "));
+				if(((string)".?;,").find(res[res.length() - 1]) != string::npos)
+					res += "?";
+
+				global::log("pref: \"" + trim(prefix) + "\"");
+				global::log("seed: \"" + join(currentPhrase, " ") + "\"");
+				if(unknownSeed) {
+					global::log("  seed is unknown?");
+					continue;
+				}
+
+				return res;
+			}
+		}
+	}
+	return "";
+} // }}}
+string CorrectionFunction::name() const { // {{{
+	return "correct";
+} // }}}
+string CorrectionFunction::help() const { // {{{
+	return "Magically corrects you";
+} // }}}
+
 

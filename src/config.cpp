@@ -12,7 +12,8 @@ namespace config {
 	string todoFileName = nick + ".todo";
 	string brainFileName = nick + ".brain";
 	unsigned int maxLineLength = 512;
-	double markovResponseChance = 0.04;
+	double markovResponseChance = 0.08;
+	double correctionResponseChance = 0.4;
 
 	namespace regex {
 		string user = "([A-Za-z0-9_]*)";
