@@ -89,7 +89,7 @@ bool global::parse(global::ChatLine line) {
 	bool matched = false;
 	boost::smatch matches;
 	// loop through setup modules trying to match their regex
-	if(!contains(global::ignoreList, line.nick)) {
+	if(!contains(ignoreList, line.nick) || isOwner(line.nick)) {
 		for(auto mod : modules::map) {
 			regex cmodr(mod.second->regex(), regex::perl);
 			// if this module matches
