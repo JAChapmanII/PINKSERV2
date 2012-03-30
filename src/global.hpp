@@ -7,8 +7,8 @@
 #include <map>
 
 namespace global {
-	void log(std::string str);
-	void err(std::string str);
+	extern std::ofstream log;
+	extern std::ofstream err;
 
 	struct ChatLine { // {{{
 		std::string nick;

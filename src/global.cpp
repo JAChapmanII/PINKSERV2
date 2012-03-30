@@ -24,8 +24,8 @@ using boost::match_extra;
 #include "util.hpp"
 using util::contains;
 
-static ofstream logFile;
-static ofstream errFile;
+ofstream global::log;
+ofstream global::err;
 static ofstream chatFile;
 
 vector<global::ChatLine> global::lastLog;
@@ -34,31 +34,22 @@ map<string, int> global::siMap;
 unsigned global::minSpeakTime = 0;
 
 bool global::init() {
+	log.open(config::logFileName, fstream::app);
+	if(!log.good()) {
+		cerr << "global::init: could not open log file!" << endl;
+		return false;
+	}
+	err.open(config::errFileName, fstream::app);
+	if(!err.good()) {
+		cerr << "global::init: could not open error file!" << endl;
+		return false;
+	}
 	return true;
 }
 bool global::deinit() {
+	log.close();
+	err.close();
 	return true;
-}
-
-void global::log(string str) {
-	if(!logFile.good()) {
-		logFile.open(config::logFileName, fstream::app);
-		if(!logFile.good()) {
-			cerr << str << endl;
-			return;
-		}
-	}
-	logFile << str << endl;
-}
-void global::err(string str) {
-	if(!errFile.good()) {
-		errFile.open(config::errFileName, fstream::app);
-		if(!errFile.good()) {
-			cerr << str << endl;
-			return;
-		}
-	}
-	errFile << str << endl;
 }
 
 bool global::parse(global::ChatLine line) {
@@ -113,11 +104,11 @@ bool global::parse(global::ChatLine line) {
 			// if this module matches
 			if(regex_match(message, fargs.matches, cmodr, match_extra)) {
 				// log that we got a hit
-				log("module matched: " + mod.first);
+				log << "Module matched: " << mod.first << endl;
 				// run the module
 				string res = mod.second->run(fargs);
 				if(res.empty()) {
-					log("module returned nothing, moving on");
+					log << "\treturned nothing, moving on" << endl;
 				} else {
 					// log the output/send the output
 					send(otarget, res);
@@ -130,8 +121,7 @@ bool global::parse(global::ChatLine line) {
 			for(auto mod : modules::map) {
 				string res = mod.second->secondary(fargs);
 				if(!res.empty()) {
-					log("module (secondary) matched " + mod.first);
-					//log << matches[1] << "@" << matches[3] << ": " << matches[4] << endl;
+					log << "Module (secondary) matched: " + mod.first << endl;
 					send(otarget, res);
 					matched = true;
 					break;
@@ -146,7 +136,7 @@ bool global::parse(global::ChatLine line) {
 	for(auto module : modules::map) {
 		string res = module.second->passive(line, matched);
 		if(!res.empty()) {
-			log("module (passive) matched " + module.first);
+			log << "Module (passive) matched: " + module.first << endl;
 			send(otarget, res);
 		}
 	}
@@ -154,13 +144,13 @@ bool global::parse(global::ChatLine line) {
 	return matched;
 }
 void global::send(string target, string line) {
-	log(" -> " + target + " :" + line);
+	log << " -> " << target << " :" << line << endl;
 	if(line.length() > config::maxLineLength) {
 		line = line.substr(0, config::maxLineLength);
-		log("    (line had to be shortened)");
+		log << "\t(line had to be shortened)" << endl;;
 	}
 	if(time(NULL) < minSpeakTime)
-		log("    (didn't really send it, we're being quiet)");
+		log << "\t(didn't really send it, we're being quiet)" << endl;
 	else
 		cout << "PRIVMSG " << target << " :" << line << endl;
 }

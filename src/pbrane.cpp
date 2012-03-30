@@ -48,16 +48,20 @@ int main(int argc, char **argv) {
 		ss >> seed;
 		srand(seed);
 	}
-	global::log(config::nick + " started.");
+	if(!global::init()) {
+		cerr << "pbrane: global::init failed" << endl;
+		return -1;
+	}
+	global::log << "-----" << config::nick << " started -----" << endl;
 
 	regex privmsgRegex(config::regex::privmsg, regex::perl);
 	regex joinRegex(config::regex::join, regex::perl);
 
 	modules::init(config::brainFileName);
-	string lstring = "loaded: ";
+	global::log << "loaded modules: ";
 	for(auto module : modules::map)
-		lstring += module.second->name() + " ";
-	global::log(lstring);
+		global::log << module.second->name() << " ";
+	global::log << endl;;
 
 	// while there is more input coming
 	int done = 0;
@@ -73,13 +77,14 @@ int main(int argc, char **argv) {
 
 			// start out by trying to match the reload command
 			if(message == config::reload) {
-				global::log("restarting -----------");
+				global::log << "----- RESTARTING -----" << endl;
+				global::log.flush();
 				done = 78;
 				break;
 			}
 			// next try to just die
 			if(message == config::die) {
-				global::log("dieing ---------------");
+				global::log << "----- DIEING -----" << endl;
 				return 77;
 			}
 
@@ -97,16 +102,20 @@ int main(int argc, char **argv) {
 		// if the current line is a JOIN...
 		} else if(regex_match(line, matches, joinRegex)) {
 			// log all the join messages
-			global::log(matches[1] + " (" + matches[2] + ") has joined " + matches[3]);
+			global::log << matches[1] << " (" << matches[2] << ")"
+				<< " has joined " << matches[3] << endl;
 		// otherwise...
 		} else {
 			// log all the failures
-			global::err("no match: " + line);
+			global::err << "NO MATCH: " + line << endl;;
 		}
 	}
 
 	// free memory associated with modules
 	modules::deinit(config::brainFileName);
+
+	// deinit global
+	global::deinit();
 
 	return done - 1;
 }

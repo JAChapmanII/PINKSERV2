@@ -14,6 +14,9 @@ using std::vector;
 #include <sstream>
 using std::stringstream;
 
+#include <iostream>
+using std::endl;
+
 #include "config.hpp"
 #include "util.hpp"
 using util::split;
@@ -230,15 +233,17 @@ string CorrectionFunction::passive(global::ChatLine line, bool parsed) { // {{{
 	if(parsed)
 		return "";
 	double r = (double)rand() / RAND_MAX;
+	if(line.nick == "JDLJDL")
+		r /= 4.0;
 	if(r < config::correctionResponseChance) {
 		vector<string> words = split(line.text);
 		words = filter(words, [](string s){ return !s.empty(); });
 		if(words.size() < markovOrder + 1)
 			return "";
-		global::log("--------------------------------------------------------");
+		global::log << "------------------------------------------------" << endl;
 		string prefix = "";
 		unsigned last = words.size() - (markovOrder + 1);
-		for(int i = 0; i < last; prefix += words[i] + " ", ++i) {
+		for(unsigned i = 0; i < last; prefix += words[i] + " ", ++i) {
 			vector<string> currentPhrase = subvector(words, i, markovOrder);
 			string seed = join(currentPhrase), target = words[i + markovOrder];
 
@@ -250,10 +255,12 @@ string CorrectionFunction::passive(global::ChatLine line, bool parsed) { // {{{
 			if(contains(markovModel[seed], target))
 				p = (double)markovModel[seed][target] / ocount;
 
-			global::log("seed: \"" + seed + "\", target: \"" + target + "\"");
-			stringstream ss;
-			ss << "p: " << p << ", ap: " << ap;
-			global::log(ss.str());
+			global::log << "seed: \"" << seed << "\","
+				<< " target: \"" << target << "\", "
+				<< "p, ap: " << p << ", " << ap << endl;
+
+			if(line.nick == "JDLJDL")
+				p *= 2.0, ap /= 2.0;
 
 			if((ap > 0) && (p < ap * .60)) {
 				string res = line.nick + ": did you mean " + trim(prefix);
