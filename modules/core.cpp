@@ -98,13 +98,13 @@ string ShutupFunction::run(FunctionArguments fargs) { // {{{
 	return ss.str();
 } // }}}
 string ShutupFunction::name() const { // {{{
-	return "shutup";
+	return "quiet";
 } // }}}
 string ShutupFunction::help() const { // {{{
-	return "Make me shutup for a few minutes";
+	return "Make me quiet for a few minutes";
 } // }}}
 string ShutupFunction::regex() const { // {{{
-	return "^!shutup(\\s+(\\d+))?";
+	return "^!quiet(\\s+(\\d+))?";
 } // }}}
 
 
@@ -113,12 +113,12 @@ string UnShutupFunction::run(FunctionArguments fargs) { // {{{
 	return fargs.nick + ": OK! :D";
 } // }}}
 string UnShutupFunction::name() const { // {{{
-	return "unshutup";
+	return "unquiet";
 } // }}}
 string UnShutupFunction::help() const { // {{{
 	return "Get me to talk again";
 } // }}}
 string UnShutupFunction::regex() const { // {{{
-	return "!unshutup";
+	return "!unquiet";
 } // }}}
 
