@@ -13,7 +13,7 @@ namespace config {
 	string brainFileName = nick + ".brain";
 	unsigned int maxLineLength = 512;
 	double markovResponseChance = 0.08;
-	double correctionResponseChance = 0.4;
+	double correctionResponseChance = 0.16;
 
 	namespace regex {
 		string user = "([A-Za-z0-9_]*)";
