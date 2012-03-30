@@ -243,18 +243,14 @@ string CorrectionFunction::passive(global::ChatLine line, bool parsed) { // {{{
 			string seed = join(currentPhrase), target = words[i + markovOrder];
 
 			unsigned ocount = occurrences(seed);
-			if(ocount == 0) {
-				global::log("OCCURENCE OF THIS SEED IS 0");
+			if(ocount == 0)
 				continue;
-			}
-
-			global::log("current prefix: \"" + prefix + "\"");
-			global::log("seed: \"" + seed + "\", target: \"" + target + "\"");
 
 			double p = 0.0, ap = 1.0/ocount;
 			if(contains(markovModel[seed], target))
 				p = (double)markovModel[seed][target] / ocount;
 
+			global::log("seed: \"" + seed + "\", target: \"" + target + "\"");
 			stringstream ss;
 			ss << "p: " << p << ", ap: " << ap;
 			global::log(ss.str());
@@ -264,15 +260,8 @@ string CorrectionFunction::passive(global::ChatLine line, bool parsed) { // {{{
 				if(!prefix.empty())
 					res += " ";
 				res += recover(join(currentPhrase, " "));
-				if(((string)".?;,").find(res[res.length() - 1]) != string::npos)
+				if(((string)".?;,:").find(res[res.length() - 1]) == string::npos)
 					res += "?";
-
-				global::log("pref: \"" + trim(prefix) + "\"");
-				global::log("seed: \"" + join(currentPhrase, " ") + "\"");
-				if(unknownSeed) {
-					global::log("  seed is unknown?");
-					continue;
-				}
 
 				return res;
 			}
