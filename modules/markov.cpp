@@ -193,7 +193,7 @@ std::string MarkovFunction::passive(global::ChatLine line, bool parsed) { // {{{
 	double r = (double)rand() / RAND_MAX;
 	if(r < config::markovResponseChance) {
 		string res = recover(line.text);
-		if(res != line.text)
+		if((res != line.text) && !unknownSeed)
 			return res;
 	}
 	return "";
