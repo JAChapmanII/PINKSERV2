@@ -91,7 +91,7 @@ string ShutupFunction::run(FunctionArguments fargs) { // {{{
 		ss >> t;
 		if(t > 60)
 			t = 60;
-		ss.clear();
+		ss.str("");
 	}
 	global::minSpeakTime = time(NULL) + t*60;
 	ss << fargs.nick << ": right-y-oh! shutting up for " << t << " minutes";
