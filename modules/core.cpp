@@ -13,6 +13,7 @@ using util::fromString;
 using util::asString;
 #include "modules.hpp"
 
+
 string IgnoreFunction::run(ChatLine line, smatch matches) { // {{{
 	if(!global::isOwner(line.nick) && !global::isAdmin(line.nick))
 		return "";
@@ -42,7 +43,6 @@ string IgnoreFunction::run(ChatLine line, smatch matches) { // {{{
 	global::ignoreList.erase(it);
 	return line.nick + ": " + nick + " no longer ignored ";
 } // }}}
-
 string IgnoreFunction::name() const { // {{{
 	return "ignore";
 } // }}}
