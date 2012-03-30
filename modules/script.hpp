@@ -9,8 +9,8 @@
 class OnRegexFunction : public Function {
 	public:
 		OnRegexFunction();
-		virtual std::string run(FunctionArguments fargs);
-		virtual std::string secondary(FunctionArguments fargs);
+		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string secondary(global::ChatLine line);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -27,7 +27,7 @@ class OnRegexFunction : public Function {
 // explain
 class ExplainFunction : public Function {
 	public:
-		virtual std::string run(FunctionArguments fargs);
+		virtual std::string run(global::ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;

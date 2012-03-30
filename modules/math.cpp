@@ -1,5 +1,7 @@
 #include "math.hpp"
 using std::string;
+using boost::smatch;
+using global::ChatLine;
 
 #include <iostream>
 using std::endl;
@@ -9,16 +11,11 @@ using std::stringstream;
 
 #include "util.hpp"
 using util::contains;
+using util::fromString;
+using util::asString;
 
-string BinaryLogFunction::run(FunctionArguments fargs) { // {{{
-	string str = fargs.matches[1];
-	stringstream ss;
-	ss << str;
-	double val = 0;
-	ss >> val;
-	stringstream outss;
-	outss << fargs.nick << ": " << log(val) << endl;
-	return outss.str();
+string BinaryLogFunction::run(ChatLine line, smatch matches) { // {{{
+	return line.nick + ": " + asString(log(fromString<double>(matches[1])));
 } // }}}
 string BinaryLogFunction::name() const { // {{{
 	return "lg";
@@ -31,17 +28,13 @@ string BinaryLogFunction::regex() const { // {{{
 } // }}}
 
 
-string SetFunction::run(FunctionArguments fargs) { // {{{
-	string varName = fargs.matches[1];
-	stringstream is(fargs.matches[2]);
-	int value = 0;
-	is >> value;
+string SetFunction::run(ChatLine line, smatch matches) { // {{{
+	string variable = matches[1];
+	int value = fromString<int>(matches[2]);
 
-	global::siMap[varName] = value;
+	global::siMap[variable] = value;
 
-	stringstream ss;
-	ss << "Set " << varName << " to " << value;
-	return ss.str();
+	return line.nick + ": set " + variable + " to " + asString(value);
 } // }}}
 string SetFunction::name() const { // {{{
 	return "set";
@@ -54,14 +47,14 @@ string SetFunction::regex() const { // {{{
 } // }}}
 
 
-string EraseFunction::run(FunctionArguments fargs) { // {{{
-	string varName = fargs.matches[1];
+string EraseFunction::run(ChatLine line, smatch matches) { // {{{
+	string variable = matches[1];
 
-	int ecount = global::siMap.erase(varName);
+	int ecount = global::siMap.erase(variable);
 	if(ecount == 0)
-		return "Variable didn't exist anyway.";
+		return line.nick + ": variable didn't exist anyway.";
 	else
-		return "Erased " + varName;
+		return line.nick + ": erased " + variable;
 } // }}}
 string EraseFunction::name() const { // {{{
 	return "erase";
@@ -74,20 +67,12 @@ string EraseFunction::regex() const { // {{{
 } // }}}
 
 
-string ListFunction::run(FunctionArguments fargs) { // {{{
-	if(fargs.nick.empty()) {
-		;//
-	}
-	stringstream ss;
-	unsigned j = 0, last = global::siMap.size() - 1;
-	for(auto i : global::siMap) {
-		ss << i.first;
-		if(j != last)
-			ss << ", ";
-		++j;
-	}
+string ListFunction::run(ChatLine line, smatch matches) { // {{{
+	string list;
+	for(auto i : global::siMap)
+		list += i.first + ", ";
 
-	return ss.str();
+	return list.substr(0, list.length() - 2);
 } // }}}
 string ListFunction::name() const { // {{{
 	return "list";
@@ -100,14 +85,13 @@ string ListFunction::regex() const { // {{{
 } // }}}
 
 
-string ValueFunction::run(FunctionArguments fargs) { // {{{
-	string var = fargs.matches[1];
-	if(!contains(global::siMap, var))
-		return "That variable does not exist";
+string ValueFunction::run(ChatLine line, smatch matches) { // {{{
+	string variable = matches[1];
+	if(!contains(global::siMap, variable))
+		return line.nick + ": that variable does not exist";
 
-	stringstream ss;
-	ss << var << " == " << global::siMap[var];
-	return ss.str();
+	return line.nick + ": " + variable + " is " +
+		asString(global::siMap[variable]);
 } // }}}
 string ValueFunction::name() const { // {{{
 	return "value";
@@ -120,16 +104,16 @@ string ValueFunction::regex() const { // {{{
 } // }}}
 
 
-string IncrementFunction::run(FunctionArguments fargs) { // {{{
+string IncrementFunction::run(ChatLine line, smatch matches) { // {{{
 	// prefix operator
-	string varName = fargs.matches[2];
-	if(varName.empty())
+	string variable = matches[2];
+	if(variable.empty())
 		// postfix operator
-		varName = fargs.matches[3];
+		variable = matches[3];
 
-	stringstream ss;
-	ss << varName << " is now " << (++(global::siMap[varName]));
-	return ss.str();
+	++global::siMap[variable];
+	return line.nick + ": " + variable + " is now " +
+		asString(global::siMap[variable]);
 } // }}}
 string IncrementFunction::name() const { // {{{
 	return "++";
@@ -142,16 +126,16 @@ string IncrementFunction::regex() const { // {{{
 } // }}}
 
 
-string DecrementFunction::run(FunctionArguments fargs) { // {{{
+string DecrementFunction::run(ChatLine line, smatch matches) { // {{{
 	// prefix operator
-	string varName = fargs.matches[2];
-	if(varName.empty())
+	string variable = matches[2];
+	if(variable.empty())
 		// postfix operator
-		varName = fargs.matches[3];
+		variable = matches[3];
 
-	stringstream ss;
-	ss << varName << " is now " << (--(global::siMap[varName]));
-	return ss.str();
+	--global::siMap[variable];
+	return line.nick + ": " + variable + " is now " +
+		asString(global::siMap[variable]);
 } // }}}
 string DecrementFunction::name() const { // {{{
 	return "--";

@@ -1,9 +1,12 @@
 #include "config.hpp"
 using std::string;
+using std::vector;
 
 namespace config {
 	string nick = "PINKSERV2";
 	string owner = "jac";
+	vector<string> admins =
+		{ "Jext", "bonzairob", "Tricky", "AndrewFM", "RGCockatrices", "Streak" };
 	string reload = nick + ": reload";
 	string die = nick + ": die";
 	string logFileName = nick + ".log";

@@ -74,39 +74,30 @@ bool global::parse(global::ChatLine line) {
 
 	string message = line.text;
 
-	bool toUs = false;
 	if(regex_match(message, toUsRegex)) {
 		message = regex_replace(message, toUsReplaceRegex, (string)"");
 		chatFile << "\trmsg: " << message << endl;
-		toUs = true;
+		line.toUs = true;
 	}
 
 	string otarget = line.target;
 	if(otarget == config::nick) {
 		otarget = line.nick;
-		toUs = true;
+		line.toUs = true;
 	}
 
-	// setup function arguments
-	FunctionArguments fargs;
-	fargs.nick = line.nick;
-	fargs.target = line.target;
-	fargs.message = line.text;
-	fargs.toUs = toUs;
-	if(fargs.nick == config::owner)
-		fargs.fromOwner = true;
-
 	bool matched = false;
+	boost::smatch matches;
 	// loop through setup modules trying to match their regex
-	if(!contains(global::ignoreList, fargs.nick)) {
+	if(!contains(global::ignoreList, line.nick)) {
 		for(auto mod : modules::map) {
 			regex cmodr(mod.second->regex(), regex::perl);
 			// if this module matches
-			if(regex_match(message, fargs.matches, cmodr, match_extra)) {
+			if(regex_match(message, matches, cmodr, match_extra)) {
 				// log that we got a hit
 				log << "Module matched: " << mod.first << endl;
 				// run the module
-				string res = mod.second->run(fargs);
+				string res = mod.second->run(line, matches);
 				if(res.empty()) {
 					log << "\treturned nothing, moving on" << endl;
 				} else {
@@ -119,7 +110,7 @@ bool global::parse(global::ChatLine line) {
 		}
 		if(!matched) {
 			for(auto mod : modules::map) {
-				string res = mod.second->secondary(fargs);
+				string res = mod.second->secondary(line);
 				if(!res.empty()) {
 					log << "Module (secondary) matched: " + mod.first << endl;
 					send(otarget, res);
@@ -153,5 +144,12 @@ void global::send(string target, string line) {
 		log << "\t(didn't really send it, we're being quiet)" << endl;
 	else
 		cout << "PRIVMSG " << target << " :" << line << endl;
+}
+
+bool global::isOwner(std::string nick) {
+	return (nick == config::owner);
+}
+bool global::isAdmin(std::string nick) {
+	return contains(config::admins, nick);
 }
 

@@ -38,3 +38,7 @@ Requests:
 	ZeldaFan: insult people on leaving channel
 	Golurk: AnNoYiNgIfIeR
 
+
+Allow function to specify whether we should direct it at a person, instead of
+doing line.nick + ": " manually. This also fixes the private message thing.
+

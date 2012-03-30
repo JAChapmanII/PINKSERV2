@@ -2,82 +2,49 @@
 #define MODULES_FUNCTION_HPP
 
 #include <string>
-#include <map>
-#include <vector>
 #include <iostream>
 #include <boost/regex.hpp>
 #include "global.hpp"
 
-// Structure used to pass relavent data to Functions
-struct FunctionArguments {
-	boost::smatch matches;
-	std::string nick;
-	std::string target;
-	std::string message;
-	bool toUs;
-	bool fromOwner;
-
-	FunctionArguments() :
-			matches(), nick(), target(), message(), toUs(false), fromOwner(false) {
-	}
-
-	FunctionArguments(FunctionArguments &rhs) :
-			matches(rhs.matches), nick(rhs.nick), target(rhs.target),
-			message(rhs.message), toUs(rhs.toUs), fromOwner(rhs.fromOwner) {
-	}
-
-	private:
-		FunctionArguments &operator=(FunctionArguments &rhs);
-};
-
 // Base class for all other functions
 class Function {
 	public:
-		virtual ~Function() {}
+		// Function constructor. Must override if you are write-able
+		// 	note: make sure to call this's constructor in the subclass
+		Function();
 
-		virtual std::string run(FunctionArguments fargs) {
-			if(!fargs.toUs)
-				return "";
-			return "";
-		}
-		virtual std::string secondary(FunctionArguments fargs) {
-			if(!fargs.toUs)
-				return "";
-			return "";
-		}
-		virtual std::string passive(global::ChatLine line, bool handled) {
-			if(handled || line.text.empty())
-				return "";
-			return "";
-		}
+		// Function deconstructor. Override if you have things to cleanup
+		virtual ~Function();
 
+		// This is run when the regex matches.
+		virtual std::string run(global::ChatLine line, boost::smatch matches);
 
-		virtual std::string name() const {
-			return "Base function";
-		}
-		virtual std::string help() const {
-			return "Base function; cannot be invoked";
-		}
-		virtual std::string regex() const {
-			return "^$";
-		}
-		virtual void reset() {
-		}
+		// This is run when no Function has already matched.
+		virtual std::string secondary(global::ChatLine line);
 
-		friend std::ostream& operator<<(std::ostream &out, Function &function) {
-			return function.output(out);
-		}
-		friend std::istream& operator>>(std::istream &in, Function &function) {
-			return function.input(in);
-		}
+		// Run on all Functions even if the line has already been handled
+		virtual std::string passive(global::ChatLine line, bool handled);
+
+		// return a human readable name for this function
+		virtual std::string name() const;
+		// return human readable help for this function
+		virtual std::string help() const;
+		// return the regex this function uses
+		virtual std::string regex() const;
+
+		// used to write this Function. Override output, not this
+		friend std::ostream &operator<<(std::ostream &out, Function &function);
+		// used to read this Function. Override input, not this
+		friend std::istream &operator>>(std::istream &in, Function &function);
 
 	protected:
-		virtual std::ostream &output(std::ostream &out) {
-			return out;
-		}
-		virtual std::istream &input(std::istream &in) {
-			return in;
-		}
+		// User overridable function to write this function out
+		virtual std::ostream &output(std::ostream &out);
+		// User overridable function to read this function in
+		virtual std::istream &input(std::istream &in);
+
+		// set to true if we should try to write this
+		bool m_write;
 };
 
 #endif // MODULES_FUNCTION_HPP

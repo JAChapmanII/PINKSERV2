@@ -2,10 +2,12 @@
 #define CONFIG_HPP
 
 #include <string>
+#include <vector>
 
 namespace config {
 	extern std::string nick;
 	extern std::string owner;
+	extern std::vector<std::string> admins;
 	extern std::string reload;
 	extern std::string die;
 	extern std::string logFileName;

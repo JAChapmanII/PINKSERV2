@@ -6,7 +6,7 @@
 // ignore
 class IgnoreFunction : public Function {
 	public:
-		virtual std::string run(FunctionArguments fargs);
+		virtual std::string run(global::ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -15,7 +15,7 @@ class IgnoreFunction : public Function {
 // help
 class HelpFunction : public Function {
 	public:
-		virtual std::string run(FunctionArguments fargs);
+		virtual std::string run(global::ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -24,7 +24,7 @@ class HelpFunction : public Function {
 // shutup
 class ShutupFunction : public Function {
 	public:
-		virtual std::string run(FunctionArguments fargs);
+		virtual std::string run(global::ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -33,7 +33,7 @@ class ShutupFunction : public Function {
 // unshutup
 class UnShutupFunction : public Function {
 	public:
-		virtual std::string run(FunctionArguments fargs);
+		virtual std::string run(global::ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;

@@ -2,6 +2,8 @@
 using std::string;
 using std::vector;
 using boost::regex;
+using boost::smatch;
+using global::ChatLine;
 
 #include <sstream>
 using std::stringstream;
@@ -37,21 +39,22 @@ string cleanWith(string dirty) { // {{{
 } // }}}
 
 
-string RegexFunction::run(FunctionArguments fargs) { // {{{
-	string replace = fargs.matches[1], with = cleanWith(fargs.matches[2]);
+string RegexFunction::run(ChatLine line, smatch matches) { // {{{
+	string replace = matches[1], with = cleanWith(matches[2]);
 	try {
 		boost::regex rregex(replace, regex::perl);
 		for(auto i = global::lastLog.rbegin(); i != global::lastLog.rend(); ++i) {
 			string str = regex_replace(i->text, rregex, with,
 					boost::match_default | boost::format_all);
 			if(str != i->text) {
-				global::lastLog.push_back(global::ChatLine(i->nick, fargs.target, str, false));
+				global::lastLog.push_back(ChatLine(
+							i->nick, line.target, str, false));
 				return (string)"<" + i->nick + "> " + str;
 			}
 		}
-		return fargs.nick + ": error: not matched";
+		return line.nick + ": error: not matched";
 	} catch(exception &e) {
-		return fargs.nick + ": error: " + e.what();
+		return line.nick + ": error: " + e.what();
 	}
 } // }}}
 string RegexFunction::name() const { // {{{
@@ -91,11 +94,11 @@ string PredefinedRegexFunction::push(string first, string second) { // {{{
 	}
 	return "";
 } // }}}
-string PredefinedRegexFunction::run(FunctionArguments fargs) { // {{{
+string PredefinedRegexFunction::run(ChatLine line, smatch matches) { // {{{
 	if(this->m_replaces.empty())
-		return fargs.nick + ": no regex in replaces";
+		return line.nick + ": no regex in replaces";
 
-	string m2 = fargs.matches[1];
+	string m2 = matches[1];
 	if(m2.empty())
 		m2 = ".*";
 
@@ -108,15 +111,15 @@ string PredefinedRegexFunction::run(FunctionArguments fargs) { // {{{
 					str = regex_replace(str, this->m_replaces[j],
 							this->m_second[j], boost::match_default | boost::format_all);
 				}
-				global::lastLog.push_back(global::ChatLine(nick, fargs.target, str, false));
+				global::lastLog.push_back(ChatLine(nick, line.target, str, false));
 				return (string)"<" + nick + "> " + str;
 			}
 		}
-		return fargs.nick + ": error: not matched";
+		return line.nick + ": error: not matched";
 	} catch(exception &e) {
-		return fargs.nick + ": error: " + e.what();
+		return line.nick + ": error: " + e.what();
 	}
-	return fargs.nick + ": what the fuck I skipped the try/catch block!?";
+	return line.nick + ": what the fuck I skipped the try/catch block!?";
 } // }}}
 string PredefinedRegexFunction::name() const { // {{{
 	return this->m_name;
@@ -151,48 +154,47 @@ istream &PredefinedRegexFunction::input(istream &in) { // {{{
 } // }}}
 
 
-string PushFunction::run(FunctionArguments fargs) { // {{{
-	string fname = fargs.matches[1], first = fargs.matches[2],
-			second = fargs.matches[3];
+string PushFunction::run(ChatLine line, smatch matches) { // {{{
+	string fname = matches[1], first = matches[2], second = matches[3];
 
 	if(contains(prfs, fname)) {
 		// user wants to erase a function
 		if(first.empty() && second.empty()) {
 			delete prfs[fname];
 			prfs.erase(prfs.find(fname));
-			return fargs.nick + ": " + fname + " erased";
+			return line.nick + ": " + fname + " erased";
 		}
 		// if they left off first (replace nothing with something)
 		if(first.empty())
-			return fargs.nick + ": error: can't replace nothing";
+			return line.nick + ": error: can't replace nothing";
 		PredefinedRegexFunction *func = prfs[fname];
 		string ret = func->push(first, second);
 		if(ret.empty())
-			return fargs.nick + ": added new regex to " + fname;
-		return fargs.nick + ": error: " + ret;
+			return line.nick + ": added new regex to " + fname;
+		return line.nick + ": error: " + ret;
 	} else {
 		// if it's already in the normal map, error
 		if(contains(modules::map, fname))
-			return fargs.nick + ": error: function by that name already exists";
+			return line.nick + ": error: function by that name already exists";
 
 		// try to create a new PRF object
 		PredefinedRegexFunction *func = new PredefinedRegexFunction(fname);
 		if(func == NULL)
-			return fargs.nick + ": error: couldn't create new object";
+			return line.nick + ": error: couldn't create new object";
 
 		// try to add the initial regex to it
 		string ret = func->push(first, second);
 		if(!ret.empty()) {
 			delete func;
-			return fargs.nick + ": error: " + ret;
+			return line.nick + ": error: " + ret;
 		}
 
 		// add it to the prfs map
 		prfs[fname] = func;
-		return fargs.nick + ": " + fname + " added to list";
+		return line.nick + ": " + fname + " added to list";
 	}
 
-	return fargs.nick + ": error: shouldn't have gotten here";
+	return line.nick + ": error: shouldn't have gotten here";
 } // }}}
 string PushFunction::name() const { // {{{
 	return "push";
@@ -230,13 +232,14 @@ istream &PushFunction::input(istream &in) { // {{{
 } // }}}
 
 
-string InvokeFunction::secondary(FunctionArguments fargs) {
+string InvokeFunction::secondary(ChatLine line) {
+	smatch matches;
 	for(auto i : prfs) {
 		boost::regex cmodr(i.second->regex(), regex::perl);
 		// if this prf matches
-		if(regex_match(fargs.message, fargs.matches, cmodr, match_extra)) {
+		if(regex_match(line.text, matches, cmodr, match_extra)) {
 			// run the module
-			string res = i.second->run(fargs);
+			string res = i.second->run(line, matches);
 			if(!res.empty()) {
 				return res;
 			}
@@ -255,19 +258,19 @@ string InvokeFunction::regex() const {
 }
 
 
-string ListRegexesFunction::run(FunctionArguments fargs) { // {{{
-	string function = fargs.matches[2];
+string ListRegexesFunction::run(ChatLine line, smatch matches) { // {{{
+	string function = matches[2];
 	if(!function.empty()) {
 		if(!contains(prfs, function))
-			return fargs.nick + ": that function doesn't exist";
+			return line.nick + ": that function doesn't exist";
 		else
-			return fargs.nick + ": " + prfs[function]->help();
+			return line.nick + ": " + prfs[function]->help();
 	}
 
 	string list;
 	for(auto i : prfs)
 		list += i.second->name() + ", ";
-	return fargs.nick + ": " + list.substr(0, list.length() - 2);
+	return line.nick + ": " + list.substr(0, list.length() - 2);
 } // }}}
 string ListRegexesFunction::name() const { // {{{
 	return "rlist";

@@ -14,12 +14,12 @@ namespace global {
 		std::string nick;
 		std::string target;
 		std::string text;
-		bool real;
+		bool real, toUs;
 		ChatLine(std::string inick, std::string itarget, std::string itext,
-				bool ireal = true) :
-				nick(inick), target(itarget), text(itext), real(ireal) {
+				bool ireal = true, bool iToUs = false) :
+				nick(inick), target(itarget), text(itext), real(ireal), toUs(iToUs) {
 		}
-		ChatLine() : nick(), target(), text(), real(false) {
+		ChatLine() : nick(), target(), text(), real(false), toUs(false) {
 		}
 	}; // }}}
 
@@ -33,6 +33,9 @@ namespace global {
 
 	bool parse(ChatLine line);
 	void send(std::string target, std::string line);
+
+	bool isOwner(std::string nick);
+	bool isAdmin(std::string nick);
 }
 
 #endif // GLOBAL_HPP

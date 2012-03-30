@@ -1,8 +1,7 @@
 #include "core.hpp"
 using std::string;
-
-#include <sstream>
-using std::stringstream;
+using boost::smatch;
+using global::ChatLine;
 
 #include <ctime>
 
@@ -10,17 +9,19 @@ using std::stringstream;
 #include "util.hpp"
 using util::join;
 using util::contains;
+using util::fromString;
+using util::asString;
 #include "modules.hpp"
 
-string IgnoreFunction::run(FunctionArguments fargs) { // {{{
-	if(!fargs.fromOwner)
+string IgnoreFunction::run(ChatLine line, smatch matches) { // {{{
+	if(!global::isOwner(line.nick) && !global::isAdmin(line.nick))
 		return "";
 
-	string nstring = fargs.matches[1], nick = fargs.matches[2];
+	string nstring = matches[1], nick = matches[2];
 	if(nstring.empty() && nick.empty()) {
 		if(global::ignoreList.empty())
-			return fargs.nick + ": not ignoring anyone";
-		return fargs.nick + ": " + join(global::ignoreList);
+			return line.nick + ": not ignoring anyone";
+		return line.nick + ": " + join(global::ignoreList);
 	}
 
 	if(nstring.empty()) {
@@ -28,18 +29,18 @@ string IgnoreFunction::run(FunctionArguments fargs) { // {{{
 			return ""; //fargs.nick + ": " + nick + " already ignored";
 
 		global::ignoreList.push_back(nick);
-		return fargs.nick + ": ignored " + nick;
+		return line.nick + ": ignored " + nick;
 	}
 
 	if(!contains(global::ignoreList, nick))
-		return fargs.nick + ": user isn't ignored currently";
+		return line.nick + ": user isn't ignored currently";
 
 	auto it = find(global::ignoreList.begin(), global::ignoreList.end(), nick);
 	if(*it != nick)
-		return fargs.nick + ": error, it not nick!?";
+		return line.nick + ": error, it not nick!?";
 
 	global::ignoreList.erase(it);
-	return fargs.nick + ": " + nick + " no longer ignored ";
+	return line.nick + ": " + nick + " no longer ignored ";
 } // }}}
 
 string IgnoreFunction::name() const { // {{{
@@ -53,8 +54,8 @@ string IgnoreFunction::regex() const { // {{{
 } // }}}
 
 
-string HelpFunction::run(FunctionArguments fargs) { // {{{
-	string func = fargs.matches[2];
+string HelpFunction::run(ChatLine line, smatch matches) { // {{{
+	string func = matches[2];
 	if(func.empty()) {
 		string res;
 		for(auto i : modules::map)
@@ -63,13 +64,13 @@ string HelpFunction::run(FunctionArguments fargs) { // {{{
 	}
 
 	if(contains(modules::map, func))
-		return fargs.nick + ": " + modules::map[func]->help();
+		return line.nick + ": " + modules::map[func]->help();
 	for(auto i : modules::map) {
 		if(i.second->name() == func)
-			return fargs.nick + ": " + i.second->help();
+			return line.nick + ": " + i.second->help();
 	}
 
-	return fargs.nick + ": that function does not exist";
+	return line.nick + ": that function does not exist";
 } // }}}
 string HelpFunction::name() const { // {{{
 	return "help";
@@ -82,20 +83,16 @@ string HelpFunction::regex() const { // {{{
 } // }}}
 
 
-string ShutupFunction::run(FunctionArguments fargs) { // {{{
+string ShutupFunction::run(ChatLine line, smatch matches) { // {{{
 	unsigned t = 5;
-	string num = fargs.matches[2];
-	stringstream ss;
-	if(!num.empty()) {
-		ss << num;
-		ss >> t;
-		if(t > 60)
-			t = 60;
-		ss.str("");
-	}
+	string num = matches[2];
+	if(!num.empty())
+		t = fromString<unsigned>(num);
+	if(t > 60)
+		t = 60;
+
 	global::minSpeakTime = time(NULL) + t*60;
-	ss << fargs.nick << ": right-y-oh! shutting up for " << t << " minutes";
-	return ss.str();
+	return "TODO: fix this so it shows up... lol";
 } // }}}
 string ShutupFunction::name() const { // {{{
 	return "quiet";
@@ -108,9 +105,9 @@ string ShutupFunction::regex() const { // {{{
 } // }}}
 
 
-string UnShutupFunction::run(FunctionArguments fargs) { // {{{
+string UnShutupFunction::run(ChatLine line, smatch matches) { // {{{
 	global::minSpeakTime = time(NULL) - 1;
-	return fargs.nick + ": OK! :D";
+	return line.nick + ": OK! :D";
 } // }}}
 string UnShutupFunction::name() const { // {{{
 	return "unquiet";

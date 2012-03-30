@@ -1,6 +1,8 @@
 #include "markov.hpp"
 using std::ostream;
 using std::istream;
+using global::ChatLine;
+using boost::smatch;
 
 #include <map>
 using std::map;
@@ -184,8 +186,8 @@ double probability(string seed, string end) { // {{{
 	return (double)markovModel[seed][end] / occurrences(seed);
 } // }}}
 
-string MarkovFunction::run(FunctionArguments fargs) { // {{{
-	return recover(fargs.matches[1]);
+string MarkovFunction::run(ChatLine line, smatch matches) { // {{{
+	return recover(matches[1]);
 } // }}}
 std::string MarkovFunction::passive(global::ChatLine line, bool parsed) { // {{{
 	if(!parsed && !line.text.empty())
@@ -215,8 +217,8 @@ istream &MarkovFunction::input(istream &in) { // {{{
 } // }}}
 
 
-string ChainCountFunction::run(FunctionArguments fargs) { // {{{
-	return count(fargs.matches[1]);
+string ChainCountFunction::run(ChatLine line, smatch matches) { // {{{
+	return count(matches[1]);
 } // }}}
 string ChainCountFunction::name() const { // {{{
 	return "ccount";

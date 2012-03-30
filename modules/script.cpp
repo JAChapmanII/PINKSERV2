@@ -1,11 +1,12 @@
 #include "script.hpp"
 using std::string;
+using std::ostream;
+using std::istream;
 using boost::regex;
 using boost::regex_match;
 using boost::match_extra;
 using boost::smatch;
-using std::ostream;
-using std::istream;
+using global::ChatLine;
 
 #include <vector>
 using std::vector;
@@ -22,12 +23,12 @@ using util::split;
 
 static string lastTrigger;
 
-OnRegexFunction::OnRegexFunction() : m_triggers(), m_scopes(), m_regex(), m_lines() {
+OnRegexFunction::OnRegexFunction() :
+		m_triggers(), m_scopes(), m_regex(), m_lines() {
 }
 
-string OnRegexFunction::run(FunctionArguments fargs) {
-	string rstring = fargs.matches[1], scope = fargs.matches[2],
-			line = fargs.matches[3];
+string OnRegexFunction::run(ChatLine line, smatch matches) {
+	string rstring = matches[1], scope = matches[2], text = matches[3];
 	try {
 		// TODO: unmagic this ( for example, what about (^|\s) ?)
 		if(rstring[0] != '^')
@@ -37,30 +38,30 @@ string OnRegexFunction::run(FunctionArguments fargs) {
 
 		boost::regex rgx(rstring, regex::perl);
 
-		global::ChatLine cl(fargs.nick, fargs.target, line, false);
+		ChatLine cl(line.nick, line.target, text, false);
 
 		this->m_triggers.push_back(rstring);
 		this->m_scopes.push_back(scope);
 		this->m_regex.push_back(rgx);
 		this->m_lines.push_back(cl);
-		return fargs.nick + ": will do!";
+		return line.nick + ": will do!";
 	} catch(exception &e) {
-		return fargs.nick + ": error: " + e.what();
+		return line.nick + ": error: " + e.what();
 	}
-	return fargs.nick + ": oh god what happened?";
+	return line.nick + ": oh god what happened?";
 }
 
-string OnRegexFunction::secondary(FunctionArguments fargs) {
+string OnRegexFunction::secondary(ChatLine line) {
 	smatch matches;
 	for(unsigned i = 0; i < this->m_regex.size(); ++i) {
 		if(!this->m_scopes[i].empty()) {
 			vector<string> nicks = split(this->m_scopes[i], ",");
-			if(!contains(nicks, fargs.nick))
+			if(!contains(nicks, line.nick))
 				continue;
 		}
-		if(regex_match(fargs.message, matches, this->m_regex[i], match_extra)) {
-			global::ChatLine cl = this->m_lines[i];
-			cl.target = fargs.target;
+		if(regex_match(line.text, matches, this->m_regex[i], match_extra)) {
+			ChatLine cl = this->m_lines[i];
+			cl.target = line.target;
 			if(global::parse(cl))
 				lastTrigger = this->m_triggers[i];
 		}
@@ -112,8 +113,8 @@ istream &OnRegexFunction::input(istream &in) {
 }
 
 
-string ExplainFunction::run(FunctionArguments fargs) {
-	return fargs.nick + ": that was from " + lastTrigger;
+string ExplainFunction::run(ChatLine line, smatch matches) {
+	return line.nick + ": that was from " + lastTrigger;
 }
 string ExplainFunction::name() const {
 	return "explain";

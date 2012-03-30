@@ -1,8 +1,7 @@
 #include "simple.hpp"
 using std::string;
-
-#include <sstream>
-using std::stringstream;
+using boost::smatch;
+using global::ChatLine;
 
 #include <queue>
 using std::queue;
@@ -12,10 +11,10 @@ using std::vector;
 
 #include <boost/regex.hpp>
 using boost::regex;
-using boost::smatch;
 
-string WaveFunction::run(FunctionArguments fargs) { // {{{
-	if(fargs.message[0] == 'o')
+string WaveFunction::run(ChatLine line, smatch matches) { // {{{
+	string wave = matches[1];
+	if(wave[0] == 'o')
 		return "\\o";
 	else
 		return "o/";
@@ -27,12 +26,13 @@ string WaveFunction::help() const { // {{{
 	return "Takes no arguments; waves.";
 } // }}}
 string WaveFunction::regex() const { // {{{
-	return "^(o/|\\\\o)( .*)?";
+	return ".*?(o/|\\\\o)( .*)?";
 } // }}}
 
 
-string LoveFunction::run(FunctionArguments fargs) { // {{{
-	if(fargs.message[1] == '/')
+string LoveFunction::run(ChatLine line, smatch matches) { // {{{
+	string slash = matches[1];
+	if(!slash.empty())
 		return ":(";
 	return "<3";
 } // }}}
@@ -43,25 +43,25 @@ string LoveFunction::help() const { // {{{
 	return "Takes no arguments; outputs love.";
 } // }}}
 string LoveFunction::regex() const { // {{{
-	return "^</?3( .*)?";
+	return "^<(/?)3( .*)?";
 } // }}}
 
 
-string FishFunction::run(FunctionArguments fargs) { // {{{
+string FishFunction::run(ChatLine line, smatch matches) { // {{{
 	int fcount = 1;
-	if((fargs.message.length() >= 5) && (fargs.message[5] == 'e'))
+	string es = matches[1];
+	if(!es.empty())
 		fcount = rand() % 6 + 2;
 
-	stringstream ss;
+	string fishies;
 	for(int i = 0; i < fcount; ++i) {
 		if(rand() % 2)
-			ss << "<><";
+			fishies += "<><";
 		else
-			ss << "><>";
-		if(i != fcount - 1)
-			ss << string(rand() % 3 + 1, ' ');
+			fishies += "><>";
+		fishies += string(rand() % 3 + 1, ' ');
 	}
-	return ss.str();
+	return fishies;
 } // }}}
 string FishFunction::name() const { // {{{
 	return "fish(es)?";
@@ -74,22 +74,22 @@ string FishFunction::regex() const { // {{{
 } // }}}
 
 
-string TrainFunction::run(FunctionArguments fargs) { // {{{
-	string extra = fargs.matches[1];
+string TrainFunction::run(ChatLine line, smatch matches) { // {{{
+	string extra = matches[1];
 	int ccount = rand() % 8, dir = rand() % 2;
-	stringstream ss;
+	string train;
 	if(dir)
-		ss << "/.==.]";
+		train += "/.==.]";
 	else
-		ss << "{. .}";
+		train += "{. .}";
 	for(int i = 0; i < ccount; ++i)
-		ss << "[. .]";
+		train += "[. .]";
 	if(dir)
-		ss << "{. .}";
+		train += "{. .}";
 	else
-		ss << "[.==.\\";
+		train += "[.==.\\";
 
-	return ss.str();
+	return train;
 } // }}}
 string TrainFunction::name() const { // {{{
 	return "sl";
@@ -102,8 +102,7 @@ string TrainFunction::regex() const { // {{{
 } // }}}
 
 
-string DubstepFunction::run(FunctionArguments fargs) { // {{{
-	string extra = fargs.matches[2];
+string DubstepFunction::run(ChatLine line, smatch matches) { // {{{
 	return "WUB WUB WUB";
 } // }}}
 string DubstepFunction::name() const { // {{{
@@ -117,16 +116,15 @@ string DubstepFunction::regex() const { // {{{
 } // }}}
 
 
-string OrFunction::run(FunctionArguments fargs) { // {{{
-	if(!fargs.toUs)
+string OrFunction::run(ChatLine line, smatch matches) { // {{{
+	if(!line.toUs)
 		return "";
 	queue<string> q;
-	q.push(fargs.matches[1]);
-	q.push(fargs.matches[2]);
+	q.push(matches[1]);
+	q.push(matches[2]);
 
 	vector<string> results;
 	boost::regex r(this->regex(), regex::perl);
-	smatch matches;
 	while(!q.empty()) {
 		string cur = q.front(); q.pop();
 		if(regex_match(cur, matches, r)) {
@@ -152,7 +150,7 @@ string OrFunction::regex() const { // {{{
 
 YesFunction::YesFunction(string nick) : m_nick(nick) { // {{{
 } // }}}
-string YesFunction::run(FunctionArguments fargs) { // {{{
+string YesFunction::run(ChatLine line, smatch matches) { // {{{
 	return "yes";
 } // }}}
 string YesFunction::name() const { // {{{
@@ -166,8 +164,8 @@ string YesFunction::regex() const { // {{{
 } // }}}
 
 
-string SayFunction::run(FunctionArguments fargs) { // {{{
-	return fargs.matches[1];
+string SayFunction::run(ChatLine line, smatch matches) { // {{{
+	return matches[1];
 } // }}}
 string SayFunction::name() const { // {{{
 	return "say";
