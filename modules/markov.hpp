@@ -6,6 +6,7 @@
 // Handles returning markov chains
 class MarkovFunction : public Function {
 	public:
+		MarkovFunction();
 		virtual std::string run(global::ChatLine line, boost::smatch matches);
 		virtual std::string passive(global::ChatLine line, bool parsed);
 		virtual std::string name() const;

@@ -7,6 +7,8 @@ using global::ChatLine;
 
 Function::Function() : m_write(false) {
 }
+Function::Function(bool write) : m_write(write) {
+}
 Function::~Function() {
 }
 
@@ -33,14 +35,20 @@ string Function::regex() const {
 }
 
 ostream &operator<<(ostream &out, Function &function) {
-	if(!function.m_write)
+	unsigned char w = (unsigned char)function.m_write;
+	out << w;
+	if(function.m_write)
+		return function.output(out);
+	else
 		return out;
-	return function.output(out);
 }
 istream &operator>>(istream &in, Function &function) {
-	if(!function.m_write)
+	unsigned char r = (unsigned char)function.m_write;
+	r = in.get();
+	if(r)
+		return function.input(in);
+	else
 		return in;
-	return function.input(in);
 }
 
 ostream &Function::output(ostream &out) {

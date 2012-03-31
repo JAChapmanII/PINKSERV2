@@ -70,16 +70,17 @@ string RegexFunction::regex() const { // {{{
 
 
 PredefinedRegexFunction::PredefinedRegexFunction(string iname) : // {{{
+		Function(true),
 		m_name(iname), m_first(), m_second(), m_replaces() {
 } // }}}
 PredefinedRegexFunction::PredefinedRegexFunction(string iname, // {{{
-		vector<string> first, vector<string> second) :
+		vector<string> first, vector<string> second) : Function(true),
 		m_name(iname), m_first(), m_second(), m_replaces() {
 	for(unsigned i = 0; i < first.size(); ++i)
 		this->push(first[i], second[i]);
 } // }}}
 PredefinedRegexFunction::PredefinedRegexFunction(string iname, // {{{
-		string first, string second) :
+		string first, string second) : Function(true),
 		m_name(iname), m_first(), m_second(), m_replaces() {
 	this->push(first, second);
 } // }}}
@@ -154,6 +155,8 @@ istream &PredefinedRegexFunction::input(istream &in) { // {{{
 } // }}}
 
 
+PushFunction::PushFunction() : Function(true) { // {{{
+} // }}}
 string PushFunction::run(ChatLine line, smatch matches) { // {{{
 	string fname = matches[1], first = matches[2], second = matches[3];
 

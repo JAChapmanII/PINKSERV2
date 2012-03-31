@@ -7,7 +7,8 @@ using global::ChatLine;
 #include <iostream>
 using std::endl;
 
-TodoFunction::TodoFunction(string todoName) : m_file() { // {{{
+TodoFunction::TodoFunction(string todoName) : Function(), // {{{
+		m_file() {
 	this->m_file.open(todoName, fstream::app);
 } // }}}
 string TodoFunction::run(ChatLine line, smatch matches) { // {{{

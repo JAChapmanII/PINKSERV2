@@ -23,7 +23,7 @@ using util::split;
 
 static string lastTrigger;
 
-OnRegexFunction::OnRegexFunction() :
+OnRegexFunction::OnRegexFunction() : Function(), 
 		m_triggers(), m_scopes(), m_regex(), m_lines() {
 }
 

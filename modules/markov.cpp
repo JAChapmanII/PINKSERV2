@@ -186,6 +186,8 @@ double probability(string seed, string end) { // {{{
 	return (double)markovModel[seed][end] / occurrences(seed);
 } // }}}
 
+MarkovFunction::MarkovFunction() : Function(true) { // {{{
+} // }}}
 string MarkovFunction::run(ChatLine line, smatch matches) { // {{{
 	return recover(matches[1]);
 } // }}}

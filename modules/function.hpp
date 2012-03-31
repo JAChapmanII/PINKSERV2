@@ -9,9 +9,10 @@
 // Base class for all other functions
 class Function {
 	public:
-		// Function constructor. Must override if you are write-able
-		// 	note: make sure to call this's constructor in the subclass
+		// Function constructor. Make sure you call the second version in
+		// write-able functions or your class will not be written.
 		Function();
+		Function(bool write);
 
 		// Function deconstructor. Override if you have things to cleanup
 		virtual ~Function();
