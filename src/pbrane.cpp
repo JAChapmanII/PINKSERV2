@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
 		cerr << "pbrane: global::init failed" << endl;
 		return -1;
 	}
-	global::log << "-----" << config::nick << " started -----" << endl;
+	global::log << "----- " << config::nick << " started -----" << endl;
 
 	regex privmsgRegex(config::regex::privmsg, regex::perl);
 	regex joinRegex(config::regex::join, regex::perl);
