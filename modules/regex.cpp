@@ -65,7 +65,7 @@ string RegexFunction::help() const { // {{{
 		" matches the first and substitutes it with the second";
 } // }}}
 string RegexFunction::regex() const { // {{{
-	return "^!s/([^/]+)/([^/]*)/?$";
+	return "^!?s/([^/]+)/([^/]*)/?$";
 } // }}}
 
 
