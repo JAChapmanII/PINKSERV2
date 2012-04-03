@@ -40,16 +40,17 @@ string cleanWith(string dirty) { // {{{
 
 
 string RegexFunction::run(ChatLine line, smatch matches) { // {{{
-	string replace = matches[1], with = cleanWith(matches[2]);
+	string replace = matches[2], with = cleanWith(matches[3]);
 	try {
 		boost::regex rregex(replace, regex::perl);
 		for(auto i = global::lastLog.rbegin(); i != global::lastLog.rend(); ++i) {
 			string str = regex_replace(i->text, rregex, with,
 					boost::match_default | boost::format_all);
 			if(str != i->text) {
+				string result = "<" + i->nick + "> " + str;
 				global::lastLog.push_back(ChatLine(
 							i->nick, line.target, str, false));
-				return (string)"<" + i->nick + "> " + str;
+				return result;
 			}
 		}
 		return line.nick + ": error: not matched";
@@ -65,7 +66,7 @@ string RegexFunction::help() const { // {{{
 		" matches the first and substitutes it with the second";
 } // }}}
 string RegexFunction::regex() const { // {{{
-	return "^!?s/([^/]+)/([^/]*)/?$";
+	return "^(!)?s/([^/]+)/([^/]*)/?$";
 } // }}}
 
 
