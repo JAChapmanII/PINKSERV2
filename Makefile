@@ -3,7 +3,7 @@ ODIR=obj
 MDIR=modules
 BDIR=.
 
-BINS=$(BDIR)/pbrane
+BINS=$(BDIR)/pbrane $(BDIR)/cm
 
 MOBJS=$(ODIR)/modules.o $(ODIR)/function.o $(ODIR)/brain.o
 MOBJS+=$(ODIR)/markov.o $(ODIR)/math.o $(ODIR)/regex.o
@@ -28,14 +28,12 @@ CXXFLAGS+=-Winline -Wfloat-equal -Wundef -Wcast-align -Wredundant-decls
 CXXFLAGS+=-Winit-self -Wshadow
 endif
 
-all: dir $(BINS) 
-	# cm
+all: dir $(BINS)
 dir:
 	mkdir -p $(SDIR) $(ODIR) $(BDIR)
 
 $(BDIR)/pbrane: $(ODIR)/pbrane.o $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
-
 $(BDIR)/cm: $(ODIR)/cm.o $(ODIR)/ircsocket.o
 	$(CXX) -o $@ $^ $(LDFLAGS) -lsfml-network -lsfml-system
 
@@ -45,6 +43,6 @@ $(ODIR)/%.o: $(MDIR)/%.cpp
 	$(CXX) -c -o $@ $^ $(CXXFLAGS)
 
 clean:
-	rm -rf $(ODIR)/*.o $(BINS) cm
+	rm -rf $(ODIR)/*.o $(BINS)
 
 

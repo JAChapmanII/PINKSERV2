@@ -9,8 +9,10 @@ using std::cerr;
 using std::endl;
 
 #include <SFML/Network/IpAddress.hpp>
+#include <SFML/System/Time.hpp>
+using sf::milliseconds;
 #include <SFML/System/Sleep.hpp>
-using sf::Sleep;
+using sf::sleep;
 
 const unsigned bufferSize = 4096;
 
@@ -27,7 +29,7 @@ int IRCSocket::connect() { // {{{
 	if(this->m_isConnected)
 		return -1;
 
-	if(this->m_socket.Connect(this->m_host, this->m_port) == Socket::Error) {
+	if(this->m_socket.connect(this->m_host, this->m_port) == Socket::Error) {
 		cerr << "IRCSocket::connect: could not connect to host" << endl;
 		return -2;
 	}
@@ -37,16 +39,17 @@ int IRCSocket::connect() { // {{{
 	string userCommand = "USER " + this->m_nick + " j j :" + this->m_nick;
 
 	this->write(nickCommand);
-	Sleep(1000/10);
+	sleep(milliseconds(20));
 
 	this->write(userCommand);
-	Sleep(1000/10);
+	sleep(milliseconds(20));
 
 	bool done = false;
 	while(!done) {
 		string str = this->read();
 		if(str.empty()) {
-			Sleep(1000/100);
+			sleep(milliseconds(30));
+			continue;
 		}
 		if((str[0] == 'P') && (str[1] == 'I') &&
 			(str[2] == 'N') && (str[3] == 'G')) {
@@ -73,13 +76,13 @@ int IRCSocket::join(string channel) { // {{{
 
 	string joinCommand = "JOIN " + channel;
 	this->write(joinCommand);
-	Sleep(1000/10);
+	sleep(milliseconds(10));
 
 	bool done = false;
 	while(!done) {
 		string str = this->read();
 		if(str.empty()) {
-			Sleep(1000/100);
+			sleep(milliseconds(30));
 			continue;
 		}
 		if((str[0] == 'P') && (str[1] == 'I') &&
@@ -110,7 +113,7 @@ int IRCSocket::quit() { // {{{
 ssize_t IRCSocket::write(const char *data, size_t count) { // {{{
 	if(!this->m_isConnected)
 		return -1;
-	switch(this->m_socket.Send(data, count)) {
+	switch(this->m_socket.send(data, count)) {
 		case Socket::Disconnected:
 			cerr << "IRCSocket::write: disconnected" << endl;
 			this->m_isConnected = false;
@@ -126,7 +129,7 @@ ssize_t IRCSocket::write(const char *data, size_t count) { // {{{
 			this->m_isConnected = false;
 			return -4;
 	}
-	switch(this->m_socket.Send("\r\n", 2)) {
+	switch(this->m_socket.send("\r\n", 2)) {
 		case Socket::Disconnected:
 			cerr << "IRCSocket::write: disconnected (2)" << endl;
 			this->m_isConnected = false;
@@ -164,7 +167,7 @@ string IRCSocket::read() { // {{{
 
 	char buffer[bufferSize];
 	size_t received = 0;
-	this->m_socket.Receive(buffer, bufferSize, received);
+	this->m_socket.receive(buffer, bufferSize, received);
 	if(received > 0)
 		this->m_recvBuffer += string(buffer, received);
 

@@ -7,8 +7,10 @@ using std::string;
 
 #include "ircsocket.hpp"
 
+#include <SFML/System/Time.hpp>
+using sf::seconds;
 #include <SFML/System/Sleep.hpp>
-using sf::Sleep;
+using sf::sleep;
 
 int main(int argc, char **argv) {
 	string server = "irc.slashnet.org";
@@ -32,11 +34,11 @@ int main(int argc, char **argv) {
 
 	cerr << "Sending \"Hello!\"" << endl;
 	isock.send("Hello!", "#zebra");
-	Sleep(1000);
+	sleep(seconds(1));
 	cerr << ".";
-	Sleep(1000);
+	sleep(seconds(1));
 	cerr << ".";
-	Sleep(1000);
+	sleep(seconds(1));
 	cerr << "." << endl;
 
 	cerr << "quitting" << endl;
