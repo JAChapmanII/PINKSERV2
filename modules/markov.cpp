@@ -37,7 +37,7 @@ static bool unknownSeed = false;
 
 void insert(string text);
 void push(vector<string> words, unsigned order);
-string fetch(string seed);
+string fetch(vector<string> words);
 string recover(string initial);
 string count(string initial);
 unsigned occurrences(string seed);
@@ -69,17 +69,32 @@ void insert(string text) { // {{{
 } // }}}
 
 // return a random endpoint given a seed
-string fetch(string seed) { // {{{
-	unknownSeed = false;
+string fetch(vector<string> seed) { // {{{
+	// top order model
+	map<string, unsigned> seedMap = markovModel[join(seed)];
+	global::log << "seedMap.size: " << seedMap.size() << endl;
+	// smooth with lower order models
+	for(unsigned i = 1; i < seed.size(); ++i) {
+		map<string, unsigned> sMap =
+			markovModel[join(subvector(seed, i, seed.size() - 1))];
+		for(auto j : sMap)
+			if(j.second > 3)
+				seedMap[j.first] += j.second / 3;
+			else
+				seedMap[j.first]++;
+	}
+	global::log << "  smoothed: " << seedMap.size() << endl;
+
 	// if we have nothing about that seed, return nothing
-	if(markovModel[seed].empty()) {
+	if(seedMap.empty()) {
 		unknownSeed = true;
 		return "";
+	} else {
+		unknownSeed = false;
 	}
 
 	// add up total occurences of all end points
 	unsigned total = 0;
-	map<string, unsigned> seedMap = markovModel[seed];
 	for(auto i : seedMap)
 		total += i.second;
 
@@ -99,12 +114,12 @@ string recover(string initial) { // {{{
 
 	bool done = false;
 	while(!done) {
-		string seed;
+		vector<string> seed;
 		// create the current seed
 		if(chain.size() < markovOrder)
-			seed = join(chain);
+			seed = chain;
 		else
-			seed = join(subvector(chain, chain.size() - markovOrder, markovOrder));
+			seed = subvector(chain, chain.size() - markovOrder, markovOrder);
 
 		// find a random endpoint
 		string next = fetch(seed);
@@ -118,7 +133,7 @@ string recover(string initial) { // {{{
 			// check to see if we should try to pick another one or just be done
 			// the goal here is to make it more likely to fetch again when the
 			// string is small
-			double prob = pow(0.5, chain.size());
+			double prob = pow(0.7, chain.size());
 
 			// if we haven't even reach chain length yet, make it twice as
 			// unlikely that we don't continue
@@ -233,50 +248,24 @@ string ChainCountFunction::regex() const { // {{{
 } // }}}
 
 
+string CorrectionFunction::run(ChatLine line, smatch matches) { // {{{
+	for(auto l = global::lastLog.rbegin(); l != global::lastLog.rend(); ++l) {
+		string cline = this->correct(l->text);
+		if(!cline.empty())
+			return line.nick + ": maybe they meant " + cline;
+		break;
+	}
+	return line.nick + ": nothing irregular found, sorry";
+} // }}}
 string CorrectionFunction::passive(global::ChatLine line, bool parsed) { // {{{
 	if(parsed)
 		return "";
 	double r = (double)rand() / RAND_MAX;
-	if(line.nick == "JDLJDL")
-		r /= 4.0;
 	if(r < config::correctionResponseChance) {
-		vector<string> words = split(line.text);
-		words = filter(words, [](string s){ return !s.empty(); });
-		if(words.size() < markovOrder + 1)
+		string cline = this->correct(line.text);
+		if(cline.empty())
 			return "";
-		global::log << "------------------------------------------------" << endl;
-		string prefix = "";
-		unsigned last = words.size() - (markovOrder + 1);
-		for(unsigned i = 0; i < last; prefix += words[i] + " ", ++i) {
-			vector<string> currentPhrase = subvector(words, i, markovOrder);
-			string seed = join(currentPhrase), target = words[i + markovOrder];
-
-			unsigned ocount = occurrences(seed);
-			if(ocount == 0)
-				continue;
-
-			double p = 0.0, ap = 1.0/ocount;
-			if(contains(markovModel[seed], target))
-				p = (double)markovModel[seed][target] / ocount;
-
-			global::log << "seed: \"" << seed << "\","
-				<< " target: \"" << target << "\", "
-				<< "p, ap: " << p << ", " << ap << endl;
-
-			if(line.nick == "JDLJDL")
-				p *= 2.0, ap /= 2.0;
-
-			if((ap > 0) && (p < ap * .60)) {
-				string res = line.nick + ": did you mean " + trim(prefix);
-				if(!prefix.empty())
-					res += " ";
-				res += recover(join(currentPhrase, " "));
-				if(((string)".?;,:").find(res[res.length() - 1]) == string::npos)
-					res += "?";
-
-				return res;
-			}
-		}
+		return line.nick + ": did you mean " + cline;
 	}
 	return "";
 } // }}}
@@ -285,6 +274,45 @@ string CorrectionFunction::name() const { // {{{
 } // }}}
 string CorrectionFunction::help() const { // {{{
 	return "Magically corrects you";
+} // }}}
+string CorrectionFunction::regex() const { // {{{
+	return "^!correct(\\s+.*)?";
+} // }}}
+string CorrectionFunction::correct(string line) { // {{{
+	vector<string> words = split(line);
+	words = filter(words, [](string s){ return !s.empty(); });
+	if(words.size() < markovOrder + 1)
+		return "";
+	global::log << "----- attempting to correct: " << line << endl;
+	string prefix = "";
+	unsigned last = words.size() - (markovOrder + 1);
+	for(unsigned i = 0; i < last; prefix += words[i] + " ", ++i) {
+		vector<string> currentPhrase = subvector(words, i, markovOrder);
+		string seed = join(currentPhrase), target = words[i + markovOrder];
+
+		unsigned ocount = occurrences(seed);
+		if(ocount == 0)
+			continue;
+
+		double p = 0.0, ap = 1.0/ocount;
+		if(contains(markovModel[seed], target))
+			p = (double)markovModel[seed][target] / ocount;
+
+		global::log << "seed: \"" << seed << "\","
+			<< " target: \"" << target << "\", "
+			<< "p, ap: " << p << ", " << ap << endl;
+
+		if((ap > 0) && (p < ap * .60)) {
+			string res = trim(prefix);
+			if(!prefix.empty())
+				res += " ";
+			res += recover(join(currentPhrase, " "));
+			if(((string)".?;,:").find(res[res.length() - 1]) == string::npos)
+				res += "?";
+			return res;
+		}
+	}
+	return "";
 } // }}}
 
 

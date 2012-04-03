@@ -28,9 +28,13 @@ class ChainCountFunction : public Function {
 // autocorrect function
 class CorrectionFunction : public Function {
 	public:
+		virtual std::string run(global::ChatLine line, boost::smatch matches);
 		virtual std::string passive(global::ChatLine line, bool parsed);
 		virtual std::string name() const;
 		virtual std::string help() const;
+		virtual std::string regex() const;
+	protected:
+		std::string correct(std::string line);
 };
 
 
