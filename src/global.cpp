@@ -57,6 +57,11 @@ bool global::parse(global::ChatLine line) {
 	static regex toUsRegex(config::regex::toUs, regex::perl);
 	static regex toUsReplaceRegex(config::regex::toUsReplace, regex::perl);
 
+	if(line.text.empty()) {
+		err << "global::parse: line.text.empty?" << endl;
+		return false;
+	}
+
 	// log the line, real or fake
 	if(!chatFile.good()) {
 		chatFile.open(config::chatFileName, fstream::app);
