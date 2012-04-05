@@ -1,8 +1,11 @@
-pbrane is a simple IRC bot written in C++.
+pbrane is an IRC bot. It's not designed very well, and it has a lot of what
+people might consider NIH syndrome. It is meant as a learning excersize and to
+be fun both to write and use.
 
 Building:
-	First of all, you may wish to change some constants in the source itself.
-	At some point I need to move this into a config as jbotc does it.
+	First of all, you may wish to change some constants in src/config.cpp .
+	This will eventually move to a simple config file that doesn't require
+	recompilation to see changes.
 
 	Then run:
 		make
