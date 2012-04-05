@@ -3,9 +3,9 @@ template<typename K, typename V> std::ostream &brain::write(
 		std::ostream &out, std::map<K, V> &variable) {
 	unsigned size = variable.size();
 	write(out, size);
-	for(auto i = variable.begin(); i != variable.end(); ++i) {
-		write(out, i->first);
-		write(out, i->second);
+	for(auto i : variable) {
+		write(out, i.first);
+		write(out, i.second);
 	}
 	return out;
 }
@@ -19,6 +19,31 @@ template<typename K, typename V> std::istream &brain::read(
 		read(in, key);
 		read(in, value);
 		variable[key] = value;
+	}
+	return in;
+}
+
+template<typename K, typename V> std::ostream &brain::write(
+		std::ostream &out, std::vector<std::pair<K, V>> &variable) {
+	unsigned size = variable.size();
+	write(out, size);
+	for(auto i : variable) {
+		write(out, i.first);
+		write(out, i.second);
+	}
+	return out;
+}
+template<typename K, typename V> std::istream &brain::read(
+		std::istream &in, std::vector<std::pair<K, V>> &variable) {
+	unsigned size = 0;
+	read(in, size);
+	variable.reserve(size);
+	for(unsigned i = 0; i < size; ++i) {
+		K key;
+		V value;
+		read(in, key);
+		read(in, value);
+		variable.push_back(std::make_pair(key, value));
 	}
 	return in;
 }

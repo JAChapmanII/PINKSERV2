@@ -4,6 +4,8 @@
 #include <fstream>
 #include <string>
 #include <map>
+#include <list>
+#include <utility>
 #include "global.hpp"
 
 namespace brain {
@@ -20,6 +22,11 @@ namespace brain {
 			std::ostream &out, std::map<K, V> &variable);
 	template<typename K, typename V> std::istream &read(
 			std::istream &in, std::map<K, V> &variable);
+
+	template<typename K, typename V> std::ostream &write(
+			std::ostream &out, std::vector<std::pair<K, V>> &variable);
+	template<typename K, typename V> std::istream &read(
+			std::istream &in, std::vector<std::pair<K, V>> &variable);
 
 	/*
 	template<typename T> std::ostream &write(std::ostream &out, T &variable);
