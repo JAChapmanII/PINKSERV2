@@ -29,6 +29,12 @@ template<typename K, typename V> bool
 		util::contains(std::map<K, V> map, K key) { // {{{
 	return (map.find(key) != map.end());
 } // }}}
-
+template<typename K, typename V>
+		bool util::contains(std::vector<std::pair<K, V>> list, K key) { // {{{
+	for(auto i : list)
+		if(i.first == key)
+			return true;
+	return false;
+} // }}}
 
 // vim: ft=cpp:

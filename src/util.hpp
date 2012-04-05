@@ -4,12 +4,14 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <utility>
 
 namespace util {
 	std::vector<std::string> split(std::string str, std::string on = " \t\r\n");
 	std::string join(std::vector<std::string> strs, std::string with = ", ");
 	std::vector<std::string> subvector(std::vector<std::string> vec,
 			size_t s, size_t n);
+	std::vector<std::string> last(std::vector<std::string> vec, size_t n);
 	std::string trim(std::string str, std::string what = " \t\r\n");
 
 	template<typename T, typename F>
@@ -22,6 +24,8 @@ namespace util {
 			bool contains(std::vector<T> vec, T val);
 	template<typename K, typename V>
 			bool contains(std::map<K, V> map, K key);
+	template<typename K, typename V>
+			bool contains(std::vector<std::pair<K, V>> list, K key);
 }
 
 #include "util.imp"
