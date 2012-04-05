@@ -65,7 +65,7 @@ bool modules::init(std::string fileName) {
 	map["explain"] = new ExplainFunction();
 
 	ifstream in(fileName, fstream::binary);
-	cerr << "module init: ";
+	cerr << "  init: ";
 	while(!in.eof() && in.good()) {
 		int length = in.get();
 		if(!in.good()) {
@@ -122,7 +122,7 @@ ChainCountFunction
 
 bool modules::deinit(std::string fileName) {
 	ofstream out(fileName, fstream::binary | fstream::trunc);
-	cerr << "module deinit: ";
+	cerr << "  DEinit: ";
 	if(out.good()) {
 		for(auto m : map) {
 			string name = m.second->name();
