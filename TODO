@@ -1,14 +1,18 @@
+boost:
+	report the bug with boost regex and
+		!push/annoying/^((.)(.)((?1)|)).*?$/\U\2\L\3\4
+
+TODO:
+	why is there a modules and a requests section? They're very blurred.
+
 Connection manager
-	get it at least running a binary and connecting it to 1 network/channel
+	get it to at least running a binary
 	connecting to multiple channels
 	connecting to multiple networks
 	handle more of the IRC protocol (more errors, identifying, etc)
 
 pbrane
 	include the topic in lastLog
-	split modules off into more files
-	get the modules to write/read for data persistency
-	multiple "masters", one owner
 	rate limit
 	handle ACTIONs better
 
@@ -26,17 +30,21 @@ Modules
 	say hello to people
 	Have PredefinedRegexFunction match the replacement regex too
 	fix .* matching twice while .+ works properly
-	play wit PkgnBotX 
+	play wit PkgnBotX
 	prevent bot fights better
 	allow "articifial" flag to work on own output
-	bias markov towards longer strings
 	!botsnack
+	bonzairob: add !teatime
+	!ignore: actually save these
 
 Requests:
 	Cacapulse: !gaga
 	randomly yell <USERNAME> IS A SPY after <user> posts (5% chance)
 	ZeldaFan: insult people on leaving channel
 	Golurk: AnNoYiNgIfIeR
+	____________jext: need a delete function
+	Solshine: command 'recharge' time to prevent command spam automatically
+	jac: when ^ is implemented, stroke Solshine's ego
 
 
 Allow function to specify whether we should direct it at a person, instead of
