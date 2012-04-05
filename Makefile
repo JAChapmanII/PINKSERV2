@@ -28,6 +28,11 @@ CXXFLAGS+=-Winline -Wfloat-equal -Wundef -Wcast-align -Wredundant-decls
 CXXFLAGS+=-Winit-self -Wshadow
 endif
 
+ifdef profile
+CXXFLAGS+=-pg
+LDFLAGS+=-pg
+endif
+
 all: dir $(BINS)
 dir:
 	mkdir -p $(SDIR) $(ODIR) $(BDIR)
