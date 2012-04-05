@@ -40,7 +40,7 @@ static const unsigned markovOrder = 2;
 static map<string, vector<pair<string, unsigned>>> markovModel;
 // TODO: uhm, hmm?
 static string joinSeparator = " ";
-static vector<double> coefficientTable = { 1.0/9, 1.0/3, 1.0 };
+static vector<double> coefficientTable = { 1.0/16, 1.0/4, 1.0 };
 
 double randomDouble();
 template<typename T>
@@ -165,17 +165,22 @@ string recover(string initial) { // {{{
 		// check to see if we should try to pick another one or just be done
 		// the goal here is to make it more likely to fetch again when the
 		// string is small
-		double prob = pow(0.7, chain.size());
+		double prob = 6.0 / chain.size();
 
 		// if we haven't even reach chain length yet, make it twice as
 		// unlikely that we don't continue
-		if(chain.size() < markovOrder)
+		//if(chain.size() <= markovOrder)
 			prob += (1 - prob) / 2.0;
+
+		// cap the probability at something somewhat sensible
+		// 	aim for 50% chance to get to 12 words if it was capped each time
+		if(prob > .945)
+			prob = .945;
 
 		// if we're currently ending with a punctuation, greatly increase the
 		// chance of ending and sounding somewhat coherent
-		if(((string)".?;:,").find(next[next.length() - 1]) != string::npos)
-			prob /= 16;
+		if(((string)".?!;").find(next[next.length() - 1]) != string::npos)
+			prob /= 1.5;
 
 		// if a random num in [0, 1] is above our probability of ending, end
 		if(((double)rand() / RAND_MAX) > prob)
