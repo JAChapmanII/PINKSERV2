@@ -53,6 +53,7 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 	global::log << "----- " << config::nick << " started -----" << endl;
+	cerr << "----- " << config::nick << " started -----" << endl;
 
 	regex privmsgRegex(config::regex::privmsg, regex::perl);
 	regex joinRegex(config::regex::join, regex::perl);
@@ -98,7 +99,10 @@ int main(int argc, char **argv) {
 				message = message.substr(message.find_first_not_of(" \t\r\n"));
 			}
 
-			global::parse(global::ChatLine(nick, target, message));
+			if(message.empty())
+				global::err << "main: message empty" << endl;
+			else
+				global::parse(global::ChatLine(nick, target, message));
 		// if the current line is a JOIN...
 		} else if(regex_match(line, matches, joinRegex)) {
 			// log all the join messages
