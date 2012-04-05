@@ -13,6 +13,10 @@ using std::string;
 #include <vector>
 using std::vector;
 
+#include <utility>
+using std::pair;
+using std::make_pair;
+
 #include <sstream>
 using std::stringstream;
 
@@ -24,6 +28,7 @@ using std::endl;
 using util::split;
 using util::join;
 using util::subvector;
+using util::last;
 using util::contains;
 using util::trim;
 using util::filter;
@@ -32,31 +37,69 @@ using util::filter;
 
 // Only variables used to store the chain information
 static const unsigned markovOrder = 2;
-static map<string, map<string, unsigned>> markovModel;
-static bool unknownSeed = false;
+static map<string, vector<pair<string, unsigned>>> markovModel;
+// TODO: uhm, hmm?
+static string joinSeparator = " ";
+static vector<double> coefficientTable = { 1.0/9, 1.0/3, 1.0 };
 
+double randomDouble();
+template<typename T>
+		void increment(vector<pair<string, T>> &l, string str, T n = 1);
+template<typename T>
+		T sum(vector<pair<string, T>> &l);
+template<typename T>
+		T value(vector<pair<string, T>> &l, string str);
 void insert(string text);
 void push(vector<string> words, unsigned order);
 string fetch(vector<string> words);
 string recover(string initial);
 string count(string initial);
 unsigned occurrences(string seed);
-double probability(string seed, string end);
+
+double randomDouble() { // {{{
+	return (double)rand() / RAND_MAX;
+} // }}}
+template<typename T> // {{{
+		void increment(vector<pair<string, T>> &l, string str, T n) {
+	for(auto i : l) {
+		if(i.first == str) {
+			i.second += n;
+			return;
+		}
+	}
+	l.push_back(make_pair(str, n));
+} // }}}
+template<typename T> // {{{
+		T sum(vector<pair<string, T>> &l) {
+	T s = 0;
+	for(auto i : l)
+		s += i.second;
+	return s;
+} // }}}
+template<typename T> // {{{
+		T value(vector<pair<string, T>> &l, string str) {
+	for(auto i : l)
+		if(i.first == str)
+			return i.second;
+	return 0;
+} // }}}
 
 // insert each possible map for a set of words using a specific order
 void push(vector<string> words, unsigned order) { // {{{
 	if(words.size() < order)
 		return;
+	// special case the 0th order chain
+	if(order == 0) {
+		for(auto w : words)
+			increment(markovModel[""], w);
+		return;
+	}
 	// insert first sets of chains
 	for(unsigned s = 0; s < words.size() - order; ++s) {
-		string chain = join(subvector(words, s, order));
+		string chain = join(subvector(words, s, order), joinSeparator);
 		string target = words[s + order];
-		markovModel[chain][target]++;
+		increment(markovModel[chain], target);
 	}
-
-	// insert last set of words -> null mapping
-	string lchain = join(subvector(words, words.size() - order, order));
-	markovModel[lchain][""]++;
 } // }}}
 
 // simple way to push all possible orders of splits for a string
@@ -64,47 +107,38 @@ void insert(string text) { // {{{
 	vector<string> words = split(text);
 	if(words.empty())
 		return;
-	for(unsigned o = 1; o <= markovOrder; ++o)
+	for(unsigned o = 0; o <= markovOrder; ++o)
 		push(words, o);
 } // }}}
 
 // return a random endpoint given a seed
 string fetch(vector<string> seed) { // {{{
-	// top order model
-	map<string, unsigned> seedMap = markovModel[join(seed)];
-	global::log << "seedMap.size: " << seedMap.size() << endl;
-	// smooth with lower order models
-	for(unsigned i = 1; i < seed.size(); ++i) {
-		map<string, unsigned> sMap =
-			markovModel[join(subvector(seed, i, seed.size() - 1))];
-		for(auto j : sMap)
-			if(j.second > 3)
-				seedMap[j.first] += j.second / 3;
-			else
-				seedMap[j.first]++;
+	vector<pair<string, double>> ends;
+	for(unsigned i = 1; (i <= seed.size()) && (i <= markovOrder); ++i) {
+		vector<pair<string, unsigned>> orderI =
+			markovModel[join(last(seed, i), joinSeparator)];
+		for(auto j : orderI)
+			increment(ends, j.first, j.second * coefficientTable[i - 1]);
 	}
-	global::log << "  smoothed: " << seedMap.size() << endl;
 
 	// if we have nothing about that seed, return nothing
-	if(seedMap.empty()) {
-		unknownSeed = true;
+	if(ends.empty())
 		return "";
-	} else {
-		unknownSeed = false;
-	}
 
 	// add up total occurences of all end points
-	unsigned total = 0;
-	for(auto i : seedMap)
-		total += i.second;
+	double total = sum(ends);
 
 	// pick a random number in [0, total)
-	unsigned r = rand() % total;
+	double r = randomDouble() * total;
 
 	// find the end point corresponding to that
-	auto i = seedMap.begin();
-	for(; r >= i->second; ++i)
+	auto i = ends.begin();
+	for(; (i != ends.end()) && (r >= i->second); ++i)
 		r -= i->second;
+	if(i == ends.end()) {
+		global::err << "markov::fetch: oh shit ran off the end of ends!" << endl;
+		return "";
+	}
 	return i->first;
 } // }}}
 
@@ -119,34 +153,36 @@ string recover(string initial) { // {{{
 		if(chain.size() < markovOrder)
 			seed = chain;
 		else
-			seed = subvector(chain, chain.size() - markovOrder, markovOrder);
+			seed = last(chain, markovOrder);
 
 		// find a random endpoint
 		string next = fetch(seed);
 
-		// if it is empty
-		if(next.empty()) {
-			// if it's because we don't know anything about that
-			if(unknownSeed) {
-				return "Sorry, I don't know anything about that";
-			}
-			// check to see if we should try to pick another one or just be done
-			// the goal here is to make it more likely to fetch again when the
-			// string is small
-			double prob = pow(0.7, chain.size());
+		// if it is empty, it's because we don't know anything about that
+		if(next.empty())
+			break;
 
-			// if we haven't even reach chain length yet, make it twice as
-			// unlikely that we don't continue
-			if(chain.size() < markovOrder)
-				prob += (1 - prob) / 2.0;
+		// check to see if we should try to pick another one or just be done
+		// the goal here is to make it more likely to fetch again when the
+		// string is small
+		double prob = pow(0.7, chain.size());
 
-			// if a random num in [0, 1] is above our probability of ending, end
-			if(((double)rand() / RAND_MAX) > prob)
-				done = true;
-		} else {
-			// otherwise add it to the string
-			chain.push_back(next);
-		}
+		// if we haven't even reach chain length yet, make it twice as
+		// unlikely that we don't continue
+		if(chain.size() < markovOrder)
+			prob += (1 - prob) / 2.0;
+
+		// if we're currently ending with a punctuation, greatly increase the
+		// chance of ending and sounding somewhat coherent
+		if(((string)".?;:,").find(next[next.length() - 1]) != string::npos)
+			prob /= 16;
+
+		// if a random num in [0, 1] is above our probability of ending, end
+		if(((double)rand() / RAND_MAX) > prob)
+			done = true;
+
+		// add next to the string
+		chain.push_back(next);
 	}
 
 	// return the generated string
@@ -157,11 +193,7 @@ string recover(string initial) { // {{{
 unsigned occurrences(string seed) { // {{{
 	if(!contains(markovModel, seed))
 		return 0;
-	map<string, unsigned> seedMap = markovModel[seed];
-	unsigned total = 0;
-	for(auto i : seedMap)
-		total += i.second;
-	return total;
+	return sum(markovModel[seed]);
 } // }}}
 
 // list chain count
@@ -170,9 +202,9 @@ string count(string initial) { // {{{
 
 	string seed;
 	if(chain.size() < markovOrder)
-		seed = join(chain);
+		seed = join(chain, joinSeparator);
 	else
-		seed = join(subvector(chain, chain.size() - markovOrder, markovOrder));
+		seed = join(last(chain, markovOrder), joinSeparator);
 
 	// count occurences of the seed string
 	unsigned total = occurrences(seed);
@@ -194,17 +226,13 @@ string count(string initial) { // {{{
 	return ss.str();
 } // }}}
 
-// determine the probability that a chain would occur
-double probability(string seed, string end) { // {{{
-	if(!contains(markovModel, seed) || !contains(markovModel[seed], end))
-		return 0;
-	return (double)markovModel[seed][end] / occurrences(seed);
-} // }}}
-
 MarkovFunction::MarkovFunction() : Function(true) { // {{{
 } // }}}
 string MarkovFunction::run(ChatLine line, smatch matches) { // {{{
-	return recover(matches[1]);
+	string seed = matches[1], r = recover(seed);
+	if(r == seed)
+		return "Sorry, I don't know anything about that";
+	return r;
 } // }}}
 std::string MarkovFunction::passive(global::ChatLine line, bool parsed) { // {{{
 	if(!parsed && !line.text.empty())
@@ -212,7 +240,7 @@ std::string MarkovFunction::passive(global::ChatLine line, bool parsed) { // {{{
 	double r = (double)rand() / RAND_MAX;
 	if(r < config::markovResponseChance) {
 		string res = recover(line.text);
-		if((res != line.text) && !unknownSeed)
+		if(res != line.text)
 			return res;
 	}
 	return "";
@@ -288,7 +316,8 @@ string CorrectionFunction::correct(string line) { // {{{
 	unsigned last = words.size() - (markovOrder + 1);
 	for(unsigned i = 0; i < last; prefix += words[i] + " ", ++i) {
 		vector<string> currentPhrase = subvector(words, i, markovOrder);
-		string seed = join(currentPhrase), target = words[i + markovOrder];
+		string seed = join(currentPhrase, joinSeparator),
+				target = words[i + markovOrder];
 
 		unsigned ocount = occurrences(seed);
 		if(ocount == 0)
@@ -296,7 +325,7 @@ string CorrectionFunction::correct(string line) { // {{{
 
 		double p = 0.0, ap = 1.0/ocount;
 		if(contains(markovModel[seed], target))
-			p = (double)markovModel[seed][target] / ocount;
+			p = value(markovModel[seed], target) / (double)ocount;
 
 		global::log << "seed: \"" << seed << "\","
 			<< " target: \"" << target << "\", "
@@ -306,7 +335,7 @@ string CorrectionFunction::correct(string line) { // {{{
 			string res = trim(prefix);
 			if(!prefix.empty())
 				res += " ";
-			res += recover(join(currentPhrase, " "));
+			res += recover(join(currentPhrase, joinSeparator));
 			if(((string)".?;,:").find(res[res.length() - 1]) == string::npos)
 				res += "?";
 			return res;
