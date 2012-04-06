@@ -1,11 +1,7 @@
-// std includes {{{
 #include <iostream>
 using std::cin;
-using std::cout;
 using std::cerr;
 using std::endl;
-
-using std::skipws;
 
 #include <string>
 using std::string;
@@ -17,37 +13,22 @@ using boost::smatch;
 using boost::regex_match;
 using boost::match_extra;
 
-#include <fstream>
-using std::ofstream;
-using std::ifstream;
-using std::fstream;
-
-#include <map>
-using std::map;
-
-#include <sstream>
-using std::stringstream;
-
 #include <vector>
 using std::vector;
-// }}}
 
 #include "global.hpp"
 #include "config.hpp"
 #include "util.hpp"
 using util::contains;
+using util::fromString;
 #include "modules.hpp"
 #include "function.hpp"
 
 int main(int argc, char **argv) {
 	srand(time(NULL));
-	if(argc > 1) {
-		stringstream ss;
-		ss << argv[1];
-		int seed;
-		ss >> seed;
-		srand(seed);
-	}
+	if(argc > 1)
+		srand(fromString<int>(argv[1]));
+
 	if(!global::init()) {
 		cerr << "pbrane: global::init failed" << endl;
 		return -1;

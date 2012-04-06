@@ -1,18 +1,24 @@
+# places to find and put files
 SDIR=src
-ODIR=obj
+LDIR=lib
 MDIR=modules
+ODIR=obj
 BDIR=.
 
+# main project binaries
 BINS=$(BDIR)/pbrane $(BDIR)/cm
 
-MOBJS=$(ODIR)/modules.o $(ODIR)/function.o $(ODIR)/brain.o
-MOBJS+=$(ODIR)/markov.o $(ODIR)/math.o $(ODIR)/regex.o
-MOBJS+=$(ODIR)/simple.o $(ODIR)/script.o $(ODIR)/todo.o $(ODIR)/core.o
+# module related objects from lib/
+MOBJS=$(ODIR)/brain.o $(ODIR)/modules.o $(ODIR)/util.o
+# module object files from modules/
+MOBJS+=$(ODIR)/core.o $(ODIR)/function.o $(ODIR)/markov.o $(ODIR)/math.o
+MOBJS+=$(ODIR)/regex.o $(ODIR)/script.o $(ODIR)/simple.o $(ODIR)/todo.o
 
+# object files required for main binary
 OBJS=$(MOBJS) $(ODIR)/util.o $(ODIR)/global.o $(ODIR)/config.o
 
 
-CXXFLAGS=-std=c++0x -Imodules -Isrc
+CXXFLAGS=-std=c++0x -I$(SDIR) -I$(LDIR) -I$(MDIR)
 LDFLAGS=-lboost_regex
 
 ifndef release
@@ -43,6 +49,8 @@ $(BDIR)/cm: $(ODIR)/cm.o $(ODIR)/ircsocket.o
 	$(CXX) -o $@ $^ $(LDFLAGS) -lsfml-network -lsfml-system
 
 $(ODIR)/%.o: $(SDIR)/%.cpp
+	$(CXX) -c -o $@ $^ $(CXXFLAGS)
+$(ODIR)/%.o: $(LDIR)/%.cpp
 	$(CXX) -c -o $@ $^ $(CXXFLAGS)
 $(ODIR)/%.o: $(MDIR)/%.cpp
 	$(CXX) -c -o $@ $^ $(CXXFLAGS)
