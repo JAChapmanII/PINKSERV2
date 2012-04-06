@@ -9,6 +9,10 @@ using std::queue;
 #include <vector>
 using std::vector;
 
+#include <random>
+using std::uniform_int_distribution;
+using std::bernoulli_distribution;
+
 #include <boost/regex.hpp>
 using boost::regex;
 
@@ -50,16 +54,20 @@ string LoveFunction::regex() const { // {{{
 string FishFunction::run(ChatLine line, smatch matches) { // {{{
 	int fcount = 1;
 	string es = matches[1];
-	if(!es.empty())
-		fcount = rand() % 6 + 2;
+	if(!es.empty()) {
+		uniform_int_distribution<> uid(2, 7);
+		fcount = uid(global::rengine);
+	}
 
 	string fishies;
+	bernoulli_distribution d(0.50);
+	uniform_int_distribution<> uid(1, 3);
 	for(int i = 0; i < fcount; ++i) {
-		if(rand() % 2)
+		if(d(global::rengine))
 			fishies += "<><";
 		else
 			fishies += "><>";
-		fishies += string(rand() % 3 + 1, ' ');
+		fishies += string(uid(global::rengine), ' ');
 	}
 	return fishies;
 } // }}}
@@ -76,7 +84,10 @@ string FishFunction::regex() const { // {{{
 
 string TrainFunction::run(ChatLine line, smatch matches) { // {{{
 	string extra = matches[1];
-	int ccount = rand() % 8, dir = rand() % 2;
+	uniform_int_distribution<> carCount(0, 8);
+	int ccount = carCount(global::rengine);
+	bernoulli_distribution d(0.50);
+	bool dir = d(global::rengine);
 	string train;
 	if(dir)
 		train += "/.==.]";
@@ -135,7 +146,8 @@ string OrFunction::run(ChatLine line, smatch matches) { // {{{
 		}
 	}
 
-	return results[rand() % results.size()];
+	uniform_int_distribution<> uid(0, results.size() - 1);
+	return results[uid(global::rengine)];
 } // }}}
 string OrFunction::name() const { // {{{
 	return "or";

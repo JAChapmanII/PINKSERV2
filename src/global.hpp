@@ -5,10 +5,12 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <random>
 
 namespace global {
 	extern std::ofstream log;
 	extern std::ofstream err;
+	extern std::mt19937_64 rengine;
 
 	struct ChatLine { // {{{
 		std::string nick;
@@ -23,7 +25,7 @@ namespace global {
 		}
 	}; // }}}
 
-	bool init();
+	bool init(unsigned int seed);
 	bool deinit();
 
 	extern std::vector<ChatLine> lastLog;

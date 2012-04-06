@@ -4,6 +4,7 @@ using std::string;
 using std::vector;
 using std::fstream;
 using std::map;
+using std::mt19937_64;
 
 #include <iostream>
 using std::cout;
@@ -26,14 +27,20 @@ using util::contains;
 
 ofstream global::log;
 ofstream global::err;
+mt19937_64 global::rengine;
 static ofstream chatFile;
+static unsigned int global_seed = 0;
 
 vector<global::ChatLine> global::lastLog;
 vector<string> global::ignoreList;
 map<string, int> global::siMap;
 unsigned global::minSpeakTime = 0;
 
-bool global::init() {
+bool global::init(unsigned int seed) {
+	// handle seeding the random number engine
+	global_seed = seed;
+	rengine.seed(seed);
+
 	log.open(config::logFileName, fstream::app);
 	if(!log.good()) {
 		cerr << "global::init: could not open log file!" << endl;

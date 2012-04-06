@@ -7,6 +7,9 @@ using std::endl;
 using std::string;
 using std::getline;
 
+#include <random>
+using std::random_device;
+
 #include <boost/regex.hpp>
 using boost::regex;
 using boost::smatch;
@@ -21,11 +24,15 @@ using util::contains;
 using util::fromString;
 
 int main(int argc, char **argv) {
-	srand(time(NULL));
-	if(argc > 1)
-		srand(fromString<int>(argv[1]));
+	unsigned int seed = 0;
+	if(argc > 1) {
+		seed = fromString<unsigned int>(argv[1]);
+	} else {
+		random_device randomDevice;
+		seed = randomDevice();
+	}
 
-	if(!global::init()) {
+	if(!global::init(seed)) {
 		cerr << "pbrane: global::init failed" << endl;
 		return -1;
 	}

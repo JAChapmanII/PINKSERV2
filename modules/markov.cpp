@@ -4,6 +4,10 @@ using std::istream;
 using global::ChatLine;
 using boost::smatch;
 
+#include <random>
+using std::uniform_real_distribution;
+using std::generate_canonical;
+
 #include <map>
 using std::map;
 
@@ -42,7 +46,6 @@ static map<string, vector<pair<string, unsigned>>> markovModel;
 static string joinSeparator = " ";
 static vector<double> coefficientTable = { 1.0/16, 1.0/4, 1.0 };
 
-double randomDouble();
 template<typename T>
 		void increment(vector<pair<string, T>> &l, string str, T n = 1);
 template<typename T>
@@ -56,9 +59,6 @@ string recover(string initial);
 string count(string initial);
 unsigned occurrences(string seed);
 
-double randomDouble() { // {{{
-	return (double)rand() / RAND_MAX;
-} // }}}
 template<typename T> // {{{
 		void increment(vector<pair<string, T>> &l, string str, T n) {
 	for(auto i : l) {
@@ -129,7 +129,8 @@ string fetch(vector<string> seed) { // {{{
 	double total = sum(ends);
 
 	// pick a random number in [0, total)
-	double r = randomDouble() * total;
+	uniform_real_distribution<> urd(0, total);
+	double r = urd(global::rengine);
 
 	// find the end point corresponding to that
 	auto i = ends.begin();
@@ -183,7 +184,7 @@ string recover(string initial) { // {{{
 			prob /= 1.5;
 
 		// if a random num in [0, 1] is above our probability of ending, end
-		if(((double)rand() / RAND_MAX) > prob)
+		if(generate_canonical<double, 16>(global::rengine) > prob)
 			done = true;
 
 		// add next to the string
@@ -242,8 +243,8 @@ string MarkovFunction::run(ChatLine line, smatch matches) { // {{{
 std::string MarkovFunction::passive(global::ChatLine line, bool parsed) { // {{{
 	if(!parsed && !line.text.empty())
 		insert(line.text);
-	double r = (double)rand() / RAND_MAX;
-	if(r < config::markovResponseChance) {
+	if(generate_canonical<double, 16>(global::rengine) <
+			config::markovResponseChance) {
 		string res = recover(line.text);
 		if(res != line.text)
 			return res;
@@ -293,8 +294,8 @@ string CorrectionFunction::run(ChatLine line, smatch matches) { // {{{
 string CorrectionFunction::passive(global::ChatLine line, bool parsed) { // {{{
 	if(parsed)
 		return "";
-	double r = (double)rand() / RAND_MAX;
-	if(r < config::correctionResponseChance) {
+	if(generate_canonical<double, 16>(global::rengine) <
+			config::correctionResponseChance) {
 		string cline = this->correct(line.text);
 		if(cline.empty())
 			return "";
