@@ -13,16 +13,12 @@ using boost::smatch;
 using boost::regex_match;
 using boost::match_extra;
 
-#include <vector>
-using std::vector;
-
 #include "global.hpp"
 #include "config.hpp"
+#include "modules.hpp"
 #include "util.hpp"
 using util::contains;
 using util::fromString;
-#include "modules.hpp"
-#include "function.hpp"
 
 int main(int argc, char **argv) {
 	srand(time(NULL));
