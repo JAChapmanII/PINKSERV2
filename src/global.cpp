@@ -102,6 +102,7 @@ bool global::parse(global::ChatLine line) {
 	boost::smatch matches;
 	// loop through setup modules trying to match their regex
 	if(!contains(ignoreList, line.nick) || isOwner(line.nick)) {
+		bool doSend = true;
 		for(auto mod : modules::map) {
 			regex cmodr(mod.second->regex(), regex::perl);
 			// if this module matches
@@ -114,45 +115,47 @@ bool global::parse(global::ChatLine line) {
 					log << "\treturned nothing, moving on" << endl;
 				} else {
 					// log the output/send the output
-					send(otarget, res);
+					send(otarget, res, doSend);
 					matched = true;
 					break;
 				}
 			}
 		}
+
+		doSend = time(NULL) > minSpeakTime;
 		if(!matched) {
 			for(auto mod : modules::map) {
 				string res = mod.second->secondary(line);
 				if(!res.empty()) {
 					log << "Module (secondary) matched: " + mod.first << endl;
-					send(otarget, res);
+					send(otarget, res, doSend);
 					matched = true;
 					break;
 				}
 			}
 		}
-	}
 
-	if(!matched)
-		lastLog.push_back(line);
+		if(!matched)
+			lastLog.push_back(line);
 
-	for(auto module : modules::map) {
-		string res = module.second->passive(line, matched);
-		if(!res.empty()) {
-			log << "Module (passive) matched: " + module.first << endl;
-			send(otarget, res);
+		for(auto module : modules::map) {
+			string res = module.second->passive(line, matched);
+			if(!res.empty()) {
+				log << "Module (passive) matched: " + module.first << endl;
+				send(otarget, res, doSend);
+			}
 		}
 	}
 
 	return matched;
 }
-void global::send(string target, string line) {
+void global::send(string target, string line, bool send) {
 	log << " -> " << target << " :" << line << endl;
 	if(line.length() > config::maxLineLength) {
 		line = line.substr(0, config::maxLineLength);
 		log << "\t(line had to be shortened)" << endl;;
 	}
-	if(time(NULL) < minSpeakTime)
+	if(!send)
 		log << "\t(didn't really send it, we're being quiet)" << endl;
 	else
 		cout << "PRIVMSG " << target << " :" << line << endl;

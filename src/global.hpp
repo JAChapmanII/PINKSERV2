@@ -34,7 +34,7 @@ namespace global {
 	extern unsigned minSpeakTime;
 
 	bool parse(ChatLine line);
-	void send(std::string target, std::string line);
+	void send(std::string target, std::string line, bool send = true);
 
 	bool isOwner(std::string nick);
 	bool isAdmin(std::string nick);
