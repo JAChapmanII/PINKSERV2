@@ -98,7 +98,8 @@ string ShutupFunction::name() const { // {{{
 	return "quiet";
 } // }}}
 string ShutupFunction::help() const { // {{{
-	return "Make me quiet for a 30 minutes or a user specified amount of time";
+	return (string)"Make me quiet for a 30 minutes or a user specified amount "
+		+ "of time [ex: !quiet 60]";
 } // }}}
 string ShutupFunction::regex() const { // {{{
 	return "^!quiet(\\s+(\\d+))?";
