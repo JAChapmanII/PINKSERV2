@@ -84,21 +84,21 @@ string HelpFunction::regex() const { // {{{
 
 
 string ShutupFunction::run(ChatLine line, smatch matches) { // {{{
-	unsigned t = 5;
+	unsigned t = 30;
 	string num = matches[2];
 	if(!num.empty())
 		t = fromString<unsigned>(num);
-	if(t > 60)
-		t = 60;
+	if(t > 180)
+		t = 180;
 
 	global::minSpeakTime = time(NULL) + t*60;
-	return "TODO: fix this so it shows up... lol";
+	return line.nick + ": yes sir, shutting up for " + asString(t) + " minutes";
 } // }}}
 string ShutupFunction::name() const { // {{{
 	return "quiet";
 } // }}}
 string ShutupFunction::help() const { // {{{
-	return "Make me quiet for a few minutes";
+	return "Make me quiet for a 30 minutes or a user specified amount of time";
 } // }}}
 string ShutupFunction::regex() const { // {{{
 	return "^!quiet(\\s+(\\d+))?";
