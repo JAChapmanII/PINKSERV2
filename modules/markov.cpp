@@ -146,6 +146,7 @@ string fetch(vector<string> seed) { // {{{
 // Handles returning markov chains by calling fetch repeatedly
 string recover(string initial) { // {{{
 	vector<string> chain = split(initial);
+	unsigned initialSize = chain.size();
 
 	bool done = false;
 	while(!done) {
@@ -163,14 +164,17 @@ string recover(string initial) { // {{{
 		if(next.empty())
 			break;
 
+		// add next to the string
+		chain.push_back(next);
+
 		// check to see if we should try to pick another one or just be done
 		// the goal here is to make it more likely to fetch again when the
 		// string is small
-		double prob = 6.0 / chain.size();
+		double prob = 5.0 / (chain.size() - initialSize);
 
 		// if we haven't even reach chain length yet, make it twice as
 		// unlikely that we don't continue
-		//if(chain.size() <= markovOrder)
+		if(chain.size() <= initialSize * 1.5)
 			prob += (1 - prob) / 2.0;
 
 		// cap the probability at something somewhat sensible
@@ -181,14 +185,11 @@ string recover(string initial) { // {{{
 		// if we're currently ending with a punctuation, greatly increase the
 		// chance of ending and sounding somewhat coherent
 		if(((string)".?!;").find(next[next.length() - 1]) != string::npos)
-			prob /= 1.5;
+			prob /= 1.85;
 
 		// if a random num in [0, 1] is above our probability of ending, end
 		if(generate_canonical<double, 16>(global::rengine) > prob)
 			done = true;
-
-		// add next to the string
-		chain.push_back(next);
 	}
 
 	// return the generated string
