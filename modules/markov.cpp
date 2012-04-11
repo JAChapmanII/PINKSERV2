@@ -246,7 +246,7 @@ std::string MarkovFunction::passive(global::ChatLine line, bool parsed) { // {{{
 		insert(line.text);
 	if(generate_canonical<double, 16>(global::rengine) <
 			config::markovResponseChance) {
-		string res = recover(line.text);
+		string res = recover(join(last(split(line.text), markovOrder + 1), " "));
 		if(res != line.text)
 			return res;
 	}
@@ -259,7 +259,7 @@ string MarkovFunction::help() const { // {{{
 	return "Returns a markov chain.";
 } // }}}
 string MarkovFunction::regex() const { // {{{
-	return "^!markov\\s+(.*)";
+	return "^!markov\\s+(.+)";
 } // }}}
 ostream &MarkovFunction::output(ostream &out) { // {{{
 	return brain::write(out, markovModel);
