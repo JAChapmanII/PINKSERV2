@@ -1,6 +1,7 @@
 #include "util.hpp"
 using std::vector;
 using std::string;
+#include <unistd.h>
 
 vector<string> util::split(string str, string on) { // {{{
 	vector<string> fields;
@@ -48,5 +49,12 @@ string util::trim(string str, string what) {
 		return "";
 	str = str.substr(firstNotOf);
 	return str.substr(0, str.find_last_not_of(what) + 1);
+}
+
+bool util::file::exists(string filename) {
+	return (access(filename.c_str(), F_OK) == 0);
+}
+bool util::file::executable(string filename) {
+	return (access(filename.c_str(), X_OK) == 0);
 }
 

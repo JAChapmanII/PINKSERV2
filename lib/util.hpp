@@ -26,6 +26,12 @@ namespace util {
 			bool contains(std::map<K, V> map, K key);
 	template<typename K, typename V>
 			bool contains(std::vector<std::pair<K, V>> list, K key);
+
+	namespace file {
+		bool exists(std::string filename);
+		bool executable(std::string filename);
+		//time_t mtime(std::string filename);
+	}
 }
 
 #include "util.imp"
