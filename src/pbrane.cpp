@@ -17,6 +17,7 @@ using boost::regex_match;
 using boost::match_extra;
 
 #include "global.hpp"
+using global::isOwner;
 #include "config.hpp"
 #include "modules.hpp"
 #include "util.hpp"
@@ -61,14 +62,14 @@ int main(int argc, char **argv) {
 			string nick(matches[1]), target(matches[3]), message(matches[4]);
 
 			// start out by trying to match the reload command
-			if(message == config::reload) {
+			if(isOwner(nick) && (message == config::reload)) {
 				global::log << "----- RESTARTING -----" << endl;
 				global::log.flush();
 				done = 78;
 				break;
 			}
 			// next try to just die
-			if(message == config::die) {
+			if(isOwner(nick) && (message == config::die)) {
 				global::log << "----- DIEING -----" << endl;
 				return 77;
 			}
