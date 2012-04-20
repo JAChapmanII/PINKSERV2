@@ -36,6 +36,7 @@ bool modules::init(std::string fileName) {
 	map["or"] = new OrFunction();
 	map["yes"] = new YesFunction(config::nick);
 	map["say"] = new SayFunction();
+	map["tell"] = new TellFunction();
 
 	map["set"] = new SetFunction();
 	map["++"] = new IncrementFunction();
@@ -60,9 +61,12 @@ bool modules::init(std::string fileName) {
 	map["help"] = new HelpFunction();
 	map["shutup"] = new ShutupFunction();
 	map["unshutup"] = new UnShutupFunction();
+	map["kick"] = new KickFunction();
 
 	map["on"] = new OnRegexFunction();
 	map["explain"] = new ExplainFunction();
+
+	map["roulette"] = new RouletteFunction();
 
 	ifstream in(fileName, fstream::binary);
 	cerr << "  init: ";
