@@ -14,6 +14,9 @@ using std::vector;
 #include <exception>
 using std::exception;
 
+#include <random>
+using std::uniform_int_distribution;
+
 #include "global.hpp"
 #include "util.hpp"
 using util::join;
@@ -62,6 +65,18 @@ string OnRegexFunction::secondary(ChatLine line) {
 		if(regex_match(line.text, matches, this->m_regex[i], match_extra)) {
 			ChatLine cl = this->m_lines[i];
 			cl.target = line.target;
+
+			try {
+				boost::regex matchreg("\\$user", regex::perl);
+				global::err << "trying to do replace" << std::endl;
+				global::err << "cl.text: " << cl.text << std::endl;
+				cl.text = regex_replace(cl.text, matchreg, line.nick,
+						boost::match_default | boost::format_all);
+				global::err << "cl.text: " << cl.text << std::endl;
+			} catch(exception &e) {
+				global::err << "had excpetion in on regex:" << e.what() << std::endl;
+			}
+
 			if(global::parse(cl))
 				lastTrigger = this->m_triggers[i];
 		}
@@ -124,5 +139,25 @@ string ExplainFunction::help() const {
 }
 string ExplainFunction::regex() const {
 	return "^!explain(\\s+.*)?";
+}
+
+
+string RouletteFunction::run(ChatLine line, smatch matches) {
+	uniform_int_distribution<> uid(1, 6);
+	if(uid(global::rengine) == 1) {
+		global::kick(line.target, line.nick,
+				(string)"sorry, " + line.nick + ", you lost!");
+		return line.nick + " lost :D hehehe";
+	}
+	return line.nick + ": you're safe for now!";
+}
+string RouletteFunction::name() const {
+	return "roulette";
+}
+string RouletteFunction::help() const {
+	return "Russian roulette!";
+}
+string RouletteFunction::regex() const {
+	return "^!roulette(\\s.*)?";
 }
 
