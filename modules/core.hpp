@@ -39,6 +39,13 @@ class UnShutupFunction : public Function {
 		virtual std::string regex() const;
 };
 
-
+// kick a user
+class KickFunction : public Function {
+	public:
+		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string name() const;
+		virtual std::string help() const;
+		virtual std::string regex() const;
+};
 
 #endif // MODULES_CORE_HPP

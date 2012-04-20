@@ -120,3 +120,21 @@ string UnShutupFunction::regex() const { // {{{
 	return "!unquiet";
 } // }}}
 
+string KickFunction::run(ChatLine line, smatch matches) { // {{{
+	string user = matches[2];
+	if(global::isOwner(line.nick) || global::isAdmin(line.nick)) {
+		global::kick(line.target, user, line.nick + " said so");
+		return line.nick + ": (tried to) kick " + user;
+	}
+	return line.nick + ": you are not authed to do that";
+} // }}}
+string KickFunction::name() const { // {{{
+	return "kick";
+} // }}}
+string KickFunction::help() const { // {{{
+	return "Kick a user";
+} // }}}
+string KickFunction::regex() const { // {{{
+	return "!kick(\\s+(\\w+))";
+} // }}}
+
