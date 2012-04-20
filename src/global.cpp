@@ -33,7 +33,7 @@ static unsigned int global_seed = 0;
 
 vector<global::ChatLine> global::lastLog;
 vector<string> global::ignoreList;
-map<string, int> global::siMap;
+map<string, long long> global::siMap;
 unsigned global::minSpeakTime = 0;
 
 bool global::init(unsigned int seed) {
@@ -166,5 +166,10 @@ bool global::isOwner(std::string nick) {
 }
 bool global::isAdmin(std::string nick) {
 	return contains(config::admins, nick);
+}
+
+void global::kick(string from, string nick, string message) {
+	log << "kick -> " << nick << " from " << from << " :" << message << endl;
+	cout << "KICK " << from << " " << nick << " :" << message << endl;
 }
 

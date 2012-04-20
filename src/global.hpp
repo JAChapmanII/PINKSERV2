@@ -30,7 +30,7 @@ namespace global {
 
 	extern std::vector<ChatLine> lastLog;
 	extern std::vector<std::string> ignoreList;
-	extern std::map<std::string, int> siMap;
+	extern std::map<std::string, long long> siMap;
 	extern unsigned minSpeakTime;
 
 	bool parse(ChatLine line);
@@ -38,6 +38,9 @@ namespace global {
 
 	bool isOwner(std::string nick);
 	bool isAdmin(std::string nick);
+
+
+	void kick(std::string from, std::string nick, std::string message = "");
 }
 
 #endif // GLOBAL_HPP
