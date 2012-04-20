@@ -189,3 +189,17 @@ string SayFunction::regex() const { // {{{
 	return "^!say\\s(.+)";
 } // }}}
 
+string TellFunction::run(ChatLine line, smatch matches) { // {{{
+	global::send(matches[1], matches[2], true);
+	return "";
+} // }}}
+string TellFunction::name() const { // {{{
+	return "tell";
+} // }}}
+string TellFunction::help() const { // {{{
+	return "Tell someone something";
+} // }}}
+string TellFunction::regex() const { // {{{
+	return "^!tell\\s+(.+)\\s+(.+)";
+} // }}}
+

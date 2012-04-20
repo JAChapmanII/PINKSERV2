@@ -81,5 +81,13 @@ class SayFunction : public Function {
 		virtual std::string regex() const;
 };
 
+// Tell someone something
+class TellFunction : public Function {
+	public:
+		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string name() const;
+		virtual std::string help() const;
+		virtual std::string regex() const;
+};
 
 #endif // MODULES_SIMPLE_HPP
