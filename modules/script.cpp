@@ -142,14 +142,22 @@ string ExplainFunction::regex() const {
 }
 
 
+static int gun_next = 6;
+static void spin_gun() {
+	uniform_int_distribution<> uid(0, 5);
+	gun_next = uid(global::rengine);
+}
+
 string RouletteFunction::run(ChatLine line, smatch matches) {
-	uniform_int_distribution<> uid(1, 6);
-	if(uid(global::rengine) == 1) {
-		global::kick(line.target, line.nick,
-				(string)"sorry, " + line.nick + ", you lost!");
-		return line.nick + " lost :D hehehe";
+	if(gun_next >= 6) {
+		spin_gun();
 	}
-	return line.nick + ": you're safe for now!";
+	++gun_next;
+	if(gun_next == 6) {
+		global::kick(line.target, line.nick, "BANG!");
+		return line.nick + " shot himself, hehehe :D";
+	}
+	return line.nick + ": ... click!";
 }
 string RouletteFunction::name() const {
 	return "roulette";
@@ -159,5 +167,19 @@ string RouletteFunction::help() const {
 }
 string RouletteFunction::regex() const {
 	return "^!roulette(\\s.*)?";
+}
+
+string SpinFunction::run(ChatLine line, smatch matches) {
+	spin_gun();
+	return line.nick + ": round and round it goes, where it stopped nobody knows!";
+}
+string SpinFunction::name() const {
+	return "spin";
+}
+string SpinFunction::help() const {
+	return "Spin the barrel of the russian roulette game";
+}
+string SpinFunction::regex() const {
+	return "^!spin(\\s.*)?";
 }
 
