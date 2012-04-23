@@ -200,6 +200,6 @@ string TellFunction::help() const { // {{{
 	return "Tell someone something";
 } // }}}
 string TellFunction::regex() const { // {{{
-	return "^!tell\\s+(.+)\\s+(.+)";
+	return "^!tell\\s+(\\S+)\\s+(.+)";
 } // }}}
 
