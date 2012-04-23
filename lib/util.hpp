@@ -14,6 +14,8 @@ namespace util {
 	std::vector<std::string> last(std::vector<std::string> vec, size_t n);
 	std::string trim(std::string str, std::string what = " \t\r\n");
 
+	bool startsWith(std::string str, std::string prefix);
+
 	template<typename T, typename F>
 			std::vector<T> filter(std::vector<T> vec, F func);
 

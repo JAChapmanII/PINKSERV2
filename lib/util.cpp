@@ -58,3 +58,9 @@ bool util::file::executable(string filename) {
 	return (access(filename.c_str(), X_OK) == 0);
 }
 
+bool util::startsWith(string str, string prefix) {
+	if(prefix.length() > str.length())
+		return false;
+	return str.substr(0, prefix.length()) == prefix;
+}
+
