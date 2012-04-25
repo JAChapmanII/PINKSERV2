@@ -20,6 +20,7 @@ using std::fstream;
 #include "script.hpp"
 #include "simple.hpp"
 #include "todo.hpp"
+#include "post.hpp"
 
 std::map<string, Function *> modules::map;
 static bool modules_inited = false;
@@ -55,7 +56,8 @@ bool modules::init(std::string fileName) {
 	map["markov"] = new MarkovFunction();
 	map["count"] = new ChainCountFunction();
 	map["correct"] = new CorrectionFunction();
-	map["dsize"] = new DictionarySizeFunction();
+
+	map["post"] = new POSTFunction();
 
 	map["todo"] = new TodoFunction(config::todoFileName);
 
@@ -72,7 +74,10 @@ bool modules::init(std::string fileName) {
 	map["spin"] = new SpinFunction();
 
 	ifstream in(fileName, fstream::binary);
-	cerr << "  init: ";
+	cerr << "  init: " << endl;
+	global::dictionary.read(in);
+	cerr << "    wrote dictionary" << endl;
+	cerr << "    modules: " << endl;
 	while(!in.eof() && in.good()) {
 		int length = in.get();
 		if(!in.good()) {
@@ -102,34 +107,12 @@ bool modules::init(std::string fileName) {
 	return true;
 }
 
-/*
-ReplaceFunction
-RegexFunction
-PredefinedRegexFunction
-PushFunction
-PushXMLFunction
-TodoFunction
-WaveFunction
-LoveFunction
-FishFunction
-TrainFunction
-DubstepFunction
-OrFunction
-YesFunction
-BinaryLogFunction
-SetFunction
-EraseFunction
-ListFunction
-IncrementFunction
-DecrementFunction
-IgnoreFunction
-MarkovFunction
-ChainCountFunction
-*/
-
 bool modules::deinit(std::string fileName) {
 	ofstream out(fileName, fstream::binary | fstream::trunc);
-	cerr << "  DEinit: ";
+	cerr << "  DEinit: " << endl;
+	global::dictionary.write(out);
+	cerr << "    read dictionary" << endl;
+	cerr << "    modules: " << endl;
 	if(out.good()) {
 		for(auto m : map) {
 			string name = m.second->name();

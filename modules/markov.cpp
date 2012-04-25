@@ -274,12 +274,10 @@ string MarkovFunction::regex() const { // {{{
 	return "^!markov\\s+(.+)";
 } // }}}
 ostream &MarkovFunction::output(ostream &out) { // {{{
-	markovModel.write(out);
-	return dictionary.write(out);
+	return markovModel.write(out);
 } // }}}
 istream &MarkovFunction::input(istream &in) { // {{{
-	markovModel.read(in);
-	return dictionary.read(in);
+	return markovModel.read(in);
 } // }}}
 
 
