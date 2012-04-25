@@ -61,4 +61,13 @@ class DecrementFunction : public Function {
 		virtual std::string regex() const;
 };
 
+// arbitrary expression function
+class MathFunction : public Function {
+	public:
+		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string name() const;
+		virtual std::string help() const;
+		virtual std::string regex() const;
+};
+
 #endif // MODULES_MATH_HPP

@@ -30,7 +30,6 @@ namespace global {
 
 	extern std::vector<ChatLine> lastLog;
 	extern std::vector<std::string> ignoreList;
-	extern std::map<std::string, long long> siMap;
 	extern unsigned minSpeakTime;
 
 	bool parse(ChatLine line);

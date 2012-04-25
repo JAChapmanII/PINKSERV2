@@ -33,7 +33,6 @@ static unsigned int global_seed = 0;
 
 vector<global::ChatLine> global::lastLog;
 vector<string> global::ignoreList;
-map<string, long long> global::siMap;
 unsigned global::minSpeakTime = 0;
 
 bool global::init(unsigned int seed) {

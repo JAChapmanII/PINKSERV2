@@ -21,7 +21,7 @@ OBJS=$(MOBJS) $(ODIR)/util.o $(ODIR)/global.o $(ODIR)/config.o
 CMOBJS=$(ODIR)/ircsocket.o $(ODIR)/subprocess.o $(ODIR)/util.o
 
 CXXFLAGS=-std=c++0x -I$(SDIR) -I$(LDIR) -I$(MDIR)
-LDFLAGS=-lboost_regex
+LDFLAGS=-lboost_regex -lgmp -lgmpxx
 
 ifndef release
 CXXFLAGS+=-g
