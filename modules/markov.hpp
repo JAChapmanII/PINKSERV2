@@ -7,8 +7,8 @@
 class MarkovFunction : public Function {
 	public:
 		MarkovFunction();
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
-		virtual std::string passive(global::ChatLine line, bool parsed);
+		virtual std::string run(ChatLine line, boost::smatch matches);
+		virtual std::string passive(ChatLine line, bool parsed);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -19,7 +19,7 @@ class MarkovFunction : public Function {
 // list chain count
 class ChainCountFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -28,8 +28,8 @@ class ChainCountFunction : public Function {
 // autocorrect function
 class CorrectionFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
-		virtual std::string passive(global::ChatLine line, bool parsed);
+		virtual std::string run(ChatLine line, boost::smatch matches);
+		virtual std::string passive(ChatLine line, bool parsed);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -40,7 +40,7 @@ class CorrectionFunction : public Function {
 // dictionary size
 class DictionarySizeFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;

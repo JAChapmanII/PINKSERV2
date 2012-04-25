@@ -7,25 +7,13 @@
 #include <map>
 #include <random>
 #include "dictionary.hpp"
+#include "chatline.hpp"
 
 namespace global {
 	extern std::ofstream log;
 	extern std::ofstream err;
 	extern std::mt19937_64 rengine;
 	extern Dictionary<std::string, unsigned> dictionary;
-
-	struct ChatLine { // {{{
-		std::string nick;
-		std::string target;
-		std::string text;
-		bool real, toUs;
-		ChatLine(std::string inick, std::string itarget, std::string itext,
-				bool ireal = true, bool iToUs = false) :
-				nick(inick), target(itarget), text(itext), real(ireal), toUs(iToUs) {
-		}
-		ChatLine() : nick(), target(), text(), real(false), toUs(false) {
-		}
-	}; // }}}
 
 	bool init(unsigned int seed);
 	bool deinit();

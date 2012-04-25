@@ -7,7 +7,7 @@
 // A function to wave to people
 class WaveFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -16,7 +16,7 @@ class WaveFunction : public Function {
 // A function to provide artificial love
 class LoveFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -25,7 +25,7 @@ class LoveFunction : public Function {
 // A function to output some fish(es)
 class FishFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -34,7 +34,7 @@ class FishFunction : public Function {
 // Someone wants a train
 class TrainFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -43,7 +43,7 @@ class TrainFunction : public Function {
 // WUB WUB WUB WUB WUB
 class DubstepFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -52,7 +52,7 @@ class DubstepFunction : public Function {
 // Return one thing or the other
 class OrFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -63,7 +63,7 @@ class YesFunction : public Function {
 	public:
 		YesFunction(std::string nick);
 
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -75,7 +75,7 @@ class YesFunction : public Function {
 // Say something
 class SayFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -84,7 +84,7 @@ class SayFunction : public Function {
 // Tell someone something
 class TellFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;

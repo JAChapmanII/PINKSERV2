@@ -2,7 +2,6 @@
 using std::string;
 using std::fstream;
 using boost::smatch;
-using global::ChatLine;
 
 #include <iostream>
 using std::endl;

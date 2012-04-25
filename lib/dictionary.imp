@@ -19,7 +19,7 @@ template<typename K, typename V> V Dictionary<K, V>::operator[](K key) {
 }
 
 template<typename K, typename V> K Dictionary<K, V>::get(V value) {
-	return this->m_rmap[value] - AnchorCount;
+	return this->m_rmap[value - AnchorCount];
 }
 template<typename K, typename V> K Dictionary<K, V>::operator[](V value) {
 	return this->get(value);

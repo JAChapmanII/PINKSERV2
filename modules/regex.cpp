@@ -3,7 +3,6 @@ using std::string;
 using std::vector;
 using boost::regex;
 using boost::smatch;
-using global::ChatLine;
 
 #include <sstream>
 using std::stringstream;

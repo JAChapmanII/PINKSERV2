@@ -3,7 +3,6 @@ using std::string;
 using std::ostream;
 using std::istream;
 using boost::smatch;
-using global::ChatLine;
 
 Function::Function() : m_write(false) {
 }

@@ -33,7 +33,7 @@ Dictionary<string, unsigned> global::dictionary;
 static ofstream chatFile;
 static unsigned int global_seed = 0;
 
-vector<global::ChatLine> global::lastLog;
+vector<ChatLine> global::lastLog;
 vector<string> global::ignoreList;
 unsigned global::minSpeakTime = 0;
 
@@ -60,7 +60,7 @@ bool global::deinit() {
 	return true;
 }
 
-bool global::parse(global::ChatLine line) {
+bool global::parse(ChatLine line) {
 	// primary regex objects
 	static regex toUsRegex(config::regex::toUs, regex::perl);
 	static regex toUsReplaceRegex(config::regex::toUsReplace, regex::perl);

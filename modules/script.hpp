@@ -9,8 +9,8 @@
 class OnRegexFunction : public Function {
 	public:
 		OnRegexFunction();
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
-		virtual std::string secondary(global::ChatLine line);
+		virtual std::string run(ChatLine line, boost::smatch matches);
+		virtual std::string secondary(ChatLine line);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -21,13 +21,13 @@ class OnRegexFunction : public Function {
 		std::vector<std::string> m_triggers;
 		std::vector<std::string> m_scopes;
 		std::vector<boost::regex> m_regex;
-		std::vector<global::ChatLine> m_lines;
+		std::vector<ChatLine> m_lines;
 };
 
 // explain
 class ExplainFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -36,7 +36,7 @@ class ExplainFunction : public Function {
 // roullette
 class RouletteFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -45,7 +45,7 @@ class RouletteFunction : public Function {
 // spin
 class SpinFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;

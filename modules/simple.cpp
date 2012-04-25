@@ -1,7 +1,6 @@
 #include "simple.hpp"
 using std::string;
 using boost::smatch;
-using global::ChatLine;
 
 #include <queue>
 using std::queue;
@@ -15,6 +14,8 @@ using std::bernoulli_distribution;
 
 #include <boost/regex.hpp>
 using boost::regex;
+
+#include "global.hpp"
 
 string WaveFunction::run(ChatLine line, smatch matches) { // {{{
 	string wave = matches[1];

@@ -1,7 +1,6 @@
 #include "core.hpp"
 using std::string;
 using boost::smatch;
-using global::ChatLine;
 
 #include <ctime>
 

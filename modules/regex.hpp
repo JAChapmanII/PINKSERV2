@@ -8,7 +8,7 @@
 // regex all the things!
 class RegexFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -24,7 +24,7 @@ class PredefinedRegexFunction : public Function {
 
 		std::string push(std::string first, std::string second);
 
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -42,7 +42,7 @@ class PredefinedRegexFunction : public Function {
 class PushFunction : public Function {
 	public:
 		PushFunction();
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -54,7 +54,7 @@ class PushFunction : public Function {
 // invoke a predefined regex
 class InvokeFunction : public Function {
 	public:
-		virtual std::string secondary(global::ChatLine line);
+		virtual std::string secondary(ChatLine line);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -63,7 +63,7 @@ class InvokeFunction : public Function {
 // list the predefined regexes
 class ListRegexesFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;

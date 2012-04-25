@@ -1,7 +1,6 @@
 #include "markov.hpp"
 using std::ostream;
 using std::istream;
-using global::ChatLine;
 using boost::smatch;
 
 #include <random>
@@ -43,7 +42,8 @@ using util::filter;
 using util::asString;
 
 #include "brain.hpp"
-#include "dictionary.hpp"
+#include "global.hpp"
+using global::dictionary;
 
 template<int O> class MarkovModel { // {{{
 	public:
@@ -74,9 +74,9 @@ template<int O> void MarkovModel<O>::increment( // {{{
 		chain.pop();
 
 	// determine the start point id
-	unsigned v = dictionary.fetch("");
+	unsigned v = global::dictionary[""];
 	if(chain.size() == this->m_order)
-		v = dictionary.fetch(chain.front());
+		v = dictionary[chain.front()];
 
 	// insert the chain in the appropriate lower order model
 	this->m_model[v].increment(chain, target, count);
@@ -87,9 +87,9 @@ template<int O> string MarkovModel<O>::random(queue<string> chain) { // {{{
 		chain.pop();
 
 	// determine the start point id
-	unsigned v = dictionary.fetch("");
+	unsigned v = dictionary[""];
 	if(chain.size() == this->m_order)
-		v = dictionary.fetch(chain.front());
+		v = dictionary[chain.front()];
 
 	// fetch random from the appropriate lower order model
 	return this->m_model[v].random(chain);
@@ -100,9 +100,9 @@ template<int O> bool MarkovModel<O>::contains(queue<string> chain) { // {{{
 		chain.pop();
 
 	// determine the start point id
-	unsigned v = dictionary.fetch("");
+	unsigned v = dictionary[""];
 	if(chain.size() == this->m_order)
-		v = dictionary.fetch(chain.front());
+		v = dictionary[chain.front()];
 
 	// if we haven't seen this seed at this level, we can't see it below
 	if(!util::contains(this->m_model, v))
@@ -117,15 +117,15 @@ template<int O> unsigned MarkovModel<O>::operator[](queue<string> chain) { // {{
 		chain.pop();
 
 	// determine the start point id
-	unsigned v = dictionary.fetch("");
+	unsigned v = dictionary[""];
 	if(chain.size() == this->m_order)
-		v = dictionary.fetch(chain.front());
+		v = dictionary[chain.front()];
 
 	// fetch value from the appropriate lower order model
 	return this->m_model[v][chain];
 } // }}}
 template<int O> MarkovModel<O - 1> MarkovModel<O>::operator[](string word) { // {{{
-	return this->m_model[dictionary.fetch(word)];
+	return this->m_model[dictionary[word]];
 } // }}}
 template<int O> unsigned MarkovModel<O>::size() const { // {{{
 	return this->m_model.size();
@@ -159,9 +159,9 @@ template<int O> map<unsigned, unsigned> MarkovModel<O>::endpoint( // {{{
 		chain.pop();
 
 	// determine the start point id
-	unsigned v = dictionary.fetch("");
+	unsigned v = dictionary[""];
 	if(chain.size() == this->m_order)
-		v = dictionary.fetch(chain.front());
+		v = dictionary[chain.front()];
 
 	// fetch value from the appropriate lower order model
 	return this->m_model[v].endpoint(chain);
@@ -172,9 +172,9 @@ template<int O> unsigned MarkovModel<O>::total(queue<string> chain) { // {{{
 		chain.pop();
 
 	// determine the start point id
-	unsigned v = dictionary.fetch("");
+	unsigned v = dictionary[""];
 	if(chain.size() == this->m_order)
-		v = dictionary.fetch(chain.front());
+		v = dictionary[chain.front()];
 
 	// fetch value from the appropriate lower order model
 	return this->m_model[v].total(chain);
@@ -203,7 +203,7 @@ template<> class MarkovModel<0> { // {{{
 
 void MarkovModel<0>::increment( // {{{
 		queue<string> chain, string target, unsigned count) {
-	this->m_model[dictionary.fetch(target)] += count;
+	this->m_model[dictionary[target]] += count;
 	this->m_total += count;
 } // }}}
 string MarkovModel<0>::random(queue<string> chain) { // {{{
@@ -221,17 +221,18 @@ string MarkovModel<0>::random(queue<string> chain) { // {{{
 		std::cerr << "total: " << this->m_total << endl;
 		return "";
 	}
-	return dictionary.fetch(i->first);
+	unsigned word = i->first;
+	return dictionary[word];
 } // }}}
 bool MarkovModel<0>::contains(queue<string> chain) { // {{{
 	if(chain.empty())
 		return false;
-	return util::contains(this->m_model, dictionary.fetch(chain.back()));
+	return util::contains(this->m_model, dictionary[chain.back()]);
 } // }}}
 unsigned MarkovModel<0>::operator[](queue<string> chain) { // {{{
 	if(chain.empty())
 		return 0;
-	return this->m_model[dictionary.fetch(chain.back())];
+	return this->m_model[dictionary[chain.back()]];
 } // }}}
 unsigned MarkovModel<0>::size() const { // {{{
 	return this->m_model.size();
@@ -355,7 +356,7 @@ string fetch(vector<string> seed) { // {{{
 		global::err << "markov::fetch: oh shit ran off the end of ends!" << endl;
 		return "";
 	}
-	return dictionary.fetch(i->first);
+	return dictionary[i->first];
 } // }}}
 
 // Handles returning markov chains by calling fetch repeatedly
@@ -458,7 +459,7 @@ string MarkovFunction::run(ChatLine line, smatch matches) { // {{{
 		return "Sorry, I don't know anything about that";
 	return r;
 } // }}}
-std::string MarkovFunction::passive(global::ChatLine line, bool parsed) { // {{{
+string MarkovFunction::passive(ChatLine line, bool parsed) { // {{{
 	if(!parsed && !line.text.empty())
 		insert(line.text);
 	if(generate_canonical<double, 16>(global::rengine) <
@@ -511,7 +512,7 @@ string CorrectionFunction::run(ChatLine line, smatch matches) { // {{{
 	}
 	return line.nick + ": nothing irregular found, sorry";
 } // }}}
-string CorrectionFunction::passive(global::ChatLine line, bool parsed) { // {{{
+string CorrectionFunction::passive(ChatLine line, bool parsed) { // {{{
 	if(parsed)
 		return "";
 	if(generate_canonical<double, 16>(global::rengine) <

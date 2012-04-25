@@ -2,7 +2,6 @@
 using std::ostream;
 using std::istream;
 using std::string;
-using global::ChatLine;
 
 #include <arpa/inet.h>
 

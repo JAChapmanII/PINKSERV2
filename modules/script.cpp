@@ -6,7 +6,6 @@ using boost::regex;
 using boost::regex_match;
 using boost::match_extra;
 using boost::smatch;
-using global::ChatLine;
 
 #include <vector>
 using std::vector;
@@ -109,7 +108,7 @@ istream &OnRegexFunction::input(istream &in) {
 	brain::read(in, size);
 	for(unsigned i = 0; i < size; ++i) {
 		string trigger, scope;
-		global::ChatLine cl;
+		ChatLine cl;
 		brain::read(in, trigger);
 		brain::read(in, scope);
 		brain::read(in, cl);

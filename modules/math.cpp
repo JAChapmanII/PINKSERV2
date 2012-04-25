@@ -1,7 +1,6 @@
 #include "math.hpp"
 using std::string;
 using boost::smatch;
-using global::ChatLine;
 
 #include <iostream>
 using std::endl;
@@ -22,6 +21,8 @@ using std::stack;
 using std::exception;
 
 #include <gmpxx.h>
+
+#include "global.hpp"
 
 #include "util.hpp"
 using util::contains;

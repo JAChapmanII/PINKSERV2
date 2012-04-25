@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 #include <boost/regex.hpp>
-#include "global.hpp"
+#include "chatline.hpp"
 
 // Base class for all other functions
 class Function {
@@ -18,13 +18,13 @@ class Function {
 		virtual ~Function();
 
 		// This is run when the regex matches.
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 
 		// This is run when no Function has already matched.
-		virtual std::string secondary(global::ChatLine line);
+		virtual std::string secondary(ChatLine line);
 
 		// Run on all Functions even if the line has already been handled
-		virtual std::string passive(global::ChatLine line, bool handled);
+		virtual std::string passive(ChatLine line, bool handled);
 
 		// return a human readable name for this function
 		virtual std::string name() const;

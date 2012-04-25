@@ -6,7 +6,7 @@
 // lg
 class BinaryLogFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -14,7 +14,7 @@ class BinaryLogFunction : public Function {
 // set a variable to something
 class SetFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -22,7 +22,7 @@ class SetFunction : public Function {
 // erase a variable
 class EraseFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -30,7 +30,7 @@ class EraseFunction : public Function {
 // list all variables
 class ListFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -38,7 +38,7 @@ class ListFunction : public Function {
 // get the value of a variable
 class ValueFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -47,7 +47,7 @@ class ValueFunction : public Function {
 // increment a variable
 class IncrementFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -55,7 +55,7 @@ class IncrementFunction : public Function {
 // decrement a variable
 class DecrementFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
@@ -64,7 +64,7 @@ class DecrementFunction : public Function {
 // arbitrary expression function
 class MathFunction : public Function {
 	public:
-		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;

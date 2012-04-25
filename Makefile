@@ -8,8 +8,10 @@ BDIR=.
 # main project binaries
 BINS=$(BDIR)/pbrane $(BDIR)/cm
 
+MOBJS=
 # module related objects from lib/
-MOBJS=$(ODIR)/brain.o $(ODIR)/modules.o $(ODIR)/util.o $(ODIR)/dictionary.o
+MOBJS+=$(ODIR)/brain.o $(ODIR)/modules.o $(ODIR)/util.o $(ODIR)/dictionary.o
+MOBJS+=$(ODIR)/chatline.o
 # module object files from modules/
 MOBJS+=$(ODIR)/core.o $(ODIR)/function.o $(ODIR)/markov.o $(ODIR)/math.o
 MOBJS+=$(ODIR)/regex.o $(ODIR)/script.o $(ODIR)/simple.o $(ODIR)/todo.o
