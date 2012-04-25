@@ -18,6 +18,7 @@ using boost::match_extra;
 
 #include "global.hpp"
 using global::isOwner;
+#include "chatline.hpp"
 #include "config.hpp"
 #include "modules.hpp"
 #include "util.hpp"
@@ -87,7 +88,7 @@ int main(int argc, char **argv) {
 			if(message.empty())
 				global::err << "main: message empty" << endl;
 			else
-				global::parse(global::ChatLine(nick, target, message));
+				global::parse(ChatLine(nick, target, message));
 		// if the current line is a JOIN...
 		} else if(regex_match(line, matches, joinRegex)) {
 			// log all the join messages
