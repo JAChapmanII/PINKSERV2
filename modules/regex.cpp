@@ -18,7 +18,6 @@ using boost::regex_match;
 using boost::match_extra;
 
 #include "util.hpp"
-using util::split;
 using util::contains;
 
 #include "global.hpp"
