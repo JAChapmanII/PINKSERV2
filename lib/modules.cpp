@@ -56,6 +56,7 @@ bool modules::init(std::string fileName) {
 	map["markov"] = new MarkovFunction();
 	map["count"] = new ChainCountFunction();
 	map["correct"] = new CorrectionFunction();
+	map["dsize"] = new DictionarySizeFunction();
 
 	map["post"] = new POSTFunction();
 
@@ -75,7 +76,11 @@ bool modules::init(std::string fileName) {
 
 	ifstream in(fileName, fstream::binary);
 	cerr << "  init: " << endl;
-	global::dictionary.read(in);
+	uint8_t hasDict = false;
+	if(!in.eof() && in.good())
+		hasDict = in.get();
+	if(!in.eof() && in.good() && hasDict)
+		global::dictionary.read(in);
 	cerr << "    wrote dictionary" << endl;
 	cerr << "    modules: " << endl;
 	while(!in.eof() && in.good()) {
@@ -110,6 +115,7 @@ bool modules::init(std::string fileName) {
 bool modules::deinit(std::string fileName) {
 	ofstream out(fileName, fstream::binary | fstream::trunc);
 	cerr << "  DEinit: " << endl;
+	out.put('y');
 	global::dictionary.write(out);
 	cerr << "    read dictionary" << endl;
 	cerr << "    modules: " << endl;
