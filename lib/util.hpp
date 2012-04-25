@@ -7,8 +7,11 @@
 #include <utility>
 
 namespace util {
+	template<typename T> T split(std::string str, std::string on = " \t\r\n");
 	std::vector<std::string> split(std::string str, std::string on = " \t\r\n");
+	template<typename T> std::string join(T strs, std::string with = ", ");
 	std::string join(std::vector<std::string> strs, std::string with = ", ");
+
 	std::vector<std::string> subvector(std::vector<std::string> vec,
 			size_t s, size_t n);
 	std::vector<std::string> last(std::vector<std::string> vec, size_t n);

@@ -4,6 +4,7 @@
 #include <queue>
 #include <string>
 #include <map>
+#include <iostream>
 
 template<int O> class MarkovModel {
 	public:
@@ -17,8 +18,8 @@ template<int O> class MarkovModel {
 		MarkovModel<O - 1> operator[](std::string word);
 		unsigned size() const;
 
-		ostream &write(ostream &out);
-		istream &read(istream &in);
+		std::ostream &write(std::ostream &out);
+		std::istream &read(std::istream &in);
 
 		std::map<unsigned, unsigned> endpoint(std::queue<std::string> chain);
 		unsigned total(std::queue<std::string> chain);
@@ -39,8 +40,8 @@ template<> class MarkovModel<0> {
 		unsigned operator[](std::queue<std::string> chain);
 		unsigned size() const;
 
-		ostream &write(ostream &out);
-		istream &read(istream &in);
+		std::ostream &write(std::ostream &out);
+		std::istream &read(std::istream &in);
 
 		std::map<unsigned, unsigned> endpoint(std::queue<std::string> chain);
 		unsigned total(std::queue<std::string> chain);

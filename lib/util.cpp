@@ -23,7 +23,7 @@ string util::join(vector<string> strs, string with) { // {{{
 	if(strs.empty())
 		return "";
 	string res;
-	for(string str : strs)
+	for(auto str : strs)
 		res += str + with;
 	return res.substr(0, res.length() - with.length());
 } // }}}
