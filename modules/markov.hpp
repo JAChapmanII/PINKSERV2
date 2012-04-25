@@ -37,5 +37,14 @@ class CorrectionFunction : public Function {
 		std::string correct(std::string line);
 };
 
+// dictionary size
+class DictionarySizeFunction : public Function {
+	public:
+		virtual std::string run(global::ChatLine line, boost::smatch matches);
+		virtual std::string name() const;
+		virtual std::string help() const;
+		virtual std::string regex() const;
+};
+
 
 #endif // MODULES_MARKOV_HPP

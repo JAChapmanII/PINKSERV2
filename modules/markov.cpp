@@ -6,6 +6,7 @@ using boost::smatch;
 
 #include <random>
 using std::uniform_real_distribution;
+using std::uniform_int_distribution;
 using std::generate_canonical;
 
 #include <map>
@@ -27,6 +28,9 @@ using std::stringstream;
 #include <iostream>
 using std::endl;
 
+#include <queue>
+using std::queue;
+
 #include "config.hpp"
 #include "util.hpp"
 using util::split;
@@ -36,18 +40,227 @@ using util::last;
 using util::contains;
 using util::trim;
 using util::filter;
+using util::asString;
 
 #include "brain.hpp"
+#include "dictionary.hpp"
 
-// Only variables used to store the chain information
+static Dictionary<string, unsigned> dictionary;
+
+template<int O> class MarkovModel { // {{{
+	public:
+		MarkovModel() : m_order(O), m_model() { }
+		void increment(queue<string> chain, string target, unsigned count = 1);
+		string random(queue<string> chain);
+
+		bool contains(queue<string> chain);
+		unsigned operator[](queue<string> chain);
+		MarkovModel<O - 1> operator[](string word);
+		unsigned size() const;
+
+		ostream &write(ostream &out);
+		istream &read(istream &in);
+
+		map<unsigned, unsigned> endpoint(queue<string> chain);
+		unsigned total(queue<string> chain);
+
+	protected:
+		unsigned m_order;
+		map<unsigned, MarkovModel<O - 1>> m_model;
+}; // }}}
+
+template<int O> void MarkovModel<O>::increment( // {{{
+		queue<string> chain, string target, unsigned count) {
+	// if there are two many words in the prefix, pop them off
+	while(chain.size() > this->m_order)
+		chain.pop();
+
+	// determine the start point id
+	unsigned v = dictionary.fetch("");
+	if(chain.size() == this->m_order)
+		v = dictionary.fetch(chain.front());
+
+	// insert the chain in the appropriate lower order model
+	this->m_model[v].increment(chain, target, count);
+} // }}}
+template<int O> string MarkovModel<O>::random(queue<string> chain) { // {{{
+	// if there are two many words in the prefix, pop them off
+	while(chain.size() > this->m_order)
+		chain.pop();
+
+	// determine the start point id
+	unsigned v = dictionary.fetch("");
+	if(chain.size() == this->m_order)
+		v = dictionary.fetch(chain.front());
+
+	// fetch random from the appropriate lower order model
+	return this->m_model[v].random(chain);
+} // }}}
+template<int O> bool MarkovModel<O>::contains(queue<string> chain) { // {{{
+	// if there are two many words in the prefix, pop them off
+	while(chain.size() > this->m_order)
+		chain.pop();
+
+	// determine the start point id
+	unsigned v = dictionary.fetch("");
+	if(chain.size() == this->m_order)
+		v = dictionary.fetch(chain.front());
+
+	// if we haven't seen this seed at this level, we can't see it below
+	if(!util::contains(this->m_model, v))
+		return false;
+
+	// find out if the lower order model has seen this seed
+	return this->m_model[v].contains(chain);
+} // }}}
+template<int O> unsigned MarkovModel<O>::operator[](queue<string> chain) { // {{{
+	// if there are two many words in the prefix, pop them off
+	while(chain.size() > this->m_order)
+		chain.pop();
+
+	// determine the start point id
+	unsigned v = dictionary.fetch("");
+	if(chain.size() == this->m_order)
+		v = dictionary.fetch(chain.front());
+
+	// fetch value from the appropriate lower order model
+	return this->m_model[v][chain];
+} // }}}
+template<int O> MarkovModel<O - 1> MarkovModel<O>::operator[](string word) { // {{{
+	return this->m_model[dictionary.fetch(word)];
+} // }}}
+template<int O> unsigned MarkovModel<O>::size() const { // {{{
+	return this->m_model.size();
+} // }}}
+template<int O> ostream &MarkovModel<O>::write(ostream &out) { // {{{
+	unsigned s = this->m_model.size();
+	brain::write(out, s);
+	for(auto i : this->m_model) {
+		unsigned f = i.first;
+		brain::write(out, f);
+		i.second.write(out);
+	}
+	return out;
+} // }}}
+template<int O> istream &MarkovModel<O>::read(istream &in) { // {{{
+	unsigned s = 0;
+	brain::read(in, s);
+	for(unsigned i = 0; i < s; ++i) {
+		unsigned key;
+		MarkovModel<O - 1> value;
+		brain::read(in, key);
+		value.read(in);
+		this->m_model[key] = value;
+	}
+	return in;
+} // }}}
+template<int O> map<unsigned, unsigned> MarkovModel<O>::endpoint( // {{{
+		queue<string> chain) {
+	// if there are two many words in the prefix, pop them off
+	while(chain.size() > this->m_order)
+		chain.pop();
+
+	// determine the start point id
+	unsigned v = dictionary.fetch("");
+	if(chain.size() == this->m_order)
+		v = dictionary.fetch(chain.front());
+
+	// fetch value from the appropriate lower order model
+	return this->m_model[v].endpoint(chain);
+} // }}}
+template<int O> unsigned MarkovModel<O>::total(queue<string> chain) { // {{{
+	// if there are two many words in the prefix, pop them off
+	while(chain.size() > this->m_order)
+		chain.pop();
+
+	// determine the start point id
+	unsigned v = dictionary.fetch("");
+	if(chain.size() == this->m_order)
+		v = dictionary.fetch(chain.front());
+
+	// fetch value from the appropriate lower order model
+	return this->m_model[v].total(chain);
+} // }}}
+
+template<> class MarkovModel<0> { // {{{
+	public:
+		MarkovModel() : m_model(), m_total(0) { }
+		void increment(queue<string> chain, string target, unsigned count = 1);
+		string random(queue<string> chain);
+
+		bool contains(queue<string> chain);
+		unsigned operator[](queue<string> chain);
+		unsigned size() const;
+
+		ostream &write(ostream &out);
+		istream &read(istream &in);
+
+		map<unsigned, unsigned> endpoint(queue<string> chain);
+		unsigned total(queue<string> chain);
+
+	protected:
+		map<unsigned, unsigned> m_model;
+		unsigned m_total;
+}; // }}}
+
+void MarkovModel<0>::increment( // {{{
+		queue<string> chain, string target, unsigned count) {
+	this->m_model[dictionary.fetch(target)] += count;
+	this->m_total += count;
+} // }}}
+string MarkovModel<0>::random(queue<string> chain) { // {{{
+	if(this->m_total == 0) {
+		std::cerr << "this map is empty!?" << std::endl;
+		return "";
+	}
+	uniform_int_distribution<> uid(1, this->m_total);
+	unsigned target = uid(global::rengine);
+	auto i = this->m_model.begin();
+	for(; (i != this->m_model.end()) && (target > i->second); ++i)
+		target -= i->second;
+	if(i == this->m_model.end()) {
+		std::cerr << "fell off the bandwagon" << endl;
+		std::cerr << "total: " << this->m_total << endl;
+		return "";
+	}
+	return dictionary.fetch(i->first);
+} // }}}
+bool MarkovModel<0>::contains(queue<string> chain) { // {{{
+	if(chain.empty())
+		return false;
+	return util::contains(this->m_model, dictionary.fetch(chain.back()));
+} // }}}
+unsigned MarkovModel<0>::operator[](queue<string> chain) { // {{{
+	if(chain.empty())
+		return 0;
+	return this->m_model[dictionary.fetch(chain.back())];
+} // }}}
+unsigned MarkovModel<0>::size() const { // {{{
+	return this->m_model.size();
+} // }}}
+ostream &MarkovModel<0>::write(ostream &out) { // {{{
+	return brain::write(out, this->m_model);
+} // }}}
+istream &MarkovModel<0>::read(istream &in) { // {{{
+	brain::read(in, this->m_model);
+	for(auto i : this->m_model)
+		this->m_total += i.second;
+	return in;
+} // }}}
+map<unsigned, unsigned> MarkovModel<0>::endpoint(queue<string> chain) { // {{{
+	return this->m_model;
+} // }}}
+unsigned MarkovModel<0>::total(queue<string> chain) {
+	return this->m_total;
+}
+
 static const unsigned markovOrder = 2;
-static map<string, vector<pair<string, unsigned>>> markovModel;
+static MarkovModel<markovOrder> markovModel;
+
 // TODO: uhm, hmm?
 static string joinSeparator = " ";
-static vector<double> coefficientTable = { 1.0/16, 1.0/4, 1.0 };
+static vector<double> coefficientTable = { 1.0/36, 1.0/6, 1.0 };
 
-template<typename T>
-		void increment(vector<pair<string, T>> &l, string str, T n = 1);
 template<typename T>
 		T sum(vector<pair<string, T>> &l);
 template<typename T>
@@ -57,18 +270,8 @@ void push(vector<string> words, unsigned order);
 string fetch(vector<string> words);
 string recover(string initial);
 string count(string initial);
-unsigned occurrences(string seed);
+unsigned occurrences(vector<string> seed);
 
-template<typename T> // {{{
-		void increment(vector<pair<string, T>> &l, string str, T n) {
-	for(auto i : l) {
-		if(i.first == str) {
-			i.second += n;
-			return;
-		}
-	}
-	l.push_back(make_pair(str, n));
-} // }}}
 template<typename T> // {{{
 		T sum(vector<pair<string, T>> &l) {
 	T s = 0;
@@ -86,19 +289,27 @@ template<typename T> // {{{
 
 // insert each possible map for a set of words using a specific order
 void push(vector<string> words, unsigned order) { // {{{
-	if(words.size() < order)
+	if(words.size() <= order)
 		return;
 	// special case the 0th order chain
 	if(order == 0) {
+		queue<string> empty;
 		for(auto w : words)
-			increment(markovModel[""], w);
+			markovModel.increment(empty, w);
 		return;
 	}
-	// insert first sets of chains
-	for(unsigned s = 0; s < words.size() - order; ++s) {
-		string chain = join(subvector(words, s, order), joinSeparator);
-		string target = words[s + order];
-		increment(markovModel[chain], target);
+
+	// insert first chain (build word queue first)
+	queue<string> chain;
+	for(unsigned i = 0; i < order; ++i)
+		chain.push(words[i]);
+	markovModel.increment(chain, words[order]);
+
+	// insert the remaining chains
+	for(unsigned e = order + 1; e < words.size(); ++e) {
+		chain.pop();
+		chain.push(words[e - 1]);
+		markovModel.increment(chain, words[e]);
 	}
 } // }}}
 
@@ -113,34 +324,40 @@ void insert(string text) { // {{{
 
 // return a random endpoint given a seed
 string fetch(vector<string> seed) { // {{{
-	vector<pair<string, double>> ends;
-	for(unsigned i = 1; (i <= seed.size()) && (i <= markovOrder); ++i) {
-		vector<pair<string, unsigned>> orderI =
-			markovModel[join(last(seed, i), joinSeparator)];
-		for(auto j : orderI)
-			increment(ends, j.first, j.second * coefficientTable[i - 1]);
+	queue<string> chain;
+	for(auto i : seed)
+		chain.push(i);
+	while(chain.size() > markovOrder)
+		chain.pop();
+
+	map<unsigned, double> smoothModel;
+	double smoothModelTotal = 0;
+	while(!chain.empty()) {
+		map<unsigned, unsigned> cmodel = markovModel.endpoint(chain);
+		for(auto i : cmodel) {
+			smoothModel[i.first] += coefficientTable[chain.size()];
+			smoothModelTotal += coefficientTable[chain.size()];
+		}
+		chain.pop();
 	}
 
 	// if we have nothing about that seed, return nothing
-	if(ends.empty())
+	if(smoothModel.empty())
 		return "";
 
-	// add up total occurences of all end points
-	double total = sum(ends);
-
 	// pick a random number in [0, total)
-	uniform_real_distribution<> urd(0, total);
+	uniform_real_distribution<> urd(0, smoothModelTotal);
 	double r = urd(global::rengine);
 
 	// find the end point corresponding to that
-	auto i = ends.begin();
-	for(; (i != ends.end()) && (r >= i->second); ++i)
+	auto i = smoothModel.begin();
+	for(; (i != smoothModel.end()) && (r >= i->second); ++i)
 		r -= i->second;
-	if(i == ends.end()) {
+	if(i == smoothModel.end()) {
 		global::err << "markov::fetch: oh shit ran off the end of ends!" << endl;
 		return "";
 	}
-	return i->first;
+	return dictionary.fetch(i->first);
 } // }}}
 
 // Handles returning markov chains by calling fetch repeatedly
@@ -197,10 +414,11 @@ string recover(string initial) { // {{{
 } // }}}
 
 // count the occurrences of a seed
-unsigned occurrences(string seed) { // {{{
-	if(!contains(markovModel, seed))
-		return 0;
-	return sum(markovModel[seed]);
+unsigned occurrences(vector<string> seed) { // {{{
+	queue<string> chain;
+	for(auto i : seed)
+		chain.push(i);
+	return markovModel.total(chain);
 } // }}}
 
 // list chain count
@@ -213,13 +431,14 @@ string count(string initial) { // {{{
 	else
 		seed = join(last(chain, markovOrder), joinSeparator);
 
+	vector<string> vseed = split(seed);
 	// count occurences of the seed string
-	unsigned total = occurrences(seed);
+	unsigned total = occurrences(vseed);
 
 	// count total endpoints for all seeds
 	unsigned long totalEnds = 0;
-	for(auto i : markovModel)
-		totalEnds += i.second.size();
+	//for(auto i : markovModel)
+		//totalEnds += i.second.size();
 
 	stringstream ss;
 	ss << "Chains starting with: " << seed << ": ("
@@ -262,10 +481,12 @@ string MarkovFunction::regex() const { // {{{
 	return "^!markov\\s+(.+)";
 } // }}}
 ostream &MarkovFunction::output(ostream &out) { // {{{
-	return brain::write(out, markovModel);
+	markovModel.write(out);
+	return dictionary.write(out);
 } // }}}
 istream &MarkovFunction::input(istream &in) { // {{{
-	return brain::read(in, markovModel);
+	markovModel.read(in);
+	return dictionary.read(in);
 } // }}}
 
 
@@ -326,13 +547,13 @@ string CorrectionFunction::correct(string line) { // {{{
 		string seed = join(currentPhrase, joinSeparator),
 				target = words[i + markovOrder];
 
-		unsigned ocount = occurrences(seed);
+		unsigned ocount = occurrences(split(seed));
 		if(ocount == 0)
 			continue;
 
-		double p = 0.0, ap = 1.0/ocount;
-		if(contains(markovModel[seed], target))
-			p = value(markovModel[seed], target) / (double)ocount;
+		double ap = 1.0/ocount, p = 0;
+		// TODO: oh god, p is broken
+		//value(markovModel[seed], target) / (double)ocount;
 
 		global::log << "seed: \"" << seed << "\","
 			<< " target: \"" << target << "\", "
@@ -349,6 +570,20 @@ string CorrectionFunction::correct(string line) { // {{{
 		}
 	}
 	return "";
+} // }}}
+
+
+string DictionarySizeFunction::run(ChatLine line, smatch matches) { // {{{
+	return line.nick + ": " + asString(dictionary.size());
+} // }}}
+string DictionarySizeFunction::name() const { // {{{
+	return "dsize";
+} // }}}
+string DictionarySizeFunction::help() const { // {{{
+	return "Return number of unique 1-grams";
+} // }}}
+string DictionarySizeFunction::regex() const { // {{{
+	return "^!dsize(\\s+.*)?";
 } // }}}
 
 

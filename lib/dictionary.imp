@@ -1,0 +1,35 @@
+#include "brain.hpp"
+
+template<typename K, typename V> Dictionary<K, V>::Dictionary() :
+		m_fmap(), m_rmap() {
+}
+
+template<typename K, typename V> V Dictionary<K, V>::fetch(K key) {
+	auto it = this->m_fmap.find(key);
+	if(it == this->m_fmap.end()) {
+		V value = this->m_fmap.size() + 1;
+		this->m_fmap[key] = value;
+		this->m_rmap[value] = key;
+		return value;
+	}
+	return it->second;
+}
+
+template<typename K, typename V> K Dictionary<K, V>::fetch(V value) {
+	return this->m_rmap[value];
+}
+
+template<typename K, typename V> std::istream &Dictionary<K, V>::read(std::istream &in) {
+	brain::read(in, this->m_fmap);
+	return brain::read(in, this->m_rmap);
+}
+template<typename K, typename V> std::ostream &Dictionary<K, V>::write(std::ostream &out) {
+	brain::write(out, this->m_fmap);
+	return brain::write(out, this->m_rmap);
+}
+
+template<typename K, typename V> unsigned Dictionary<K, V>::size() const {
+	return this->m_fmap.size();
+}
+
+// vim: ft=cpp:

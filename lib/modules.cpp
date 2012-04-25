@@ -55,6 +55,7 @@ bool modules::init(std::string fileName) {
 	map["markov"] = new MarkovFunction();
 	map["count"] = new ChainCountFunction();
 	map["correct"] = new CorrectionFunction();
+	map["dsize"] = new DictionarySizeFunction();
 
 	map["todo"] = new TodoFunction(config::todoFileName);
 
@@ -68,6 +69,7 @@ bool modules::init(std::string fileName) {
 	map["explain"] = new ExplainFunction();
 
 	map["roulette"] = new RouletteFunction();
+	map["spin"] = new SpinFunction();
 
 	ifstream in(fileName, fstream::binary);
 	cerr << "  init: ";
