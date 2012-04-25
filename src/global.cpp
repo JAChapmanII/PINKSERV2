@@ -28,6 +28,8 @@ using util::contains;
 ofstream global::log;
 ofstream global::err;
 mt19937_64 global::rengine;
+Dictionary<string, unsigned> global::dictionary;
+
 static ofstream chatFile;
 static unsigned int global_seed = 0;
 

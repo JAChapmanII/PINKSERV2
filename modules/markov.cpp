@@ -45,8 +45,6 @@ using util::asString;
 #include "brain.hpp"
 #include "dictionary.hpp"
 
-static Dictionary<string, unsigned> dictionary;
-
 template<int O> class MarkovModel { // {{{
 	public:
 		MarkovModel() : m_order(O), m_model() { }

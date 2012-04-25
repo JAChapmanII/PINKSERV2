@@ -6,11 +6,13 @@
 #include <vector>
 #include <map>
 #include <random>
+#include "dictionary.hpp"
 
 namespace global {
 	extern std::ofstream log;
 	extern std::ofstream err;
 	extern std::mt19937_64 rengine;
+	extern Dictionary<std::string, unsigned> dictionary;
 
 	struct ChatLine { // {{{
 		std::string nick;
