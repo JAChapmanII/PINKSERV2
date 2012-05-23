@@ -14,6 +14,12 @@ void MarkovModel<0>::increment( // {{{
 	this->m_model[global::dictionary[target]] += count;
 	this->m_total += count;
 } // }}}
+void MarkovModel<0>::increment(std::queue<unsigned> chain, unsigned target,
+		unsigned count) {
+	this->m_model[target] += count;
+	this->m_total += count;
+}
+
 std::string MarkovModel<0>::random(std::queue<std::string> chain) { // {{{
 	if(this->m_total == 0) {
 		std::cerr << "this std::map is empty!?" << std::endl;
@@ -42,6 +48,12 @@ unsigned MarkovModel<0>::operator[](std::queue<std::string> chain) { // {{{
 		return 0;
 	return this->m_model[global::dictionary[chain.back()]];
 } // }}}
+std::map<unsigned, unsigned>::iterator MarkovModel<0>::begin() { // {{{
+	return this->m_model.begin();
+} // }}}
+std::map<unsigned, unsigned>::iterator MarkovModel<0>::end() { // {{{
+	return this->m_model.end();
+} // }}}
 unsigned MarkovModel<0>::size() const { // {{{
 	return this->m_model.size();
 } // }}}
@@ -57,6 +69,9 @@ std::istream &MarkovModel<0>::read(std::istream &in) { // {{{
 std::map<unsigned, unsigned> MarkovModel<0>::endpoint(std::queue<std::string> chain) { // {{{
 	return this->m_model;
 } // }}}
+std::map<unsigned, unsigned> MarkovModel<0>::endpoint(std::queue<unsigned> chain) {
+	return this->m_model;
+}
 unsigned MarkovModel<0>::total(std::queue<std::string> chain) { // {{{
 	return this->m_total;
 } // }}}
