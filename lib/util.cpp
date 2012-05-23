@@ -28,21 +28,6 @@ string util::join(vector<string> strs, string with) { // {{{
 	return res.substr(0, res.length() - with.length());
 } // }}}
 
-vector<string> util::subvector(vector<string> vec, size_t s, size_t n) { // {{{
-	vector<string> res;
-	if(s >= vec.size())
-		return res;
-	if(s + n >= vec.size())
-		n = vec.size() - s;
-	res.insert(res.begin(), vec.begin() + s, vec.begin() + s + n);
-	return res;
-} // }}}
-vector<string> util::last(vector<string> vec, size_t n) {
-	if(n > vec.size())
-		n = vec.size();
-	return subvector(vec, vec.size() - n, n);
-}
-
 string util::trim(string str, string what) {
 	size_t firstNotOf = str.find_first_not_of(what);
 	if(firstNotOf == string::npos)

@@ -12,9 +12,10 @@ namespace util {
 	template<typename T> std::string join(T strs, std::string with = ", ");
 	std::string join(std::vector<std::string> strs, std::string with = ", ");
 
-	std::vector<std::string> subvector(std::vector<std::string> vec,
+	template<typename T> std::vector<T> subvector(std::vector<T> vec,
 			size_t s, size_t n);
-	std::vector<std::string> last(std::vector<std::string> vec, size_t n);
+	template<typename T> std::vector<T> last(std::vector<T> vec, size_t n);
+
 	std::string trim(std::string str, std::string what = " \t\r\n");
 
 	bool startsWith(std::string str, std::string prefix);

@@ -27,6 +27,23 @@ template<typename T> std::string util::join(T strs, std::string with) { // {{{
 	return res.substr(0, res.length() - with.length());
 } // }}}
 
+template<typename T> std::vector<T> util::subvector(std::vector<T> vec, // {{{
+		size_t s, size_t n) {
+	std::vector<T> res;
+	if(s >= vec.size())
+		return res;
+	if(s + n >= vec.size())
+		n = vec.size() - s;
+	res.insert(res.begin(), vec.begin() + s, vec.begin() + s + n);
+	return res;
+} // }}}
+template<typename T> std::vector<T> util::last(std::vector<T> vec, size_t n) {
+	if(n > vec.size())
+		n = vec.size();
+	return subvector(vec, vec.size() - n, n);
+}
+
+
 template<typename T, typename F>
 		std::vector<T> util::filter(std::vector<T> vec, F func) {
 	std::vector<T> res;
