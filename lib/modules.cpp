@@ -59,6 +59,7 @@ bool modules::init(std::string fileName) {
 	map["dsize"] = new DictionarySizeFunction();
 
 	map["post"] = new POSTFunction();
+	map["post_train"] = new POSTTrainFunction();
 
 	map["todo"] = new TodoFunction(config::todoFileName);
 
