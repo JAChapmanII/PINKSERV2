@@ -128,8 +128,8 @@ string fetch(vector<string> seed) { // {{{
 	while(!chain.empty()) {
 		map<unsigned, unsigned> cmodel = markovModel.endpoint(chain);
 		for(auto i : cmodel) {
-			smoothModel[i.first] += coefficientTable[chain.size()];
-			smoothModelTotal += coefficientTable[chain.size()];
+			smoothModel[i.first] += coefficientTable[chain.size()] * i.second;
+			smoothModelTotal += coefficientTable[chain.size()] * i.second;
 		}
 		chain.pop();
 	}
