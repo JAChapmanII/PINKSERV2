@@ -38,12 +38,14 @@ string cleanWith(string dirty) { // {{{
 
 
 string RegexFunction::run(ChatLine line, smatch matches) { // {{{
-	string replace = matches[2], with = cleanWith(matches[3]);
+	string replace = matches[2], with = cleanWith(matches[3]), nick = matches[5];
 	try {
 		boost::regex rregex(replace, regex::perl);
 		for(auto i = global::lastLog.rbegin(); i != global::lastLog.rend(); ++i) {
 			string str = regex_replace(i->text, rregex, with,
 					boost::match_default | boost::format_all);
+			if(!nick.empty() && (nick != i->nick))
+				continue;
 			if(str != i->text) {
 				string result = "<" + i->nick + "> " + str;
 				global::lastLog.push_back(ChatLine(
@@ -61,10 +63,11 @@ string RegexFunction::name() const { // {{{
 } // }}}
 string RegexFunction::help() const { // {{{
 	return (string)"Give it two regex, it finds the last message that" +
-		" matches the first and substitutes it with the second";
+		" matches the first and substitutes it with the second. You can" +
+		" append a nick to the very end to restrict the match further";
 } // }}}
 string RegexFunction::regex() const { // {{{
-	return "^(!)?s/([^/]+)/([^/]*)/?$";
+	return "^(!)?s/([^/]+)/([^/]*)(/(.+)?)?$";
 } // }}}
 
 
