@@ -54,6 +54,9 @@ static MarkovModel<markovOrder> markovModel;
 static string joinSeparator = " ";
 static vector<double> coefficientTable = { 1.0/36, 1.0/6, 1.0 };
 
+// TODO: oh god why
+static bool lastWasQuestion = false;
+
 template<typename T>
 		T sum(vector<pair<string, T>> &l);
 template<typename T>
@@ -256,11 +259,19 @@ string MarkovFunction::run(ChatLine line, smatch matches) { // {{{
 string MarkovFunction::passive(ChatLine line, bool parsed) { // {{{
 	if(!parsed && !line.text.empty())
 		insert(line.text);
+	if(lastWasQuestion) {
+		lastWasQuestion = false;
+		return "Ah, OK! Thanks!";
+	}
+
 	if(generate_canonical<double, 16>(global::rengine) <
 			config::markovResponseChance) {
 		string res = recover(join(last(split(line.text), markovOrder + 1), " "));
-		if(res != line.text)
+		if(res != line.text) {
+			if(res[res.length() - 1] == '?')
+				lastWasQuestion = true;
 			return res;
+		}
 	}
 	return "";
 } // }}}
@@ -312,7 +323,8 @@ string CorrectionFunction::passive(ChatLine line, bool parsed) { // {{{
 		string cline = this->correct(line.text);
 		if(cline.empty())
 			return "";
-		return line.nick + ": did you mean " + cline;
+		// TODO: remove this entirely? Config option?
+		return /*line.nick + ": did you mean " +*/ cline;
 	}
 	return "";
 } // }}}
