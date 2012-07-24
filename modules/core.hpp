@@ -6,10 +6,15 @@
 // ignore
 class IgnoreFunction : public Function {
 	public:
+		IgnoreFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string name() const;
 		virtual std::string help() const;
 		virtual std::string regex() const;
+
+	protected:
+		virtual std::ostream &output(std::ostream &out);
+		virtual std::istream &input(std::istream &in);
 };
 
 // help

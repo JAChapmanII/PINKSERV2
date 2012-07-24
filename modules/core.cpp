@@ -1,5 +1,7 @@
 #include "core.hpp"
 using std::string;
+using std::ostream;
+using std::istream;
 using boost::smatch;
 
 #include <ctime>
@@ -13,6 +15,8 @@ using util::asString;
 #include "modules.hpp"
 
 
+IgnoreFunction::IgnoreFunction() : Function(true) { // {{{
+}// }}}
 string IgnoreFunction::run(ChatLine line, smatch matches) { // {{{
 	if(!global::isOwner(line.nick) && !global::isAdmin(line.nick))
 		return "";
@@ -50,6 +54,24 @@ string IgnoreFunction::help() const { // {{{
 } // }}}
 string IgnoreFunction::regex() const { // {{{
 	return "^!ignore(?:\\s+(!)?(\\S+))?";
+} // }}}
+ostream &IgnoreFunction::output(ostream &out) { // {{{
+	unsigned char size = global::ignoreList.size();
+	out << size;
+	for(auto nick : global::ignoreList)
+		brain::write(out, nick);
+	return out;
+}// }}}
+istream &IgnoreFunction::input(istream &in) { // {{{
+	int size = in.get();
+	if(size < 0)
+		return in;
+	for(int i = 0; i < size; ++i) {
+		string nick;
+		brain::read(in, nick);
+		global::ignoreList.push_back(nick);
+	}
+	return in;
 } // }}}
 
 
