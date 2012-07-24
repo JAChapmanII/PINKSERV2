@@ -3,10 +3,10 @@ using std::string;
 using std::vector;
 
 namespace config {
-	string nick = "PINKSERV2";
+	string nick = "Pinky2";
 	string owner = "jac";
-	vector<string> admins =
-		{ "Jext", "bonzairob", "Tricky", "AndrewFM", "RGCockatrices", "Streak" };
+	string startupFile = nick + ".startup";
+	vector<string> admins = { "jac" };
 	string reload = nick + ": reload";
 	string die = nick + ": die";
 	string logFileName = nick + ".log";
@@ -15,8 +15,8 @@ namespace config {
 	string todoFileName = nick + ".todo";
 	string brainFileName = nick + ".brain";
 	unsigned int maxLineLength = 512;
-	double markovResponseChance = 0.08;
-	double correctionResponseChance = 0.16;
+	double markovResponseChance = 0.14;
+	double correctionResponseChance = 0.06;
 
 	namespace regex {
 		string user = "([A-Za-z0-9_]*)";

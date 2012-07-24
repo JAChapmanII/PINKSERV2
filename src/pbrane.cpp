@@ -50,6 +50,8 @@ int main(int argc, char **argv) {
 		global::log << module.second->name() << " ";
 	global::log << endl;;
 
+	global::secondaryInit();
+
 	// while there is more input coming
 	int done = 0;
 	while(!cin.eof() && !done) {

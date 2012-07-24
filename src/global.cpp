@@ -1,5 +1,6 @@
 #include "global.hpp"
 using std::ofstream;
+using std::ifstream;
 using std::string;
 using std::vector;
 using std::fstream;
@@ -54,6 +55,24 @@ bool global::init(unsigned int seed) {
 	}
 	return true;
 }
+
+void global::secondaryInit() {
+	ifstream startup(config::startupFile);
+	if(startup.good()) {
+		log << "reading startup file: " << config::startupFile << endl;
+		ChatLine cl(config::owner, config::nick, "", false, true);
+		while(startup.good() && !startup.eof()) {
+			getline(startup, cl.text);
+			if(startup.eof())
+				break;
+			if(cl.text.empty())
+				continue;
+			log << "\t" << cl.text << endl;
+			parse(cl);
+		}
+	}
+}
+
 bool global::deinit() {
 	log.close();
 	err.close();

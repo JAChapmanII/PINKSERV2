@@ -16,6 +16,7 @@ namespace global {
 	extern Dictionary<std::string, unsigned> dictionary;
 
 	bool init(unsigned int seed);
+	void secondaryInit();
 	bool deinit();
 
 	extern std::vector<ChatLine> lastLog;
