@@ -25,6 +25,7 @@ using util::contains;
 #include "brain.hpp"
 using std::ostream;
 using std::istream;
+#include "config.hpp"
 
 static map<string, PredefinedRegexFunction *> prfs;
 
@@ -48,6 +49,8 @@ string RegexFunction::run(ChatLine line, smatch matches) { // {{{
 				continue;
 			if(str != i->text) {
 				string result = "<" + i->nick + "> " + str;
+				if(str.length() > config::maxLineLength)
+					str = str.substr(0, config::maxLineLength);
 				global::lastLog.push_back(ChatLine(
 							i->nick, line.target, str, false));
 				return result;
@@ -114,6 +117,8 @@ string PredefinedRegexFunction::run(ChatLine line, smatch matches) { // {{{
 					str = regex_replace(str, this->m_replaces[j],
 							this->m_second[j], boost::match_default | boost::format_all);
 				}
+				if(str.length() > config::maxLineLength)
+					str = str.substr(0, config::maxLineLength);
 				global::lastLog.push_back(ChatLine(nick, line.target, str, false));
 				return (string)"<" + nick + "> " + str;
 			}
