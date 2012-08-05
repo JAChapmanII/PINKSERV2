@@ -16,6 +16,8 @@ using std::exception;
 #include <random>
 using std::uniform_int_distribution;
 
+#include <ctime>
+
 #include "global.hpp"
 #include "util.hpp"
 using util::join;
@@ -54,6 +56,8 @@ string OnRegexFunction::run(ChatLine line, smatch matches) {
 }
 
 string OnRegexFunction::secondary(ChatLine line) {
+	if(time(NULL) <= global::minSpeakTime)
+		return "";
 	smatch matches;
 	for(unsigned i = 0; i < this->m_regex.size(); ++i) {
 		if(!this->m_scopes[i].empty()) {
