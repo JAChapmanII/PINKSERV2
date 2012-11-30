@@ -40,6 +40,7 @@ using util::contains;
 using util::trim;
 using util::filter;
 using util::asString;
+using util::fromString;
 
 #include "brain.hpp"
 #include "global.hpp"
@@ -400,5 +401,48 @@ string DictionarySizeFunction::help() const { // {{{
 string DictionarySizeFunction::regex() const { // {{{
 	return "^!dsize(\\s+.*)?";
 } // }}}
+
+
+string RandomWordFunction::run(ChatLine line, smatch matches) { // {{{
+	string mins = matches[2], maxs = matches[3];
+
+	queue<string> chain;
+	// get 0th order model
+	map<unsigned, unsigned> model0 = markovModel.endpoint(chain);
+	// TODO: already defined maybe?
+	double totalWeight = 0;
+	for(auto i : model0)
+		totalWeight += i.second;
+
+	double min = 0, max = 1;
+	if(!mins.empty())
+		min = fromString<double>(mins);
+	if(!maxs.empty())
+		max = fromString<double>(maxs);
+
+	// pick a random number in [0, total)
+	uniform_real_distribution<> urd(min, max * totalWeight);
+	double r = urd(global::rengine);
+
+	// find the end point corresponding to that
+	auto i = model0.begin();
+	for(; (i != model0.end()) && (r >= i->second); ++i)
+		r -= i->second;
+	if(i == model0.end()) {
+		global::err << "markov::fetch: oh shit ran off the end of ends!" << endl;
+		return "";
+	}
+	return dictionary[i->first];
+} // }}}
+string RandomWordFunction::name() const { // {{{
+	return "rword";
+} // }}}
+string RandomWordFunction::help() const { // {{{
+	return "Returns a random word (can be restricted to range)";
+} // }}}
+string RandomWordFunction::regex() const { // {{{
+	return "^!rword(\\s+(\\d+)\\s+(\\d+).*?)?";
+} // }}}
+
 
 
