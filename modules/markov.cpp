@@ -52,7 +52,8 @@ static MarkovModel<markovOrder> markovModel;
 
 // TODO: uhm, hmm?
 static string joinSeparator = " ";
-static vector<double> coefficientTable = { 1.0/36, 1.0/6, 1.0 };
+// TODO: best values for these?
+static vector<double> coefficientTable = { 1.0/128.0, 1.0/8.0, 1.0 };
 
 // TODO: oh god why
 static bool lastWasQuestion = false;
@@ -118,6 +119,10 @@ void insert(string text) { // {{{
 		push(words, o);
 } // }}}
 
+#include <iostream>
+using std::cerr;
+using std::endl;
+
 // return a random endpoint given a seed
 string fetch(vector<string> seed) { // {{{
 	queue<string> chain;
@@ -131,8 +136,9 @@ string fetch(vector<string> seed) { // {{{
 	while(!chain.empty()) {
 		map<unsigned, unsigned> cmodel = markovModel.endpoint(chain);
 		for(auto i : cmodel) {
-			smoothModel[i.first] += coefficientTable[chain.size()] * i.second;
-			smoothModelTotal += coefficientTable[chain.size()] * i.second;
+			// TODO: see how the division here works out
+			smoothModel[i.first] += coefficientTable[chain.size()] / cmodel.size() * i.second;
+			smoothModelTotal += coefficientTable[chain.size()] / cmodel.size() * i.second;
 		}
 		chain.pop();
 	}
@@ -140,6 +146,13 @@ string fetch(vector<string> seed) { // {{{
 	// if we have nothing about that seed, return nothing
 	if(smoothModel.empty())
 		return "";
+
+	// add 0th order model
+	map<unsigned, unsigned> model0 = markovModel.endpoint(chain);
+	for(auto i : model0) {
+		smoothModel[i.first] += coefficientTable[0] / model0.size() * i.second;
+		smoothModelTotal += coefficientTable[0] / model0.size() * i.second;
+	}
 
 	// pick a random number in [0, total)
 	uniform_real_distribution<> urd(0, smoothModelTotal);
