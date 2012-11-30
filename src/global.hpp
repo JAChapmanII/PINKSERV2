@@ -24,6 +24,15 @@ namespace global {
 	extern unsigned minSpeakTime;
 
 	bool parse(ChatLine line);
+	struct ExpressionResult {
+		std::string result;
+		bool matched;
+		bool doSend;
+
+		ExpressionResult() : result(""), matched(false), doSend(false) {
+		}
+	};
+	ExpressionResult run(ChatLine line, std::string message);
 	void send(std::string target, std::string line, bool send = true);
 
 	bool isOwner(std::string nick);

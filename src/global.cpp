@@ -1,4 +1,5 @@
 #include "global.hpp"
+using global::ExpressionResult;
 using std::ofstream;
 using std::ifstream;
 using std::string;
@@ -25,6 +26,7 @@ using boost::match_extra;
 #include "modules.hpp"
 #include "util.hpp"
 using util::contains;
+using util::split;
 
 ofstream global::log;
 ofstream global::err;
@@ -118,56 +120,72 @@ bool global::parse(ChatLine line) {
 		line.toUs = true;
 	}
 
-	bool matched = false;
+	ExpressionResult res = run(line, message);
+	if(!res.result.empty())
+		send(otarget, res.result, res.doSend);
+
+	return res.matched;
+}
+
+ExpressionResult global::run(ChatLine line, string message) {
+	ExpressionResult ret;
+
+	/* TODO: maybe? Or have !text command?
+	size_t tsep = line.text.find(";;");
+	if(tsep != string::npos) {
+		lastLog.push_back(ChatLine(line.nick, line.target,
+					line.text.substr(0, tsep), line.real, line.toUs));
+		line.text = trim(line.text.substr(tsep + 2));
+	}
+	if(line.text.empty())
+		return ret;
+	*/
+
 	boost::smatch matches;
 	// loop through setup modules trying to match their regex
-	if(!contains(ignoreList, line.nick) || isOwner(line.nick)) {
-		bool doSend = true;
-		for(auto mod : modules::map) {
-			regex cmodr(mod.second->regex(), regex::perl);
-			// if this module matches
-			if(regex_match(message, matches, cmodr, match_extra)) {
-				// log that we got a hit
-				log << "Module matched: " << mod.first << endl;
-				// run the module
-				string res = mod.second->run(line, matches);
-				if(res.empty()) {
-					log << "\treturned nothing, moving on" << endl;
-				} else {
-					// log the output/send the output
-					send(otarget, res, doSend);
-					matched = true;
-					break;
-				}
-			}
-		}
+	if(contains(ignoreList, line.nick) && !isOwner(line.nick))
+		return ret;
 
-		doSend = time(NULL) > minSpeakTime;
-		if(!matched) {
-			for(auto mod : modules::map) {
-				string res = mod.second->secondary(line);
-				if(!res.empty()) {
-					log << "Module (secondary) matched: " + mod.first << endl;
-					send(otarget, res, doSend);
-					matched = true;
-					break;
-				}
-			}
-		}
-
-		if(!matched)
-			lastLog.push_back(line);
-
-		for(auto module : modules::map) {
-			string res = module.second->passive(line, matched);
-			if(!res.empty()) {
-				log << "Module (passive) matched: " + module.first << endl;
-				send(otarget, res, doSend);
+	ret.doSend = true;
+	for(auto mod : modules::map) {
+		regex cmodr(mod.second->regex(), regex::perl);
+		// if this module matches
+		if(regex_match(message, matches, cmodr, match_extra)) {
+			// log that we got a hit
+			log << "Module matched: " << mod.first << endl;
+			// run the module
+			ret.result = mod.second->run(line, matches);
+			if(ret.result.empty()) {
+				log << "\treturned nothing, moving on" << endl;
+			} else {
+				// log the output/send the output
+				ret.matched = true;
+				return ret;
 			}
 		}
 	}
 
-	return matched;
+	ret.doSend = time(NULL) > minSpeakTime;
+	for(auto mod : modules::map) {
+		ret.result = mod.second->secondary(line);
+		if(!ret.result.empty()) {
+			log << "Module (secondary) matched: " + mod.first << endl;
+			ret.matched = true;
+			return ret;
+		}
+	}
+
+	lastLog.push_back(line);
+
+	for(auto module : modules::map) {
+		ret.result = module.second->passive(line, ret.matched);
+		if(!ret.result.empty()) {
+			log << "Module (passive) matched: " + module.first << endl;
+			return ret;
+		}
+	}
+
+	return ret;
 }
 void global::send(string target, string line, bool send) {
 	log << " -> " << target << " :" << line << endl;
