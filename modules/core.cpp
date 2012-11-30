@@ -105,7 +105,7 @@ string HelpFunction::regex() const { // {{{
 
 
 string ShutupFunction::run(ChatLine line, smatch matches) { // {{{
-	unsigned t = 30;
+	unsigned t = 120;
 	string num = matches[2];
 	if(!num.empty())
 		t = fromString<unsigned>(num);
