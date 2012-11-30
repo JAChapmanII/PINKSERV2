@@ -6,7 +6,7 @@ ODIR=obj
 BDIR=.
 
 # main project binaries
-BINS=$(BDIR)/pbrane $(BDIR)/cm
+BINS=$(BDIR)/pbrane
 
 MOBJS=
 # module related objects from lib/
@@ -19,9 +19,6 @@ MOBJS+=$(ODIR)/post.o
 
 # object files required for main binary
 OBJS=$(MOBJS) $(ODIR)/util.o $(ODIR)/global.o $(ODIR)/config.o
-
-# object files required for cm
-CMOBJS=$(ODIR)/ircsocket.o $(ODIR)/subprocess.o $(ODIR)/util.o
 
 CXXFLAGS=-std=c++0x -I$(SDIR) -I$(LDIR) -I$(MDIR)
 LDFLAGS=-lboost_regex -lgmp -lgmpxx
@@ -50,8 +47,6 @@ dir:
 
 $(BDIR)/pbrane: $(ODIR)/pbrane.o $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
-$(BDIR)/cm: $(ODIR)/cm.o $(CMOBJS)
-	$(CXX) -o $@ $^ $(LDFLAGS) -lsfml-network -lsfml-system
 
 $(ODIR)/%.o: $(SDIR)/%.cpp
 	$(CXX) -c -o $@ $^ $(CXXFLAGS)
