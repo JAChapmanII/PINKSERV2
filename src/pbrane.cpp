@@ -77,16 +77,6 @@ int main(int argc, char **argv) {
 				return 77;
 			}
 
-			// TODO: un awful hack this
-			// If Pokengine is the user speaking for someone on the MMO, attempt
-			// to translate the message to be what it appears as in the MMO.
-			if((nick == "Pokengine") && (message[0] == '<')) {
-				nick = message.substr(1);
-				nick = nick.substr(0, nick.find(">"));
-				message = message.substr(message.find(">") + 1);
-				message = message.substr(message.find_first_not_of(" \t\r\n"));
-			}
-
 			if(message.empty())
 				global::err << "main: message empty" << endl;
 			else
