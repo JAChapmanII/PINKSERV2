@@ -48,7 +48,11 @@ string RegexFunction::run(ChatLine line, smatch matches) { // {{{
 			if(!nick.empty() && (nick != i->nick))
 				continue;
 			if(str != i->text) {
-				string result = "<" + i->nick + "> " + str;
+				string result = "";
+				// TODO this is kind of a hack...
+				if(!i->nick.empty())
+					result += "<" + i->nick + "> ";
+				result += str;
 				if(str.length() > config::maxLineLength)
 					str = str.substr(0, config::maxLineLength);
 				global::lastLog.push_back(ChatLine(

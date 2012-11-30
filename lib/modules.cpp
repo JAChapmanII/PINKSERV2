@@ -75,6 +75,8 @@ bool modules::init(std::string fileName) {
 	map["roulette"] = new RouletteFunction();
 	map["spin"] = new SpinFunction();
 
+	map["text"] = new TextFunction();
+
 	ifstream in(fileName, fstream::binary);
 	cerr << "  init: " << endl;
 	uint8_t hasDict = false;

@@ -186,3 +186,23 @@ string SpinFunction::regex() const {
 	return "^!spin(\\s.*)?";
 }
 
+#include <iostream>
+using namespace std;
+
+string TextFunction::run(ChatLine line, smatch matches) {
+	cerr << "text: " << matches[1] << endl;
+	global::lastLog.push_back(
+			ChatLine("", line.target, matches[1], false, false));
+	// TODO: status codes so this doesn't need to be hacked >_>
+	return " ";
+}
+string TextFunction::name() const {
+	return "text";
+}
+string TextFunction::help() const {
+	return "Make me see text";
+}
+string TextFunction::regex() const {
+	return "^!text\\s(.*)";
+}
+
