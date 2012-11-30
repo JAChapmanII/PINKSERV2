@@ -119,10 +119,6 @@ void insert(string text) { // {{{
 		push(words, o);
 } // }}}
 
-#include <iostream>
-using std::cerr;
-using std::endl;
-
 // return a random endpoint given a seed
 string fetch(vector<string> seed) { // {{{
 	queue<string> chain;
@@ -133,12 +129,14 @@ string fetch(vector<string> seed) { // {{{
 
 	map<unsigned, double> smoothModel;
 	double smoothModelTotal = 0;
+	double weight = 0;
 	while(!chain.empty()) {
 		map<unsigned, unsigned> cmodel = markovModel.endpoint(chain);
 		for(auto i : cmodel) {
+			weight = coefficientTable[chain.size()] * i.second / cmodel.size();
 			// TODO: see how the division here works out
-			smoothModel[i.first] += coefficientTable[chain.size()] / cmodel.size() * i.second;
-			smoothModelTotal += coefficientTable[chain.size()] / cmodel.size() * i.second;
+			smoothModel[i.first] += weight;
+			smoothModelTotal += weight;
 		}
 		chain.pop();
 	}
@@ -150,8 +148,9 @@ string fetch(vector<string> seed) { // {{{
 	// add 0th order model
 	map<unsigned, unsigned> model0 = markovModel.endpoint(chain);
 	for(auto i : model0) {
-		smoothModel[i.first] += coefficientTable[0] / model0.size() * i.second;
-		smoothModelTotal += coefficientTable[0] / model0.size() * i.second;
+		weight = coefficientTable[0] * i.second / model0.size();
+		smoothModel[i.first] += weight;
+		smoothModelTotal += weight;
 	}
 
 	// pick a random number in [0, total)
