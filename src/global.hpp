@@ -28,11 +28,12 @@ namespace global {
 		std::string result;
 		bool matched;
 		bool doSend;
+		int turtles = 0;
 
 		ExpressionResult() : result(""), matched(false), doSend(false) {
 		}
 	};
-	ExpressionResult run(ChatLine line, std::string message);
+	ExpressionResult run(ChatLine line, std::string message, int turtles = 0);
 	void send(std::string target, std::string line, bool send = true);
 
 	bool isOwner(std::string nick);

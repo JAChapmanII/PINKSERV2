@@ -127,9 +127,13 @@ bool global::parse(ChatLine line) {
 	return res.matched;
 }
 
-ExpressionResult global::run(ChatLine line, string message) {
+ExpressionResult global::run(ChatLine line, string message, int turtles) {
 	// TODO: errors in subexpressions? Include in ExpressionResult
 	ExpressionResult ret;
+	ret.turtles = ++turtles;
+	if(ret.turtles > 6) {
+		return ret;
+	}
 
 	/* TODO: maybe? Or have !text command?
 	size_t tsep = line.text.find(";;");
@@ -163,7 +167,15 @@ ExpressionResult global::run(ChatLine line, string message) {
 		}
 		string subexpr = message.substr(subc + 1, subcEnd - subc - 1);
 		ExpressionResult subret = run(ChatLine(line.nick, line.target, subexpr,
-					line.real, line.toUs), subexpr);
+					line.real, line.toUs), subexpr, turtles);
+		// TODO: config constant
+		if(subret.turtles > 6) {
+			ret.turtles = subret.turtles;
+			ret.result = line.nick + ": It's turtles all the way down";
+			ret.matched = true;
+			ret.doSend = true;
+			return ret;
+		}
 		message = message.substr(0, subc) + subret.result + message.substr(subcEnd + 1);
 	}
 
