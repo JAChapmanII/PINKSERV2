@@ -27,6 +27,7 @@ namespace config {
 
 		extern std::string privmsg;
 		extern std::string join;
+		extern std::string quit;
 		extern std::string toUs;
 		extern std::string toUsReplace;
 	}
