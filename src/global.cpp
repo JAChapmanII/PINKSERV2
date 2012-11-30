@@ -128,6 +128,7 @@ bool global::parse(ChatLine line) {
 }
 
 ExpressionResult global::run(ChatLine line, string message) {
+	// TODO: errors in subexpressions? Include in ExpressionResult
 	ExpressionResult ret;
 
 	/* TODO: maybe? Or have !text command?
@@ -140,6 +141,26 @@ ExpressionResult global::run(ChatLine line, string message) {
 	if(line.text.empty())
 		return ret;
 	*/
+
+	for(size_t subc = message.find("{!"); subc != string::npos;
+			subc = message.find("{!")) {
+		size_t subcEnd = message.find("}", subc + 2);
+		if(subcEnd == string::npos) {
+			ret.result = "Unmatched brace at: ";
+			if(subc > 1)
+				ret.result += message.substr(subc - 2, 1);
+			if(subc > 0)
+				ret.result += message.substr(subc - 1, 1);
+			ret.result += message.substr(subc, 5);
+			ret.matched = true;
+			ret.doSend = true;
+			return ret;
+		}
+		string subexpr = message.substr(subc + 1, subcEnd - subc - 1);
+		ExpressionResult subret = run(ChatLine(line.nick, line.target, subexpr,
+					line.real, line.toUs), subexpr);
+		message = message.substr(0, subc) + subret.result + message.substr(subcEnd + 1);
+	}
 
 	boost::smatch matches;
 	// loop through setup modules trying to match their regex
