@@ -145,6 +145,11 @@ ExpressionResult global::run(ChatLine line, string message) {
 	for(size_t subc = message.find("{!"); subc != string::npos;
 			subc = message.find("{!")) {
 		size_t subcEnd = message.find("}", subc + 2);
+		for(size_t subsubStart = message.find("{!", subc + 1);
+				subsubStart < subcEnd;
+				subsubStart = message.find("{!", subsubStart + 1)) {
+			subcEnd = message.find("}", subcEnd + 1);
+		}
 		if(subcEnd == string::npos) {
 			ret.result = "Unmatched brace at: ";
 			if(subc > 1)
