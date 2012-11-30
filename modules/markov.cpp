@@ -441,7 +441,7 @@ string RandomWordFunction::help() const { // {{{
 	return "Returns a random word (can be restricted to range)";
 } // }}}
 string RandomWordFunction::regex() const { // {{{
-	return "^!rword(\\s+(\\d+)\\s+(\\d+).*?)?";
+	return "^!rword(\\s+([\\d\\.-]+)\\s+([\\d\\.-]+).*?)?";
 } // }}}
 
 
