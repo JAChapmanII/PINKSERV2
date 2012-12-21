@@ -83,3 +83,30 @@ modes for everything:
 functions can have errors
 there can be syntax errors
 
+
+argument specification:
+	%w -> word
+	%f -> float
+	%f[0,1) -> float between 0 (inclusive) and 1 (exclusive)
+	%i -> integer
+	%i[0,1000] -> integer between 0 and 1000 inclusive
+	%s -> greedy "string", or quote enclosed string
+	%n -> a currently active nick (for things like kick)
+
+	any specifier can be appended with ? for optional:
+		%w? -> optional word
+		%f[0,1]? -> optional float between 0 and 1 inclusive
+
+	can have literal characters that must be there, ex:
+		%n: you suck %ix
+		an active nick followed by a colon, some number of spaces, the words
+		"you suck", followed by some space, an integer follewd by the letter x
+		jac:      you suck     10000x
+
+	implied space between conjoined specifiers:
+		%i%f is really %i %f
+	but
+		%i: is really %i:
+	all space is really \s+ unless it is inside quotes
+		see the "you suck" thing above"
+
