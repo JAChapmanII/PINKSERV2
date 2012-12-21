@@ -1,0 +1,21 @@
+# special defined:
+or %x -> %d =>
+reply %s -> %d =>
+for %w %i %i %i? -> %d =>
+rand %f %f[$v > $1] -> %f
+rand %d %d[$v > $1] -> %d
+
+(%e)? %e : %e -> %d =>
+%w > %w -> %b =>
+%w < %w -> %b =>
+%w >= %w -> %b =>
+%w <= %w -> %b =>
+%w == %w -> %b =>
+%w = %w -> %d =>
+%w += %w -> %d =>
+%w -= %w -> %d =>
+++%w -> %d =>
+%w++ -> %d =>
+--%w -> %d =>
+%w-- -> %d =>
+

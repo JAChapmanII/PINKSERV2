@@ -1,0 +1,16 @@
+||o/|\o => !or "o/" "\o"
+<3 => !reply <3
+</3 => !reply :(
+fish => !or "<><" "><>"
+fishes => !for i 0 {!rand 3 8}: !fish; " "
+sl => tmp.d = {!or 0 1}
+sl +=> (tmp.d)? "/.==.]" : "{. .}"
+sl +=> !for i 0 {!rand 3 4}: "[. .]"
+sl +=> (tmp.d?) "{. .}" : "[.==\\"
+dubstep||(?i)(wub|dubstep) => "WUB WUB WUB"
+speak %s => $1
+roulette => shot++;
+roulette +=> (shot > 6)? !kick $nick; "$nick shot himself!" : "cilck"
+spin => shot = {!rand 1 6};
+spin +=> "Round and round it goes, where it lands no one knows"
+
