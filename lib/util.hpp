@@ -32,6 +32,8 @@ namespace util {
 			bool contains(std::vector<std::pair<K, V>> list, K key);
 	bool contains(std::string str, char c);
 
+	// appends an ordinal string to the number (1 -> 1st, 2 -> 2nd, etc)
+	std::string toOrdinal(long num);
 
 	namespace file {
 		bool exists(std::string filename);

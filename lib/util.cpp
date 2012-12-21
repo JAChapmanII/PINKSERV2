@@ -57,3 +57,17 @@ bool util::contains(std::string str, char c) {
 	return (str.find(c) != string::npos);
 }
 
+string util::toOrdinal(long num) {
+	string nums = asString(num);
+	switch(nums[nums.length() - 1]) {
+		case '0': case '4': case '5': case '6': case '7': case '8': case '9':
+			nums += "th"; break;
+		case '1': nums += "st"; break;
+		case '2': nums += "nd"; break;
+		case '3': nums += "rd"; break;
+		default:
+			break;
+	}
+	return nums;
+}
+
