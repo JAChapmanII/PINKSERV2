@@ -35,7 +35,7 @@ bool modules::init(std::string fileName) {
 	map["dubstep"] = new DubstepFunction();
 	map["or"] = new OrFunction();
 	map["yes"] = new YesFunction(config::nick);
-	map["say"] = new SayFunction();
+	map["speak"] = new SayFunction();
 	map["tell"] = new TellFunction();
 
 	map["set"] = new SetFunction();

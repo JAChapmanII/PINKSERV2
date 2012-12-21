@@ -136,11 +136,12 @@ string YesFunction::run(ChatLine line, smatch matches) { // {{{
 
 
 SayFunction::SayFunction() : Function( // {{{
-		"say", "Say something", "^!say\\s(.+)") {
+		"speak", "Say something", "^!speak\\s(.+)") {
 } // }}}
 string SayFunction::run(ChatLine line, smatch matches) { // {{{
 	return matches[1];
 } // }}}
+
 
 TellFunction::TellFunction() : Function( // {{{
 		"tell", "Tell someone something", "^!tell\\s+(\\S+)\\s+(.+)") {
