@@ -26,6 +26,11 @@ $nick ->
 speak ->
 	!tell $here $1
 
+roulette ->
+	$shot++; ($shot > 6)? !kick $nick; "$nick killed himself!"
+spin ->
+	$shot = {!rand 1 6}; "Spinny spinny round it goes!"
+
 specification is commandname1|commandname2|etc...||regex trigger
 	"||regex trigger" part is optional
 	all secondary command names are optional
@@ -33,11 +38,25 @@ specification is commandname1|commandname2|etc...||regex trigger
 
 !tell is special defined
 !reply sends back either $nick: text to a channel or just text to user
-math related functions are special defined
+math related functions are special defined:
+	++, --
 ternary are special defined
 if just text is result, !tell $here?
 rand and drand hard coded
 hard coded "!has %d" to check for existence of (optional) arg
+markov things hardcoded:
+	ccount, dsize, rword
+	rword maybe is like choose? expose markov data as variables?
+variable manipulation hardcoded:
+	tests, erase, list (ditch?)
+!push, !rlist and !s?
+
+management functions hardcoded?
+	kick
+	maybe ignore is variable? like
+	bot.ignore += user
+	bot.ignore -= user
+	bot.ignore = just_user
 
 
 execute things on events:
@@ -120,4 +139,9 @@ return type of functions is also specified
 %d can be used to make type checking lazy as well
 	%d can also mean tuple of things,
 		could eval to %i %f[0,1) %s
+
+user registration
+password
+gender:
+	$nick.pronoun, etc?
 
