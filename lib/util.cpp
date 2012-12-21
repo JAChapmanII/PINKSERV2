@@ -32,7 +32,7 @@ string util::join(vector<string> strs, string with) { // {{{
 string util::trim(string str, string what) {
 	size_t firstNotOf = str.find_first_not_of(what);
 	if(firstNotOf == string::npos)
-		return "";
+		return str;
 	str = str.substr(firstNotOf);
 	return str.substr(0, str.find_last_not_of(what) + 1);
 }
