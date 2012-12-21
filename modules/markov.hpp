@@ -39,5 +39,12 @@ class DictionarySizeFunction : public Function {
 		virtual std::string run(ChatLine line, boost::smatch matches);
 };
 
+// random word
+class RandomWordFunction : public Function {
+	public:
+		RandomWordFunction();
+		virtual std::string run(ChatLine line, boost::smatch matches);
+};
+
 
 #endif // MODULES_MARKOV_HPP

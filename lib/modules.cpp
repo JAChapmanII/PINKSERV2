@@ -56,6 +56,7 @@ bool modules::init(std::string fileName) {
 	map["count"] = new ChainCountFunction();
 	map["correct"] = new CorrectionFunction();
 	map["dsize"] = new DictionarySizeFunction();
+	map["rword"] = new RandomWordFunction();
 
 	map["todo"] = new TodoFunction(config::todoFileName);
 
