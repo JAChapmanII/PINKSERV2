@@ -6,6 +6,8 @@ using std::string;
 using std::vector;
 #include <algorithm>
 using std::transform;
+#include <stack>
+using std::stack;
 #include <cctype>
 
 #include "util.hpp"
@@ -14,6 +16,7 @@ using util::trimWhitespace;
 using util::contains;
 using util::toOrdinal;
 using util::startsWith;
+using util::asString;
 
 // variable, function map
 map<string, string> vars;
@@ -369,6 +372,56 @@ struct TokenFragment {
 	} // }}}
 };
 
+struct ExpressionTree {
+	ExpressionTree *child;
+	ExpressionTree *next;
+
+	static ExpressionTree *parse(string statement) {
+		vector<TokenFragment> frags = TokenFragment::fragment(statement);
+
+		// starts of sub expressions
+		stack<unsigned> sexprStack;
+
+		// make a pass to ensure there aren't any strange mismatched sub
+		// expression related tokens
+		for(unsigned i = 0; i < frags.size(); ++i) {
+			if(frags[i].special) {
+				// open sub expressions
+				if(frags[i].text == "{")
+					sexprStack.push(i);
+				if(frags[i].text == "(")
+					sexprStack.push(i);
+
+				// close expressions
+				if(frags[i].text == "}") {
+					if(sexprStack.empty())
+						throw (string)"extra " + frags[i].text;
+					if(frags[sexprStack.top()].text == "{")
+						sexprStack.pop();
+					else
+						throw (string)"mismatched " + frags[sexprStack.top()].text +
+							" with " + frags[i].text;
+				}
+				if(frags[i].text == ")") {
+					if(sexprStack.empty())
+						throw (string)"extra " + frags[i].text;
+					if(frags[sexprStack.top()].text == "(")
+						sexprStack.pop();
+					else
+						throw (string)"mismatched " + frags[sexprStack.top()].text +
+							" with " + frags[i].text;
+				}
+			}
+		}
+		if(!sexprStack.empty()) {
+			throw asString(sexprStack.size()) + " expressions unclosed";
+		}
+		return NULL;
+	}
+	static ExpressionTree parse() {
+	}
+};
+
 void execute(string statement) {
 	// tmp variable map
 	map<string, string> tvars;
@@ -379,7 +432,8 @@ int main(int argc, char **argv) {
 		cout << i << ": " << argv[i] << endl;
 		try {
 			//Permissions p = Permissions::parse(argv[i]);
-			vector<TokenFragment> tfv = TokenFragment::fragment(argv[i]);
+			//vector<TokenFragment> tfv = TokenFragment::fragment(argv[i]);
+			ExpressionTree *etree = ExpressionTree::parse(argv[i]);
 		} catch(string &s) {
 			cout << "\t: " << s << endl;
 		}
