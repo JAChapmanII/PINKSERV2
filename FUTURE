@@ -12,7 +12,7 @@ sl ->
 	dir = {!or true false};
 	(dir)? "/.==.]" : "{. .}";
 	!for i 0 {!rand 3 4}: "[. .]"};
-	(dir)? "{. . }" : "[.==.\"
+	(dir)? "{. .}" : "[.==.\"
 dubstep||(?i)(wub|dubstep) ->
 	!tell $here "WUB WUB WUB"
 
@@ -35,6 +35,16 @@ specification is commandname1|commandname2|etc...||regex trigger
 	"||regex trigger" part is optional
 	all secondary command names are optional
 
+
+!def for defining functions? or set var name to {!func} or something?
+	both depending on purpose?
+	fname => function body
+	fname +=> something to append to function body (implicit ; added)
+	fname %s %i %args -> %return %type => body
+		both are optional, "-> %return %type" is one piece, both must exist
+
+	default args is %v
+	return type if left off is inferred
 
 !tell is special defined
 !reply sends back either $nick: text to a channel or just text to user
@@ -107,15 +117,21 @@ there can be syntax errors
 argument specification:
 	%w -> word
 	%f -> float
-	%f[0,1) -> float between 0 (inclusive) and 1 (exclusive)
+	%f[$v >= 0 && $v < 1] -> float between 0 (inclusive) and 1 (exclusive)
+		[] gives an expression which must match. $v is the currently attempted
+		to match thing
 	%i -> integer
-	%i[0,1000] -> integer between 0 and 1000 inclusive
+	%i[$v >= 0 && $v <= 1000] -> integer between 0 and 1000 inclusive
 	%s -> greedy "string" of words, or quote enclosed string (backtracks)
 	%n -> a currently active nick (for things like kick)
 
 	any specifier can be appended with ? for optional:
 		%w? -> optional word
-		%f[0,1]? -> optional float between 0 and 1 inclusive
+		%f[$v >= 0 && $v <= 1]? -> optional float between 0 and 1 inclusive
+
+	tests can refer to previous things:
+		%i %i[$v > $1]
+		an integer and an integer larger than that
 
 	can have literal characters that must be there, ex:
 		%n: you suck %ix
@@ -132,6 +148,11 @@ argument specification:
 
 	%v -> void (only valid as return type)
 	%d -> dynamic (delays type checking to eval time)
+	%e -> expression... either greedy or {!} enclosed
+
+	%x -> list of %w
+	%a -> vaild identifier? or just %w
+	%b -> bool
 
 
 lazy evaluation, strict type checking
