@@ -39,3 +39,9 @@ Requests:
 Allow function to specify whether we should direct it at a person, instead of
 doing line.nick + ": " manually. This also fixes the private message thing.
 
+
+overhaul help system, it sucks
+m_write not really needed right?
+!help -> ?
+expose config variables as !set-etc'able things
+
