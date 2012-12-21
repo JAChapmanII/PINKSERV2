@@ -37,6 +37,7 @@ math related functions are special defined
 ternary are special defined
 if just text is result, !tell $here?
 rand and drand hard coded
+hard coded "!has %d" to check for existence of (optional) arg
 
 
 execute things on events:
@@ -90,7 +91,7 @@ argument specification:
 	%f[0,1) -> float between 0 (inclusive) and 1 (exclusive)
 	%i -> integer
 	%i[0,1000] -> integer between 0 and 1000 inclusive
-	%s -> greedy "string", or quote enclosed string
+	%s -> greedy "string" of words, or quote enclosed string (backtracks)
 	%n -> a currently active nick (for things like kick)
 
 	any specifier can be appended with ? for optional:
@@ -109,4 +110,14 @@ argument specification:
 		%i: is really %i:
 	all space is really \s+ unless it is inside quotes
 		see the "you suck" thing above"
+
+	%v -> void (only valid as return type)
+	%d -> dynamic (delays type checking to eval time)
+
+
+lazy evaluation, strict type checking
+return type of functions is also specified
+%d can be used to make type checking lazy as well
+	%d can also mean tuple of things,
+		could eval to %i %f[0,1) %s
 
