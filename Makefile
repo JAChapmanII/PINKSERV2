@@ -15,7 +15,6 @@ MOBJS+=$(ODIR)/chatline.o $(ODIR)/markovmodel.o
 # module object files from modules/
 MOBJS+=$(ODIR)/core.o $(ODIR)/function.o $(ODIR)/markov.o $(ODIR)/math.o
 MOBJS+=$(ODIR)/regex.o $(ODIR)/script.o $(ODIR)/simple.o $(ODIR)/todo.o
-MOBJS+=$(ODIR)/post.o
 
 # object files required for main binary
 OBJS=$(MOBJS) $(ODIR)/util.o $(ODIR)/global.o $(ODIR)/config.o

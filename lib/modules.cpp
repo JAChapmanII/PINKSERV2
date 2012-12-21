@@ -20,7 +20,6 @@ using std::fstream;
 #include "script.hpp"
 #include "simple.hpp"
 #include "todo.hpp"
-#include "post.hpp"
 
 std::map<string, Function *> modules::map;
 static bool modules_inited = false;
@@ -57,9 +56,6 @@ bool modules::init(std::string fileName) {
 	map["count"] = new ChainCountFunction();
 	map["correct"] = new CorrectionFunction();
 	map["dsize"] = new DictionarySizeFunction();
-
-	map["post"] = new POSTFunction();
-	map["post_train"] = new POSTTrainFunction();
 
 	map["todo"] = new TodoFunction(config::todoFileName);
 
