@@ -21,9 +21,6 @@ namespace util {
 
 	bool startsWith(std::string str, std::string prefix);
 
-	template<typename T, typename F>
-			std::vector<T> filter(std::vector<T> vec, F func);
-
 	template<typename T> T fromString(std::string str);
 	template<typename T> std::string asString(T val);
 
