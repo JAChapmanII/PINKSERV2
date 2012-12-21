@@ -12,6 +12,7 @@ specification is commandname1|commandname2|etc...||regex trigger
 
 =~ operator for regex matching...
 	matches go into r0, r1, r2, etc...
+	result goes into r_
 
 !def for defining functions? or set var name to {!func} or something?
 	both depending on purpose?
@@ -65,6 +66,8 @@ $nicks ->
 	set of nicks that are here
 $text ->
 	the body of what was just said
+$ltext ->
+	the body of what was last said
 $toUs ->
 	true if to us, false otherwise
 $bot.nick ->
