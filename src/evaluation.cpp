@@ -196,6 +196,192 @@ bool hasPermission(Permission p, string nick, string variable, int level) { // {
 	return perms.allowed(p, nick, level);
 } // }}}
 
+#include <iostream>
+using namespace std;
+
+enum TokenType { Call, SubToken, Argument };
+struct Token {
+	TokenType type;
+	string text;
+	Token *sub;
+	Token *next;
+
+	Token() : type(TokenType::Argument), text(""), sub(NULL), next(NULL) {
+	}
+	void print(int ilevel = 0) {
+		for(Token *token = this; token; token = token->next) {
+			if(token->type == TokenType::SubToken) {
+				token->sub->print(ilevel + 1);
+			} else {
+				cout << string(ilevel, '\t');
+				switch(token->type) {
+					case TokenType::Call:
+						cout << "!" << token->text;
+						break;
+					case TokenType::Argument:
+						cout << token->text;
+						break;
+				}
+			}
+			cout << endl;
+		}
+	}
+};
+
+struct TokenFragment {
+	bool special;
+	string text;
+
+	TokenFragment() : special(false), text() { }
+	TokenFragment(string itext, bool ispecial = false) :
+		special(ispecial), text(itext) { }
+	void clear() {
+		text.clear();
+		special = false;
+	}
+};
+
+Token parse(string statement) {
+	vector<string> special = {
+		"+=>", "=>", "&&", "||",
+		"++", "--", "<=", ">=", "==", "=~", "+=", "-=",
+		"<", ">", "(", ")", "?", ":", ";",
+		"+", "-", "*", "/", "%", "^", "{", "}", "$", "!", "~"
+	}, specialInString = { "$", "{", "}" };
+
+	cout << "statement: " << statement << endl;
+	vector<TokenFragment> stokens;
+	bool inString = false;
+	char stringType = '\0';
+	TokenFragment ctoken;
+	while(statement.length() > 0) {
+		//cout << (inToken ? "inToken" : "notToken") << " " <<
+			//(inString ? "inString" : "notString") <<
+			//": " << statement << endl;
+
+		if(statement.front() == '\'' || statement.front() == '"') {
+			if(inString) {
+				// end current string
+				if(statement.front() == stringType) {
+					if(!ctoken.text.empty())
+						stokens.push_back(ctoken);
+					ctoken.clear();
+					stokens.push_back({ string(1, statement.front()), true });
+					statement = statement.substr(1);
+					inString = false;
+					continue;
+				}
+			} else {
+				stringType = statement.front();
+				stokens.push_back({ string(1, statement.front()), true });
+				statement = statement.substr(1);
+				inString = true;
+				continue;
+			}
+		}
+
+		if(inString) {
+			bool isSpecial = false;
+			for(auto specialt : specialInString) {
+				if(startsWith(statement, specialt)) {
+					if(!ctoken.text.empty())
+						stokens.push_back(ctoken);
+					ctoken.clear();
+					stokens.push_back({ specialt, true });
+					statement = statement.substr(specialt.length());
+					isSpecial = true;
+					break;
+				}
+			}
+			if(isSpecial)
+				continue;
+
+			if(statement.front() == '\\') {
+				statement = statement.substr(1);
+				if(statement.empty()) {
+					throw (string)"escaped character at end of string";
+				}
+			}
+
+			ctoken.text += statement.front();
+			statement = statement.substr(1);
+			continue;
+		}
+
+		bool isSpecial = false;
+		for(auto specialt : special) {
+			if(startsWith(statement, specialt)) {
+				if(!ctoken.text.empty())
+					stokens.push_back(ctoken);
+				ctoken.clear();
+				stokens.push_back({ specialt, true });
+				statement = statement.substr(specialt.length());
+				isSpecial = true;
+				break;
+			}
+		}
+		if(isSpecial)
+			continue;
+
+		if(isspace(statement[0])) {
+			if(!ctoken.text.empty())
+				stokens.push_back(ctoken);
+			ctoken.clear();
+		} else {
+			if(statement.front() == '\\') {
+				statement = statement.substr(1);
+				if(statement.empty()) {
+					throw (string)"escaped character at end of string";
+				}
+			}
+
+			ctoken.text += statement[0];
+		}
+		statement = statement.substr(1);
+	}
+
+	if(!ctoken.text.empty()) {
+		stokens.push_back(ctoken);
+		cout << "at end: " << ctoken.text << endl;
+	}
+	if(inString)
+		cout << "error" << endl;
+
+	cout << stokens.size() << ": " << endl;
+	if(stokens.size() > 0)
+		for(auto t : stokens) {
+			if(t.special)
+				cout << "special: ";
+			cout << t.text << endl;
+		}
+	cout << endl;
+
+	Token t;
+	return t;
+
+	/*
+	Token *tokens = NULL, *last = NULL;
+	Token *current = new Token();
+	while(statement.length() > 1) {
+		// token is over, advance
+		if(isspace(statement[0])) {
+			if(tokens == NULL)
+				tokens = current, last = tokens;
+			else
+				last->next = current, last = last->next;
+			current = new Token();
+		} else if(statement[0] == '!') {
+			current->type = TokenType::Call;
+		} else if(startsWith(statement, "{!")) {
+			
+		}
+		current->text += statement[0];
+		parse(current->text);
+	}
+	*/
+}
+
+
 void execute(string statement) {
 	// tmp variable map
 	map<string, string> tvars;
@@ -206,6 +392,7 @@ int main(int argc, char **argv) {
 		cout << i << ": " << argv[i] << endl;
 		try {
 			//Permissions p = Permissions::parse(argv[i]);
+			Token t = parse(argv[i]);
 		} catch(string &s) {
 			cout << "\t: " << s << endl;
 		}
