@@ -1,0 +1,85 @@
+o/|\o ->
+	!reply {!or "o/" "\o"}
+<3 ->
+	!reply <3
+</3 ->
+	!reply :(
+fish ->
+	!or "<><" "><>"
+fishes ->
+	!for i 0 {!rand 3 8}: "{!fish} "
+sl ->
+	dir = {!or true false};
+	(dir)? "/.==.]" : "{. .}";
+	!for i 0 {!rand 3 4}: "[. .]"};
+	(dir)? "{. . }" : "[.==.\"
+dubstep||(?i)(wub|dubstep) ->
+	!tell $here "WUB WUB WUB"
+
+maybe special defined for arbitrary args? Like a choose sort of function
+or ->
+	r = {!rand 0 1};
+	(r == 0)? $1 : $2
+
+$nick ->
+	!tell $here "yes"
+speak ->
+	!tell $here $1
+
+specification is commandname1|commandname2|etc...||regex trigger
+	"||regex trigger" part is optional
+	all secondary command names are optional
+
+
+!tell is special defined
+!reply sends back either $nick: text to a channel or just text to user
+math related functions are special defined
+ternary are special defined
+if just text is result, !tell $here?
+rand and drand hard coded
+
+
+execute things on events:
+	join
+	part/quit (same?)
+	speak
+	in (in 5m)
+	on (date)
+triggers can depend on variables... like so:
+	!on speak ($nick == jac && {!drand 0 1} > $oheart%)? "I love you, jac"
+	now if oheart% is changed, this will be conditionally executed less or more
+
+
+$here ->
+	either a channel or a nick depending on where the command is coming from
+$nick ->
+	the nick of the invoker
+$nicks ->
+	set of nicks that are here
+$bot.nick ->
+	the bot's nick
+$bot.owner ->
+	the bot's owner
+$bot.admins ->
+	set of nicks which are admins
+$bot.maxLineLength ->
+	maximum length of output
+$bot.markov% ->
+	percent chance of markov
+$bot.correct% ->
+	percent chance of correction
+
+modes for everything:
+	bot owner has all permissions for everything
+	a (admin), o (owner), u (user), n:specific_nick (a specific person)
+		admin has all owner permissions
+		owner has all user permissions
+	w (write permission), x (execute permission), a (all)
+
+	default spec: [aax]
+		admin and owner have all permissions,
+		user has execute permissions
+
+functions can have errors
+there can be syntax errors
+
