@@ -81,7 +81,7 @@ bool modules::init(std::string fileName) {
 		hasDict = in.get();
 	if(!in.eof() && in.good() && hasDict)
 		global::dictionary.read(in);
-	cerr << "    wrote dictionary" << endl;
+	cerr << "    read dictionary" << endl;
 	cerr << "    modules: " << endl;
 	while(!in.eof() && in.good()) {
 		int length = in.get();
@@ -117,7 +117,7 @@ bool modules::deinit(std::string fileName) {
 	cerr << "  DEinit: " << endl;
 	out.put('y');
 	global::dictionary.write(out);
-	cerr << "    read dictionary" << endl;
+	cerr << "    wrote dictionary" << endl;
 	cerr << "    modules: " << endl;
 	if(out.good()) {
 		for(auto m : map) {
