@@ -17,6 +17,7 @@ namespace util {
 	template<typename T> std::vector<T> last(std::vector<T> vec, size_t n);
 
 	std::string trim(std::string str, std::string what = " \t\r\n");
+	std::string trimWhitespace(std::string str);
 
 	bool startsWith(std::string str, std::string prefix);
 

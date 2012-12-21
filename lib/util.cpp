@@ -36,6 +36,9 @@ string util::trim(string str, string what) {
 	str = str.substr(firstNotOf);
 	return str.substr(0, str.find_last_not_of(what) + 1);
 }
+string util::trimWhitespace(std::string str) {
+	return trim(str, " \t\r\n");
+}
 
 bool util::file::exists(string filename) {
 	return (access(filename.c_str(), F_OK) == 0);
