@@ -4,9 +4,18 @@ using std::ostream;
 using std::istream;
 using boost::smatch;
 
-Function::Function() : m_write(false) {
+/*
+	TODO: old defaults?
+	m_name("Base function")
+	m_help("Base function; cannot be invoked")
+	m_regex("^$")
+*/
+
+Function::Function(string iname, string ihelp, string iregex) :
+		m_write(false), m_name(iname), m_help(ihelp), m_regex(iregex) {
 }
-Function::Function(bool write) : m_write(write) {
+Function::Function(string iname, string ihelp, string iregex, bool write) :
+		m_write(write), m_name(iname), m_help(ihelp), m_regex(iregex) {
 }
 Function::~Function() {
 }
@@ -24,13 +33,13 @@ string Function::passive(ChatLine line, bool handled) {
 }
 
 string Function::name() const {
-	return "Base function";
+	return this->m_name;
 }
 string Function::help() const {
-	return "Base function; cannot be invoked";
+	return this->m_help;
 }
 string Function::regex() const {
-	return "^$";
+	return this->m_regex;
 }
 
 ostream &operator<<(ostream &out, Function &function) {

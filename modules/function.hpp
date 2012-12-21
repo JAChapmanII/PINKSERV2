@@ -11,8 +11,8 @@ class Function {
 	public:
 		// Function constructor. Make sure you call the second version in
 		// write-able functions or your class will not be written.
-		Function();
-		Function(bool write);
+		Function(std::string iname, std::string ihelp, std::string iregex);
+		Function(std::string iname, std::string ihelp, std::string iregex, bool write);
 
 		// Function deconstructor. Override if you have things to cleanup
 		virtual ~Function();
@@ -27,11 +27,11 @@ class Function {
 		virtual std::string passive(ChatLine line, bool handled);
 
 		// return a human readable name for this function
-		virtual std::string name() const;
+		std::string name() const;
 		// return human readable help for this function
-		virtual std::string help() const;
+		std::string help() const;
 		// return the regex this function uses
-		virtual std::string regex() const;
+		std::string regex() const;
 
 		// used to write this Function. Override output, not this
 		friend std::ostream &operator<<(std::ostream &out, Function &function);
@@ -46,6 +46,11 @@ class Function {
 
 		// set to true if we should try to write this
 		bool m_write;
+
+		// stores important information that all functions must have
+		std::string m_name;
+		std::string m_help;
+		std::string m_regex;
 };
 
 #endif // MODULES_FUNCTION_HPP
