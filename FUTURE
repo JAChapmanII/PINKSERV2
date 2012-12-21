@@ -27,9 +27,9 @@ speak ->
 	!tell $here $1
 
 roulette ->
-	$shot++; ($shot > 6)? !kick $nick; "$nick killed himself!"
+	shot++; (shot > 6)? !kick $nick; "$nick killed himself!"
 spin ->
-	$shot = {!rand 1 6}; "Spinny spinny round it goes!"
+	shot = {!rand 1 6}; "Spinny spinny round it goes!"
 
 specification is commandname1|commandname2|etc...||regex trigger
 	"||regex trigger" part is optional
@@ -66,7 +66,7 @@ execute things on events:
 	in (in 5m)
 	on (date)
 triggers can depend on variables... like so:
-	!on speak ($nick == jac && {!drand 0 1} > $oheart%)? "I love you, jac"
+	!on speak (nick == "jac" && {!drand 0 1} > oheart%)? "I love you, jac"
 	now if oheart% is changed, this will be conditionally executed less or more
 
 
@@ -144,4 +144,10 @@ user registration
 password
 gender:
 	$nick.pronoun, etc?
+
+special var namespaces: local, tmp
+	$local.shot for instance, would be a $shot variable that is only defined
+		for that function
+	$tmp.r would be a special $r that only exists during this execution of the
+		function
 
