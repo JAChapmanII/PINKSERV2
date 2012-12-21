@@ -132,37 +132,6 @@ string ExplainFunction::run(ChatLine line, smatch matches) { // {{{
 } // }}}
 
 
-static int gun_next = 6;
-static void spin_gun() {
-	uniform_int_distribution<> uid(0, 5);
-	gun_next = uid(global::rengine);
-}
-
-RouletteFunction::RouletteFunction() : Function( // {{{
-		"roulette", "Russian roulette!", "^!roulette(\\s.*)?") {
-} // }}}
-string RouletteFunction::run(ChatLine line, smatch matches) { // {{{
-	if(gun_next >= 6) {
-		spin_gun();
-	}
-	++gun_next;
-	if(gun_next == 6) {
-		global::kick(line.target, line.nick, "BANG!");
-		return line.nick + " shot himself, hehehe :D";
-	}
-	return line.nick + ": ... click!";
-} // }}}
-
-SpinFunction::SpinFunction() : Function( // {{{
-		"spin", "Spin the barrel of the russian roulette game",
-		"^!spin(\\s.*)?") {
-} // }}}
-string SpinFunction::run(ChatLine line, smatch matches) { // {{{
-	spin_gun();
-	return line.nick +
-		": round and round it goes, where it stopped nobody knows!";
-} // }}}
-
 TextFunction::TextFunction() : Function( // {{{
 		"text", "Make me see text", "^!text\\s(.*)") {
 } // }}}

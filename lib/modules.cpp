@@ -28,14 +28,8 @@ bool modules::init(std::string fileName) {
 	if(modules_inited)
 		return true;
 
-	map["o/"] = new WaveFunction();
-	map["fish"] = new FishFunction();
-	map["<3"] = new LoveFunction();
-	map["sl"] = new TrainFunction();
-	map["dubstep"] = new DubstepFunction();
 	map["or"] = new OrFunction();
 	map["yes"] = new YesFunction(config::nick);
-	map["speak"] = new SayFunction();
 	map["tell"] = new TellFunction();
 
 	map["set"] = new SetFunction();
@@ -68,9 +62,6 @@ bool modules::init(std::string fileName) {
 
 	map["on"] = new OnRegexFunction();
 	map["explain"] = new ExplainFunction();
-
-	map["roulette"] = new RouletteFunction();
-	map["spin"] = new SpinFunction();
 
 	map["text"] = new TextFunction();
 

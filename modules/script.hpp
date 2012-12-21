@@ -29,21 +29,6 @@ class ExplainFunction : public Function {
 		virtual std::string run(ChatLine line, boost::smatch matches);
 };
 
-// roullette
-class RouletteFunction : public Function {
-	public:
-		RouletteFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
-
-// spin
-class SpinFunction : public Function {
-	public:
-		SpinFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
-
-
 // read text
 class TextFunction : public Function {
 	public:
