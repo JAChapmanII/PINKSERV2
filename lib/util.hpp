@@ -30,6 +30,8 @@ namespace util {
 			bool contains(std::map<K, V> map, K key);
 	template<typename K, typename V>
 			bool contains(std::vector<std::pair<K, V>> list, K key);
+	bool contains(std::string str, char c);
+
 
 	namespace file {
 		bool exists(std::string filename);

@@ -53,3 +53,7 @@ bool util::startsWith(string str, string prefix) {
 	return str.substr(0, prefix.length()) == prefix;
 }
 
+bool util::contains(std::string str, char c) {
+	return (str.find(c) != string::npos);
+}
+
