@@ -15,8 +15,9 @@ vector<string> util::split(string str, string on) { // {{{
 		fields.push_back(str.substr(0, fsep));
 		str = str.substr(fsep + 1);
 	}
-	if(!str.empty())
+	if(!str.empty()) {
 		fields.push_back(str);
+	}
 	return fields;
 } // }}}
 string util::join(vector<string> strs, string with) { // {{{
