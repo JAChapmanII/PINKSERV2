@@ -6,68 +6,52 @@
 // lg
 class BinaryLogFunction : public Function {
 	public:
+		BinaryLogFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 // set a variable to something
 class SetFunction : public Function {
 	public:
+		SetFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 // erase a variable
 class EraseFunction : public Function {
 	public:
+		EraseFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 // list all variables
 class ListFunction : public Function {
 	public:
+		ListFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 // get the value of a variable
 class ValueFunction : public Function {
 	public:
+		ValueFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // increment a variable
 class IncrementFunction : public Function {
 	public:
+		IncrementFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 // decrement a variable
 class DecrementFunction : public Function {
 	public:
+		DecrementFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // arbitrary expression function
 class MathFunction : public Function {
 	public:
+		MathFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 #endif // MODULES_MATH_HPP

@@ -11,9 +11,7 @@ class OnRegexFunction : public Function {
 		OnRegexFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
 		virtual std::string secondary(ChatLine line);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
+
 	protected:
 		std::ostream &output(std::ostream &out);
 		std::istream &input(std::istream &in);
@@ -27,38 +25,30 @@ class OnRegexFunction : public Function {
 // explain
 class ExplainFunction : public Function {
 	public:
+		ExplainFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // roullette
 class RouletteFunction : public Function {
 	public:
+		RouletteFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // spin
 class SpinFunction : public Function {
 	public:
+		SpinFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 
 // read text
 class TextFunction : public Function {
 	public:
+		TextFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 

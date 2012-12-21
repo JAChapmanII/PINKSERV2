@@ -257,6 +257,9 @@ string BinaryLogFunction::regex() const { // {{{
 */
 
 
+SetFunction::SetFunction() : Function( // {{{
+		"set", "Sets a variable to be an integer", "^!set\\s+(\\w+)\\s+(\\S+).*") {
+} // }}}
 string SetFunction::run(ChatLine line, smatch matches) { // {{{
 	string variable = matches[1], value = matches[2];
 	try {
@@ -269,17 +272,11 @@ string SetFunction::run(ChatLine line, smatch matches) { // {{{
 	return line.nick + ": set " + variable + " to " +
 		variableMap[variable].get_str();
 } // }}}
-string SetFunction::name() const { // {{{
-	return "set";
-} // }}}
-string SetFunction::help() const { // {{{
-	return "Sets a variable to be an integer";
-} // }}}
-string SetFunction::regex() const { // {{{
-	return "^!set\\s+(\\w+)\\s+(\\S+).*";
-} // }}}
 
 
+EraseFunction::EraseFunction() : Function( // {{{
+		"erase", "Erases a variable", "^!erase\\s+(\\w+)(\\s.*)?") {
+} // }}}
 string EraseFunction::run(ChatLine line, smatch matches) { // {{{
 	string variable = matches[1];
 
@@ -289,17 +286,11 @@ string EraseFunction::run(ChatLine line, smatch matches) { // {{{
 	else
 		return line.nick + ": erased " + variable;
 } // }}}
-string EraseFunction::name() const { // {{{
-	return "erase";
-} // }}}
-string EraseFunction::help() const { // {{{
-	return "Erases a variable";
-} // }}}
-string EraseFunction::regex() const { // {{{
-	return "^!erase\\s+(\\w+)(\\s.*)?";
-} // }}}
 
 
+ListFunction::ListFunction() : Function( // {{{
+		"list", "List stored variables", "^!list(\\s.*)?") {
+} // }}}
 string ListFunction::run(ChatLine line, smatch matches) { // {{{
 	string list;
 	for(auto i : variableMap)
@@ -307,17 +298,11 @@ string ListFunction::run(ChatLine line, smatch matches) { // {{{
 
 	return list.substr(0, list.length() - 2);
 } // }}}
-string ListFunction::name() const { // {{{
-	return "list";
-} // }}}
-string ListFunction::help() const { // {{{
-	return "List stored variables";
-} // }}}
-string ListFunction::regex() const { // {{{
-	return "^!list(\\s.*)?";
-} // }}}
 
 
+ValueFunction::ValueFunction() : Function( // {{{
+		"value", "Return the vaule of a store variable", "^!value(\\s(.+))") {
+} // }}}
 string ValueFunction::run(ChatLine line, smatch matches) { // {{{
 	string variable = matches[2];
 	if(!contains(variableMap, variable))
@@ -326,17 +311,12 @@ string ValueFunction::run(ChatLine line, smatch matches) { // {{{
 	return line.nick + ": " + variable + " is " +
 		variableMap[variable].get_str();
 } // }}}
-string ValueFunction::name() const { // {{{
-	return "value";
-} // }}}
-string ValueFunction::help() const { // {{{
-	return "Return the vaule of a store variable";
-} // }}}
-string ValueFunction::regex() const { // {{{
-	return "^!value(\\s(.+))";
-} // }}}
 
 
+IncrementFunction::IncrementFunction() : Function( // {{{
+		"++", "Increment variable",
+		"^\\s*(\\+\\+\\s*(\\w+)|(\\w+)\\s*\\+\\+)( .*)?") {
+} // }}}
 string IncrementFunction::run(ChatLine line, smatch matches) { // {{{
 	// prefix operator
 	string variable = matches[2];
@@ -348,17 +328,11 @@ string IncrementFunction::run(ChatLine line, smatch matches) { // {{{
 	return line.nick + ": " + variable + " is now " +
 		variableMap[variable].get_str();
 } // }}}
-string IncrementFunction::name() const { // {{{
-	return "++";
-} // }}}
-string IncrementFunction::help() const { // {{{
-	return "Increment variable";
-} // }}}
-string IncrementFunction::regex() const { // {{{
-	return "^\\s*(\\+\\+\\s*(\\w+)|(\\w+)\\s*\\+\\+)( .*)?";
-} // }}}
 
 
+DecrementFunction::DecrementFunction() : Function( // {{{
+		"--", "Decrement variable", "^\\s*(--\\s*(\\w+)|(\\w+)\\s*--)( .*)?") {
+} // }}}
 string DecrementFunction::run(ChatLine line, smatch matches) { // {{{
 	// prefix operator
 	string variable = matches[2];
@@ -370,31 +344,16 @@ string DecrementFunction::run(ChatLine line, smatch matches) { // {{{
 	return line.nick + ": " + variable + " is now " +
 		variableMap[variable].get_str();
 } // }}}
-string DecrementFunction::name() const { // {{{
-	return "--";
-} // }}}
-string DecrementFunction::help() const { // {{{
-	return "Decrement variable";
-} // }}}
-string DecrementFunction::regex() const { // {{{
-	return "^\\s*(--\\s*(\\w+)|(\\w+)\\s*--)( .*)?";
-} // }}}
 
 
+MathFunction::MathFunction() : Function( // {{{
+		"math", "Evalute some math", "^!math\\s+(.+)") {
+} // }}}
 string MathFunction::run(ChatLine line, smatch matches) { // {{{
 	try {
 		return line.nick + ": " + simplify(matches[1]);
 	} catch(string &e) {
 		return line.nick + ": " + e;
 	}
-} // }}}
-string MathFunction::name() const { // {{{
-	return "math";
-} // }}}
-string MathFunction::help() const { // {{{
-	return "Evalute some math";
-} // }}}
-string MathFunction::regex() const { // {{{
-	return "^!math\\s+(.+)";
 } // }}}
 

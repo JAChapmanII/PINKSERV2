@@ -260,7 +260,9 @@ string count(string initial) { // {{{
 	return ss.str();
 } // }}}
 
-MarkovFunction::MarkovFunction() : Function(true) { // {{{
+
+MarkovFunction::MarkovFunction() : Function( // {{{
+		"markov", "Returns a markov chain.", "^!markov\\s+(.+)", true) {
 } // }}}
 string MarkovFunction::run(ChatLine line, smatch matches) { // {{{
 	string seed = matches[1], r = recover(seed);
@@ -287,15 +289,6 @@ string MarkovFunction::passive(ChatLine line, bool parsed) { // {{{
 	}
 	return "";
 } // }}}
-string MarkovFunction::name() const { // {{{
-	return "markov";
-} // }}}
-string MarkovFunction::help() const { // {{{
-	return "Returns a markov chain.";
-} // }}}
-string MarkovFunction::regex() const { // {{{
-	return "^!markov\\s+(.+)";
-} // }}}
 ostream &MarkovFunction::output(ostream &out) { // {{{
 	return markovModel.write(out);
 } // }}}
@@ -304,20 +297,17 @@ istream &MarkovFunction::input(istream &in) { // {{{
 } // }}}
 
 
+ChainCountFunction::ChainCountFunction() : Function( // {{{
+		"ccount", "Return number of markov chains", "^!c+ount\\s+(.+)", false) {
+} // }}}
 string ChainCountFunction::run(ChatLine line, smatch matches) { // {{{
 	return count(matches[1]);
 } // }}}
-string ChainCountFunction::name() const { // {{{
-	return "ccount";
-} // }}}
-string ChainCountFunction::help() const { // {{{
-	return "Return number of markov chains";
-} // }}}
-string ChainCountFunction::regex() const { // {{{
-	return "^!c+ount\\s+(.+)";
-} // }}}
 
 
+CorrectionFunction::CorrectionFunction() : Function( // {{{
+		"correct", "Magically corrects you", "^!correct(\\s+.*)?", false) {
+} // }}}
 string CorrectionFunction::run(ChatLine line, smatch matches) { // {{{
 	for(auto l = global::lastLog.rbegin(); l != global::lastLog.rend(); ++l) {
 		string cline = this->correct(l->text);
@@ -339,15 +329,6 @@ string CorrectionFunction::passive(ChatLine line, bool parsed) { // {{{
 		return /*line.nick + ": did you mean " +*/ cline;
 	}
 	return "";
-} // }}}
-string CorrectionFunction::name() const { // {{{
-	return "correct";
-} // }}}
-string CorrectionFunction::help() const { // {{{
-	return "Magically corrects you";
-} // }}}
-string CorrectionFunction::regex() const { // {{{
-	return "^!correct(\\s+.*)?";
 } // }}}
 string CorrectionFunction::correct(string line) { // {{{
 	vector<string> words = split(line);
@@ -388,17 +369,10 @@ string CorrectionFunction::correct(string line) { // {{{
 } // }}}
 
 
+DictionarySizeFunction::DictionarySizeFunction() : Function( // {{{
+		"dsize", "Return number of unique 1-grams", "^!dsize(\\s+.*)?", false) {
+} // }}}
 string DictionarySizeFunction::run(ChatLine line, smatch matches) { // {{{
 	return line.nick + ": " + asString(dictionary.size());
 } // }}}
-string DictionarySizeFunction::name() const { // {{{
-	return "dsize";
-} // }}}
-string DictionarySizeFunction::help() const { // {{{
-	return "Return number of unique 1-grams";
-} // }}}
-string DictionarySizeFunction::regex() const { // {{{
-	return "^!dsize(\\s+.*)?";
-} // }}}
-
 

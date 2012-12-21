@@ -6,7 +6,8 @@ using boost::smatch;
 #include <iostream>
 using std::endl;
 
-TodoFunction::TodoFunction(string todoName) : Function(), // {{{
+TodoFunction::TodoFunction(string todoName) : // {{{
+		Function("todo", "Adds a string to the todo file.", "^!todo\\s+(.*)"),
 		m_file() {
 	this->m_file.open(todoName, fstream::app);
 } // }}}
@@ -16,14 +17,5 @@ string TodoFunction::run(ChatLine line, smatch matches) { // {{{
 		return line.nick + ": recorded";
 	}
 	return line.nick + ": error: file error";
-} // }}}
-string TodoFunction::name() const { // {{{
-	return "todo";
-} // }}}
-string TodoFunction::help() const { // {{{
-	return "Adds a string to the todo file.";
-} // }}}
-string TodoFunction::regex() const { // {{{
-	return "^!todo\\s+(.*)";
 } // }}}
 

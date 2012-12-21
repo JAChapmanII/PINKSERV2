@@ -15,7 +15,8 @@ using util::asString;
 #include "modules.hpp"
 
 
-IgnoreFunction::IgnoreFunction() : Function(true) { // {{{
+IgnoreFunction::IgnoreFunction() : Function( // {{{
+		"ignore", "Ignore a user", "^!ignore(?:\\s+(!)?(\\S+))?", true) {
 }// }}}
 string IgnoreFunction::run(ChatLine line, smatch matches) { // {{{
 	if(!global::isOwner(line.nick) && !global::isAdmin(line.nick))
@@ -46,15 +47,6 @@ string IgnoreFunction::run(ChatLine line, smatch matches) { // {{{
 	global::ignoreList.erase(it);
 	return line.nick + ": " + nick + " no longer ignored ";
 } // }}}
-string IgnoreFunction::name() const { // {{{
-	return "ignore";
-} // }}}
-string IgnoreFunction::help() const { // {{{
-	return "Ignore a user";
-} // }}}
-string IgnoreFunction::regex() const { // {{{
-	return "^!ignore(?:\\s+(!)?(\\S+))?";
-} // }}}
 ostream &IgnoreFunction::output(ostream &out) { // {{{
 	unsigned char size = global::ignoreList.size();
 	out << size;
@@ -75,6 +67,9 @@ istream &IgnoreFunction::input(istream &in) { // {{{
 } // }}}
 
 
+HelpFunction::HelpFunction() : Function( // {{{
+		"help", "Do you really need to ask?", "^!help(\\s+(\\S+)?)?", false) {
+}// }}}
 string HelpFunction::run(ChatLine line, smatch matches) { // {{{
 	string func = matches[2];
 	if(func.empty()) {
@@ -93,17 +88,12 @@ string HelpFunction::run(ChatLine line, smatch matches) { // {{{
 
 	return line.nick + ": that function does not exist";
 } // }}}
-string HelpFunction::name() const { // {{{
-	return "help";
-} // }}}
-string HelpFunction::help() const { // {{{
-	return "Do you really need to ask?";
-} // }}}
-string HelpFunction::regex() const { // {{{
-	return "^!help(\\s+(\\S+)?)?";
-} // }}}
 
 
+ShutupFunction::ShutupFunction() : Function( // {{{
+		"quiet", "Make me quiet for a default or a user specified amount of time",
+		"^!quiet(\\s+(\\d+))?", false) {
+}// }}}
 string ShutupFunction::run(ChatLine line, smatch matches) { // {{{
 	unsigned t = 120;
 	string num = matches[2];
@@ -115,32 +105,20 @@ string ShutupFunction::run(ChatLine line, smatch matches) { // {{{
 	global::minSpeakTime = time(NULL) + t*60;
 	return line.nick + ": yes sir, shutting up for " + asString(t) + " minutes";
 } // }}}
-string ShutupFunction::name() const { // {{{
-	return "quiet";
-} // }}}
-string ShutupFunction::help() const { // {{{
-	return (string)"Make me quiet for a 30 minutes or a user specified amount "
-		+ "of time [ex: !quiet 60]";
-} // }}}
-string ShutupFunction::regex() const { // {{{
-	return "^!quiet(\\s+(\\d+))?";
-} // }}}
 
 
+UnShutupFunction::UnShutupFunction() : Function( // {{{
+		"unquiet", "Get me to talk again", "!unquiet", false) {
+}// }}}
 string UnShutupFunction::run(ChatLine line, smatch matches) { // {{{
 	global::minSpeakTime = time(NULL) - 1;
 	return line.nick + ": OK! :D";
 } // }}}
-string UnShutupFunction::name() const { // {{{
-	return "unquiet";
-} // }}}
-string UnShutupFunction::help() const { // {{{
-	return "Get me to talk again";
-} // }}}
-string UnShutupFunction::regex() const { // {{{
-	return "!unquiet";
-} // }}}
 
+
+KickFunction::KickFunction() : Function( // {{{
+		"kick", "Kick a user", "!kick(\\s+(\\w+))", false) {
+}// }}}
 string KickFunction::run(ChatLine line, smatch matches) { // {{{
 	string user = matches[2];
 	if(global::isOwner(line.nick) || global::isAdmin(line.nick)) {
@@ -148,14 +126,5 @@ string KickFunction::run(ChatLine line, smatch matches) { // {{{
 		return line.nick + ": (tried to) kick " + user;
 	}
 	return line.nick + ": you are not authed to do that";
-} // }}}
-string KickFunction::name() const { // {{{
-	return "kick";
-} // }}}
-string KickFunction::help() const { // {{{
-	return "Kick a user";
-} // }}}
-string KickFunction::regex() const { // {{{
-	return "!kick(\\s+(\\w+))";
 } // }}}
 

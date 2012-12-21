@@ -38,6 +38,13 @@ string cleanWith(string dirty) { // {{{
 } // }}}
 
 
+RegexFunction::RegexFunction() : Function( // {{{
+		"regex",
+		(string)"Give it two regex, it finds the last message that" +
+			" matches the first and substitutes it with the second. You can" +
+			" append a nick to the very end to restrict the match further",
+		"^(!)?s/([^/]+)/([^/]*)(/(.+)?)?$") {
+} // }}}
 string RegexFunction::run(ChatLine line, smatch matches) { // {{{
 	string replace = matches[2], with = cleanWith(matches[3]), nick = matches[5];
 	try {
@@ -65,32 +72,35 @@ string RegexFunction::run(ChatLine line, smatch matches) { // {{{
 		return line.nick + ": error: " + e.what();
 	}
 } // }}}
-string RegexFunction::name() const { // {{{
-	return "regex";
-} // }}}
-string RegexFunction::help() const { // {{{
-	return (string)"Give it two regex, it finds the last message that" +
-		" matches the first and substitutes it with the second. You can" +
-		" append a nick to the very end to restrict the match further";
-} // }}}
-string RegexFunction::regex() const { // {{{
-	return "^(!)?s/([^/]+)/([^/]*)(/(.+)?)?$";
-} // }}}
 
 
 PredefinedRegexFunction::PredefinedRegexFunction(string iname) : // {{{
-		Function(true),
-		m_name(iname), m_first(), m_second(), m_replaces() {
+		Function(this->m_cname,
+				this->m_cname + " replaces \"" + this->m_first[0] + "\" with \"" +
+					this->m_second[0] + "\" and maybe others",
+				"^!" + this->m_cname + "(?:\\s+(.*))?",
+				true),
+		m_cname(iname), m_first(), m_second(), m_replaces() {
 } // }}}
 PredefinedRegexFunction::PredefinedRegexFunction(string iname, // {{{
-		vector<string> first, vector<string> second) : Function(true),
-		m_name(iname), m_first(), m_second(), m_replaces() {
+		vector<string> first, vector<string> second) :
+		Function(this->m_cname,
+				this->m_cname + " replaces \"" + this->m_first[0] + "\" with \"" +
+					this->m_second[0] + "\" and maybe others",
+				"^!" + this->m_cname + "(?:\\s+(.*))?",
+				true),
+		m_cname(iname), m_first(), m_second(), m_replaces() {
 	for(unsigned i = 0; i < first.size(); ++i)
 		this->push(first[i], second[i]);
 } // }}}
 PredefinedRegexFunction::PredefinedRegexFunction(string iname, // {{{
-		string first, string second) : Function(true),
-		m_name(iname), m_first(), m_second(), m_replaces() {
+		string first, string second) :
+		Function(this->m_cname,
+				this->m_cname + " replaces \"" + this->m_first[0] + "\" with \"" +
+					this->m_second[0] + "\" and maybe others",
+				"^!" + this->m_cname + "(?:\\s+(.*))?",
+				true),
+		m_cname(iname), m_first(), m_second(), m_replaces() {
 	this->push(first, second);
 } // }}}
 string PredefinedRegexFunction::push(string first, string second) { // {{{
@@ -133,16 +143,6 @@ string PredefinedRegexFunction::run(ChatLine line, smatch matches) { // {{{
 	}
 	return line.nick + ": what the fuck I skipped the try/catch block!?";
 } // }}}
-string PredefinedRegexFunction::name() const { // {{{
-	return this->m_name;
-} // }}}
-string PredefinedRegexFunction::help() const { // {{{
-	return this->m_name + " replaces \"" + this->m_first[0] + "\" with \"" +
-		this->m_second[0] + "\" and maybe others";
-} // }}}
-string PredefinedRegexFunction::regex() const { // {{{
-	return "^!" + this->m_name + "(?:\\s+(.*))?";
-} // }}}
 ostream &PredefinedRegexFunction::output(ostream &out) { // {{{
 	unsigned char size = this->m_first.size();
 	out << size;
@@ -166,7 +166,9 @@ istream &PredefinedRegexFunction::input(istream &in) { // {{{
 } // }}}
 
 
-PushFunction::PushFunction() : Function(true) { // {{{
+PushFunction::PushFunction() : Function( // {{{
+		"push", "Dynamically adds a PredefinedRegex function to the module map",
+		"^!push/([^/]+)/([^/]*)/([^/]*)/?$", true) {
 } // }}}
 string PushFunction::run(ChatLine line, smatch matches) { // {{{
 	string fname = matches[1], first = matches[2], second = matches[3];
@@ -210,15 +212,6 @@ string PushFunction::run(ChatLine line, smatch matches) { // {{{
 
 	return line.nick + ": error: shouldn't have gotten here";
 } // }}}
-string PushFunction::name() const { // {{{
-	return "push";
-} // }}}
-string PushFunction::help() const { // {{{
-	return "Dynamically adds a PredefinedRegex function to the module map";
-} // }}}
-string PushFunction::regex() const { // {{{
-	return "^!push/([^/]+)/([^/]*)/([^/]*)/?$";
-} // }}}
 ostream &PushFunction::output(ostream &out) { // {{{
 	unsigned size = prfs.size();
 	brain::write(out, size);
@@ -246,7 +239,10 @@ istream &PushFunction::input(istream &in) { // {{{
 } // }}}
 
 
-string InvokeFunction::secondary(ChatLine line) {
+InvokeFunction::InvokeFunction() : Function( // {{{
+		"invoke", "Magically called for !push'd functions :)", "") {
+} // }}}
+string InvokeFunction::secondary(ChatLine line) { // {{{
 	smatch matches;
 	for(auto i : prfs) {
 		boost::regex cmodr(i.second->regex(), regex::perl);
@@ -260,18 +256,12 @@ string InvokeFunction::secondary(ChatLine line) {
 		}
 	}
 	return "";
-}
-string InvokeFunction::name() const {
-	return "invoke";
-}
-string InvokeFunction::help() const {
-	return "Magically called for !push'd functions :)";
-}
-string InvokeFunction::regex() const {
-	return "";
-}
+} // }}}
 
 
+ListRegexesFunction::ListRegexesFunction() : Function( // {{{
+		"rlist", "List the predefined regex functions", "^!rlist(\\s+(\\S+)?)?") {
+} // }}}
 string ListRegexesFunction::run(ChatLine line, smatch matches) { // {{{
 	string function = matches[2];
 	if(!function.empty()) {
@@ -285,14 +275,5 @@ string ListRegexesFunction::run(ChatLine line, smatch matches) { // {{{
 	for(auto i : prfs)
 		list += i.second->name() + ", ";
 	return line.nick + ": " + list.substr(0, list.length() - 2);
-} // }}}
-string ListRegexesFunction::name() const { // {{{
-	return "rlist";
-} // }}}
-string ListRegexesFunction::help() const { // {{{
-	return "List the predefined regex functions";
-} // }}}
-string ListRegexesFunction::regex() const { // {{{
-	return "^!rlist(\\s+(\\S+)?)?";
 } // }}}
 

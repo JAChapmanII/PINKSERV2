@@ -9,11 +9,8 @@
 class TodoFunction : public Function {
 	public:
 		TodoFunction(std::string todoName);
-
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
+
 	protected:
 		std::ofstream m_file;
 };

@@ -7,87 +7,64 @@
 // A function to wave to people
 class WaveFunction : public Function {
 	public:
+		WaveFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // A function to provide artificial love
 class LoveFunction : public Function {
 	public:
+		LoveFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // A function to output some fish(es)
 class FishFunction : public Function {
 	public:
+		FishFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // Someone wants a train
 class TrainFunction : public Function {
 	public:
+		TrainFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // WUB WUB WUB WUB WUB
 class DubstepFunction : public Function {
 	public:
+		DubstepFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // Return one thing or the other
 class OrFunction : public Function {
 	public:
+		OrFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // say yes
 class YesFunction : public Function {
 	public:
 		YesFunction(std::string nick);
-
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
-
-	protected:
-		std::string m_nick;
 };
 
 // Say something
 class SayFunction : public Function {
 	public:
+		SayFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // Tell someone something
 class TellFunction : public Function {
 	public:
+		TellFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 #endif // MODULES_SIMPLE_HPP

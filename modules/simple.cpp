@@ -17,6 +17,9 @@ using boost::regex;
 
 #include "global.hpp"
 
+WaveFunction::WaveFunction() : Function( // {{{
+		"wave", "Takes no arguments; waves.", ".*?(o/|\\\\o)( .*)?") {
+} // }}}
 string WaveFunction::run(ChatLine line, smatch matches) { // {{{
 	string wave = matches[1];
 	if(wave[0] == 'o')
@@ -24,34 +27,23 @@ string WaveFunction::run(ChatLine line, smatch matches) { // {{{
 	else
 		return "o/";
 } // }}}
-string WaveFunction::name() const { // {{{
-	return "wave";
-} // }}}
-string WaveFunction::help() const { // {{{
-	return "Takes no arguments; waves.";
-} // }}}
-string WaveFunction::regex() const { // {{{
-	return ".*?(o/|\\\\o)( .*)?";
-} // }}}
 
 
+LoveFunction::LoveFunction() : Function( // {{{
+		"</?3", "Takes no arguments; outputs love.", "^<(/?)3( .*)?") {
+} // }}}
 string LoveFunction::run(ChatLine line, smatch matches) { // {{{
 	string slash = matches[1];
 	if(!slash.empty())
 		return ":(";
 	return "<3";
 } // }}}
-string LoveFunction::name() const { // {{{
-	return "</?3";
-} // }}}
-string LoveFunction::help() const { // {{{
-	return "Takes no arguments; outputs love.";
-} // }}}
-string LoveFunction::regex() const { // {{{
-	return "^<(/?)3( .*)?";
-} // }}}
 
 
+FishFunction::FishFunction() : Function( // {{{
+		"fish(es)?", "Takes no arguments; outputs fish(es).",
+		"^!fish(es)?( .*)?") {
+} // }}}
 string FishFunction::run(ChatLine line, smatch matches) { // {{{
 	int fcount = 1;
 	string es = matches[1];
@@ -72,17 +64,11 @@ string FishFunction::run(ChatLine line, smatch matches) { // {{{
 	}
 	return fishies;
 } // }}}
-string FishFunction::name() const { // {{{
-	return "fish(es)?";
-} // }}}
-string FishFunction::help() const { // {{{
-	return "Takes no arguments; outputs fish(es).";
-} // }}}
-string FishFunction::regex() const { // {{{
-	return "^!fish(es)?( .*)?";
-} // }}}
 
 
+TrainFunction::TrainFunction() : Function( // {{{
+		"sl", "Takes no arguments; returns a train.", "^!sl( .*)?") {
+} // }}}
 string TrainFunction::run(ChatLine line, smatch matches) { // {{{
 	string extra = matches[1];
 	uniform_int_distribution<> carCount(0, 8);
@@ -103,31 +89,20 @@ string TrainFunction::run(ChatLine line, smatch matches) { // {{{
 
 	return train;
 } // }}}
-string TrainFunction::name() const { // {{{
-	return "sl";
-} // }}}
-string TrainFunction::help() const { // {{{
-	return "Takes no arguments; returns a train.";
-} // }}}
-string TrainFunction::regex() const { // {{{
-	return "^!sl( .*)?";
-} // }}}
 
 
+DubstepFunction::DubstepFunction() : Function( // {{{
+		"dubstep", "Takes no arguments; rocks.",
+		"^(!dubstep|WUB|wub|DUBSTEP|dubstep)( .*)?") {
+} // }}}
 string DubstepFunction::run(ChatLine line, smatch matches) { // {{{
 	return "WUB WUB WUB";
 } // }}}
-string DubstepFunction::name() const { // {{{
-	return "dubstep";
-} // }}}
-string DubstepFunction::help() const { // {{{
-	return "Takes no arguments; rocks.";
-} // }}}
-string DubstepFunction::regex() const { // {{{
-	return "^(!dubstep|WUB|wub|DUBSTEP|dubstep)( .*)?";
-} // }}}
 
 
+OrFunction::OrFunction() : Function( // {{{
+		"or", "Returns one of multiple possibilities", "(.*)\\s+or\\s+(.*)") {
+} // }}}
 string OrFunction::run(ChatLine line, smatch matches) { // {{{
 	if(!line.toUs)
 		return "";
@@ -150,57 +125,28 @@ string OrFunction::run(ChatLine line, smatch matches) { // {{{
 	uniform_int_distribution<> uid(0, results.size() - 1);
 	return results[uid(global::rengine)];
 } // }}}
-string OrFunction::name() const { // {{{
-	return "or";
-} // }}}
-string OrFunction::help() const { // {{{
-	return "Returns one of multiple possibilities";
-} // }}}
-string OrFunction::regex() const { // {{{
-	return "(.*)\\s+or\\s+(.*)";
-} // }}}
 
 
-YesFunction::YesFunction(string nick) : m_nick(nick) { // {{{
+YesFunction::YesFunction(string nick) : Function( // {{{
+		nick, "Say yes when my name is said", ".*" + nick + ".*") {
 } // }}}
 string YesFunction::run(ChatLine line, smatch matches) { // {{{
 	return "yes";
 } // }}}
-string YesFunction::name() const { // {{{
-	return this->m_nick;
-} // }}}
-string YesFunction::help() const { // {{{
-	return "Say yes when my name is said";
-} // }}}
-string YesFunction::regex() const { // {{{
-	return (string)".*" + this->m_nick + ".*";
-} // }}}
 
 
+SayFunction::SayFunction() : Function( // {{{
+		"say", "Say something", "^!say\\s(.+)") {
+} // }}}
 string SayFunction::run(ChatLine line, smatch matches) { // {{{
 	return matches[1];
 } // }}}
-string SayFunction::name() const { // {{{
-	return "say";
-} // }}}
-string SayFunction::help() const { // {{{
-	return "Say something";
-} // }}}
-string SayFunction::regex() const { // {{{
-	return "^!say\\s(.+)";
-} // }}}
 
+TellFunction::TellFunction() : Function( // {{{
+		"tell", "Tell someone something", "^!tell\\s+(\\S+)\\s+(.+)") {
+} // }}}
 string TellFunction::run(ChatLine line, smatch matches) { // {{{
 	global::send(matches[1], matches[2], true);
 	return "";
-} // }}}
-string TellFunction::name() const { // {{{
-	return "tell";
-} // }}}
-string TellFunction::help() const { // {{{
-	return "Tell someone something";
-} // }}}
-string TellFunction::regex() const { // {{{
-	return "^!tell\\s+(\\S+)\\s+(.+)";
 } // }}}
 

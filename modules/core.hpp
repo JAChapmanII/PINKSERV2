@@ -8,9 +8,6 @@ class IgnoreFunction : public Function {
 	public:
 		IgnoreFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 
 	protected:
 		virtual std::ostream &output(std::ostream &out);
@@ -20,37 +17,30 @@ class IgnoreFunction : public Function {
 // help
 class HelpFunction : public Function {
 	public:
+		HelpFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // shutup
 class ShutupFunction : public Function {
 	public:
+		ShutupFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // unshutup
 class UnShutupFunction : public Function {
 	public:
+		UnShutupFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
 
 // kick a user
 class KickFunction : public Function {
 	public:
+		KickFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string name() const;
-		virtual std::string help() const;
-		virtual std::string regex() const;
 };
+
 
 #endif // MODULES_CORE_HPP

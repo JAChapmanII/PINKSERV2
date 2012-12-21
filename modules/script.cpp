@@ -27,7 +27,9 @@ using util::split;
 
 static string lastTrigger;
 
-OnRegexFunction::OnRegexFunction() : Function(), 
+OnRegexFunction::OnRegexFunction() :
+		Function("on", "When a regex matches, simulate a typed line",
+				"^!on\\s+/([^/]+)/(\\S*)\\s+(.+)$"),
 		m_triggers(), m_scopes(), m_regex(), m_lines() {
 }
 
@@ -87,16 +89,6 @@ string OnRegexFunction::secondary(ChatLine line) {
 	return "";
 }
 
-string OnRegexFunction::name() const {
-	return "on";
-}
-string OnRegexFunction::help() const {
-	return "When a regex matches, simulate a typed line";
-}
-string OnRegexFunction::regex() const {
-	return "^!on\\s+/([^/]+)/(\\S*)\\s+(.+)$";
-}
-
 ostream &OnRegexFunction::output(ostream &out) {
 	unsigned size = this->m_triggers.size();
 	brain::write(out, size);
@@ -131,18 +123,13 @@ istream &OnRegexFunction::input(istream &in) {
 }
 
 
-string ExplainFunction::run(ChatLine line, smatch matches) {
+ExplainFunction::ExplainFunction() : Function( // {{{
+		"explain", "Explains the last thing we said from !on",
+		"^!explain(\\s+.*)?") {
+} // }}}
+string ExplainFunction::run(ChatLine line, smatch matches) { // {{{
 	return line.nick + ": that was from " + lastTrigger;
-}
-string ExplainFunction::name() const {
-	return "explain";
-}
-string ExplainFunction::help() const {
-	return "Explains the last thing we said from !on";
-}
-string ExplainFunction::regex() const {
-	return "^!explain(\\s+.*)?";
-}
+} // }}}
 
 
 static int gun_next = 6;
@@ -151,7 +138,10 @@ static void spin_gun() {
 	gun_next = uid(global::rengine);
 }
 
-string RouletteFunction::run(ChatLine line, smatch matches) {
+RouletteFunction::RouletteFunction() : Function( // {{{
+		"roulette", "Russian roulette!", "^!roulette(\\s.*)?") {
+} // }}}
+string RouletteFunction::run(ChatLine line, smatch matches) { // {{{
 	if(gun_next >= 6) {
 		spin_gun();
 	}
@@ -161,44 +151,25 @@ string RouletteFunction::run(ChatLine line, smatch matches) {
 		return line.nick + " shot himself, hehehe :D";
 	}
 	return line.nick + ": ... click!";
-}
-string RouletteFunction::name() const {
-	return "roulette";
-}
-string RouletteFunction::help() const {
-	return "Russian roulette!";
-}
-string RouletteFunction::regex() const {
-	return "^!roulette(\\s.*)?";
-}
+} // }}}
 
-string SpinFunction::run(ChatLine line, smatch matches) {
+SpinFunction::SpinFunction() : Function( // {{{
+		"spin", "Spin the barrel of the russian roulette game",
+		"^!spin(\\s.*)?") {
+} // }}}
+string SpinFunction::run(ChatLine line, smatch matches) { // {{{
 	spin_gun();
-	return line.nick + ": round and round it goes, where it stopped nobody knows!";
-}
-string SpinFunction::name() const {
-	return "spin";
-}
-string SpinFunction::help() const {
-	return "Spin the barrel of the russian roulette game";
-}
-string SpinFunction::regex() const {
-	return "^!spin(\\s.*)?";
-}
+	return line.nick +
+		": round and round it goes, where it stopped nobody knows!";
+} // }}}
 
-string TextFunction::run(ChatLine line, smatch matches) {
+TextFunction::TextFunction() : Function( // {{{
+		"text", "Make me see text", "^!text\\s(.*)") {
+} // }}}
+string TextFunction::run(ChatLine line, smatch matches) { // {{{
 	global::lastLog.push_back(
 			ChatLine("", line.target, matches[1], false, false));
 	// TODO: status codes so this doesn't need to be hacked >_>
 	return " ";
-}
-string TextFunction::name() const {
-	return "text";
-}
-string TextFunction::help() const {
-	return "Make me see text";
-}
-string TextFunction::regex() const {
-	return "^!text\\s(.*)";
-}
+} // }}}
 
