@@ -553,8 +553,8 @@ struct ExpressionTree {
 			printexprends(sexprlist[i], frags);
 			last = treeify(exprEnds[i].first, exprEnds[i].second);
 			if(last != NULL) {
-				cout << "last returned frome treeify: " << endl;
-				last->print();
+				//cout << "last returned frome treeify: " << endl;
+				//last->print();
 			}
 		}
 
@@ -564,7 +564,7 @@ struct ExpressionTree {
 		for(end = start; end->next; end = end->next)
 			;// "spin"
 
-		//dropSemicolons(start, end);
+		start = dropSemicolons(start, end);
 
 		cout << endl << endl;
 		cout << "final: " << endl;
@@ -577,14 +577,26 @@ struct ExpressionTree {
 		if(level == 0)
 			cout << this->fragment.text << endl;
 
-		if(this->child) {
-			cout << string(level * 2 + 2, ' ') << "l: " << this->child->fragment.text << endl;
-			this->child->print(level + 1);
-		}
-
-		if(this->rchild) {
-			cout << string(level * 2 + 2, ' ') << "r: " << this->rchild->fragment.text << endl;
-			this->rchild->print(level + 1);
+		string sstring(level * 2 + 2, ' ');
+		if(this->isSpecial("!")) {
+			cout << sstring << "name: " << this->child->fragment.text << endl;
+			for(ExpressionTree *a = this->rchild; a; a = a->next) {
+				cout << sstring << " arg: ";
+				if(a->fragment.special && a->folded) {
+					cout << a->fragment.text << endl;
+					a->print(level + 1);
+				} else
+					cout << a->fragment.text << endl;
+			}
+		} else {
+			if(this->child) {
+				cout << sstring << "l: " << this->child->fragment.text << endl;
+				this->child->print(level + 1);
+			}
+			if(this->rchild) {
+				cout << sstring << "r: " << this->rchild->fragment.text << endl;
+				this->rchild->print(level + 1);
+			}
 		}
 
 		if(this->next)
@@ -698,6 +710,40 @@ struct ExpressionTree {
 				// if it's already folded, then skip it
 				if(here->folded)
 					continue;
+
+				// if we have a function call, parse and bind arguments
+				if(here->isSpecial("!")) {
+					if(!here->next)
+						throw (string)"function call with no function name";
+					if(!here->next->validIdentifier())
+						throw here->next->fragment.text +
+							" is not a valid identifier for a call";
+					// setup function name
+					here->child = here->next;
+
+					// no arguments
+					if(!here->next->next || here->next->next == end) {
+						here->next = NULL;
+						return here;
+					}
+
+					ExpressionTree *startOfArgs = here->next->next;
+					here->next = NULL;
+
+					startOfArgs->prev = NULL;
+					end->prev->next = NULL;
+					end->next = NULL;
+					here->rchild = startOfArgs;
+					cout << "args: ";
+					for(ExpressionTree *s = here->rchild; s; s = s->next)
+						cout << s->fragment.text << " ";
+					cout << endl;
+
+					//ExpressionTree *args = startOfArgs; //treeify(startOfArgs, end);
+					//here->rchild = args;
+					return here;
+				}
+
 				// loop over all operators on this level
 				for(auto op : level) {
 					// if the op doesnt' match, skip it
@@ -754,7 +800,7 @@ struct ExpressionTree {
 							break; // }}}
 						case OperatorType::Prefix: // {{{
 							// TODO: unspecial case?
-							if(op.first == "$" || op.first == "!") {
+							if(op.first == "$") {
 								if(!here->next->validIdentifier())
 									throw here->next->fragment.text + " is not valid identifier";
 								;//cout << "dollar" << endl;// do something?
