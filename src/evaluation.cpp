@@ -519,7 +519,7 @@ struct ExpressionTree {
 
 		return sexprlist_noempty;
 	} // }}}
-	static ExpressionTree *parse(string statement) {
+	static ExpressionTree *parse(string statement) { // {{{
 		// turn string into a set of fragments
 		vector<TokenFragment> frags = TokenFragment::fragment(statement);
 
@@ -550,20 +550,18 @@ struct ExpressionTree {
 			last = treeify(exprEnds[i].first, exprEnds[i].second);
 		}
 
+		// find the real starts and ends of the overall expression
 		ExpressionTree *start = last, *end = NULL;
 		for(; start->prev; start = start->prev)
 			;// "spin"
 		for(end = start; end->next; end = end->next)
 			;// "spin"
 
+		// last ditch attempt for leftover semicolons
 		start = dropSemicolons(start, end);
 
-		cout << endl << endl;
-		cout << "final: " << endl;
-		start->print();
-
-		return NULL;
-	}
+		return start;
+	} // }}}
 
 	void print(int level = 0, bool sprint = false) { // {{{
 		if(level == 0)
@@ -944,6 +942,11 @@ int main(int argc, char **argv) {
 			//Permissions p = Permissions::parse(argv[i]);
 			//vector<TokenFragment> tfv = TokenFragment::fragment(argv[i]);
 			ExpressionTree *etree = ExpressionTree::parse(argv[i]);
+
+			// print computed AST
+			cout << "final: " << endl;
+			etree->print();
+
 		} catch(string &s) {
 			cout << "\t: " << s << endl;
 		}
