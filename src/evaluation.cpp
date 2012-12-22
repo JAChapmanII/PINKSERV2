@@ -246,7 +246,7 @@ struct TokenFragment {
 		vector<string> special = {
 			"+=>", "=>", "&&", "||",
 			"++", "--", "<=", ">=", "==", "=~", "+=", "-=",
-			"<", ">", "(", ")", "?", ":", ";",
+			"=", "<", ">", "(", ")", "?", ":", ";",
 			"+", "-", "*", "/", "%", "^", "{", "}", "$", "!", "~"
 		}, specialInString = { "$", "{", "}" };
 
@@ -372,6 +372,45 @@ struct TokenFragment {
 	} // }}}
 };
 
+void printfrags(vector<TokenFragment> frags, unsigned emph) {
+	cout << frags.size() << ": ";
+	for(unsigned i = 0; i < frags.size(); ++i) {
+		if(frags[i].special)
+			cout << "";
+		if(emph == i)
+			cout << "[";
+		cout << frags[i].text;
+		if(emph == i)
+			cout << "]";
+		cout << " ";
+	}
+	cout << endl;
+}
+void printsestack(stack<unsigned> sestack, vector<TokenFragment> frags) {
+	cout << "sestack: ";
+	while(!sestack.empty()) {
+		cout << frags[sestack.top()].text << " ";
+		sestack.pop();
+	}
+	cout << endl;
+}
+void printexprends(vector<pair<unsigned, unsigned>> sexpr, vector<TokenFragment> frags) {
+	vector<unsigned> fstarts;
+	string expr;
+	for(auto frag : frags) {
+		fstarts.push_back(expr.length());
+		expr += frag.text + " ";
+	}
+
+	for(auto s : sexpr) {
+		int first = fstarts[s.first], second = fstarts[s.second];
+		//cout << first << ", " << second << endl;
+		cout << expr << endl;
+		cout << string(first, ' ') + '^' +
+			string(second - first - 1, '~') + '^' << endl;
+	}
+}
+
 struct ExpressionTree {
 	TokenFragment fragment;
 	ExpressionTree *child;
@@ -383,6 +422,10 @@ struct ExpressionTree {
 
 	static ExpressionTree *parse(string statement) {
 		vector<TokenFragment> frags = TokenFragment::fragment(statement);
+		frags.insert(frags.begin(), TokenFragment(";", true));
+		frags.push_back(TokenFragment(";", true));
+
+		vector<pair<unsigned, unsigned>> sexprlist;
 
 		// starts of sub expressions
 		stack<unsigned> sexprStack;
@@ -393,38 +436,93 @@ struct ExpressionTree {
 
 		// make a pass to ensure there aren't any strange mismatched sub
 		// expression related tokens
-		for(unsigned i = 0; i < frags.size(); ++i) {
+		sexprStack.push(0);
+		for(unsigned i = 1; i < frags.size(); ++i) {
+			cout << "i = " << i << ": ";
+			printfrags(frags, i);
+
 			if(frags[i].special) {
+				printsestack(sexprStack, frags);
+
+				if(frags[i].text == ";") {
+					sexprlist.push_back({ sexprStack.top(), i });
+					sexprStack.pop();
+					sexprStack.push(i);
+					continue;
+				}
+
 				// open sub expressions
-				if(frags[i].text == "{")
+				if(frags[i].text == "{" || frags[i].text == "(") {
 					sexprStack.push(i);
-				if(frags[i].text == "(")
-					sexprStack.push(i);
+					frags.insert(frags.begin() + i + 1, TokenFragment(";", true));
+					sexprStack.push(i + 1);
+					i++;
+					continue;
+				}
 
 				// close expressions
 				if(frags[i].text == "}") {
+					if(!frags[i - 1].special || frags[i - 1].text != ";") {
+						frags.insert(frags.begin() + i, TokenFragment(";", true));
+						i--;
+						continue;
+					}
+					printsestack(sexprStack, frags);
 					if(sexprStack.empty())
 						throw (string)"extra " + frags[i].text;
-					if(frags[sexprStack.top()].text == "{")
+					if(frags[sexprStack.top()].text == ";")
 						sexprStack.pop();
-					else
+					if(frags[sexprStack.top()].text == "{") {
+						sexprlist.push_back({ sexprStack.top(), i });
+						sexprStack.pop();
+					} else
 						throw (string)"mismatched " + frags[sexprStack.top()].text +
 							" with " + frags[i].text;
 				}
 				if(frags[i].text == ")") {
+					if(!frags[i - 1].special || frags[i - 1].text != ";") {
+						frags.insert(frags.begin() + i, TokenFragment(";", true));
+						i--;
+						continue;
+					}
+					printsestack(sexprStack, frags);
 					if(sexprStack.empty())
 						throw (string)"extra " + frags[i].text;
-					if(frags[sexprStack.top()].text == "(")
+					if(frags[sexprStack.top()].text == ";")
 						sexprStack.pop();
-					else
+					if(frags[sexprStack.top()].text == "(") {
+						sexprlist.push_back({ sexprStack.top(), i });
+						sexprStack.pop();
+					} else
 						throw (string)"mismatched " + frags[sexprStack.top()].text +
 							" with " + frags[i].text;
 				}
 			}
 		}
+		if(sexprStack.size() == 1) {
+			unsigned i = sexprStack.top();
+			if(frags[i].special && frags[i].text == ";") {
+				sexprlist.push_back({ i, frags.size() });
+				sexprStack.pop();
+			}
+		}
 		if(!sexprStack.empty()) {
 			throw asString(sexprStack.size()) + " expressions unclosed";
 		}
+
+		vector<pair<unsigned, unsigned>> sexprlist_noempty;
+		for(auto sexpr : sexprlist) {
+			if(sexpr.first == sexpr.second || sexpr.first == sexpr.second - 1)
+				continue;
+			sexprlist_noempty.push_back(sexpr);
+		}
+		sexprlist = sexprlist_noempty;
+
+		for(auto sexpr : sexprlist) {
+			cout << sexpr.first << " -> " << sexpr.second << endl;
+		}
+
+		printexprends(sexprlist, frags);
 
 		return NULL;
 	}
