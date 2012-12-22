@@ -399,11 +399,13 @@ void printexprends(vector<pair<unsigned, unsigned>> sexpr, vector<TokenFragment>
 
 struct ExpressionTree {
 	bool folded;
+	unsigned eid;
 	TokenFragment fragment;
 	ExpressionTree *child, *rchild;
 	ExpressionTree *prev, *next;
 
-	ExpressionTree(TokenFragment ifrag) : folded(false), fragment(ifrag),
+	ExpressionTree(TokenFragment ifrag, unsigned ieid) :
+			folded(false), eid(ieid), fragment(ifrag),
 			child(NULL), rchild(NULL), prev(NULL), next(NULL) {
 	}
 
@@ -532,7 +534,7 @@ struct ExpressionTree {
 		// parse into a tree
 		vector<ExpressionTree *> exprs;
 		for(unsigned i = 0; i < frags.size(); ++i) {
-			ExpressionTree *here = new ExpressionTree(frags[i]);
+			ExpressionTree *here = new ExpressionTree(frags[i], i);
 			// hook up the previous to here
 			if(exprs.size() > 0) {
 				exprs[i - 1]->next = here;
@@ -554,7 +556,7 @@ struct ExpressionTree {
 			last = treeify(exprEnds[i].first, exprEnds[i].second);
 			if(last != NULL) {
 				//cout << "last returned frome treeify: " << endl;
-				//last->print();
+				last->print(0, true);
 			}
 		}
 
@@ -573,20 +575,21 @@ struct ExpressionTree {
 		return NULL;
 	}
 
-	void print(int level = 0) { // {{{
+	void print(int level = 0, bool sprint = false) { // {{{
 		if(level == 0)
 			cout << this->fragment.text << endl;
+		else if(sprint)
+			cout << string(level * 2, ' ') << "a: " << this->fragment.text << endl;
 
 		string sstring(level * 2 + 2, ' ');
 		if(this->isSpecial("!")) {
 			cout << sstring << "name: " << this->child->fragment.text << endl;
 			for(ExpressionTree *a = this->rchild; a; a = a->next) {
-				cout << sstring << " arg: ";
 				if(a->fragment.special && a->folded) {
-					cout << a->fragment.text << endl;
-					a->print(level + 1);
+					//cout << a->fragment.text << endl;
+					a->print(level + 1, true);
 				} else
-					cout << a->fragment.text << endl;
+					cout << sstring << "arg: " << a->fragment.text << endl;
 			}
 		} else {
 			if(this->child) {
@@ -599,7 +602,7 @@ struct ExpressionTree {
 			}
 		}
 
-		if(this->next)
+		if(this->next && !sprint)
 			this->next->print(level);
 	} // }}}
 
@@ -636,6 +639,17 @@ struct ExpressionTree {
 			return false;
 		return (this->fragment.text == token);
 	} // }}}
+
+	static void ppp(ExpressionTree *begin, ExpressionTree *end) {
+		bool done = false;
+		cout << "ppp: ";
+		for(ExpressionTree *b = begin; !done; b = b->next) {
+			if(b == end)
+				done = true;
+			cout << b->fragment.text << " ";
+		}
+		cout << endl;
+	}
 
 	enum OperatorType { Binary, Prefix, Suffix };
 	static ExpressionTree *treeify(ExpressionTree *begin, ExpressionTree *end) {
@@ -718,30 +732,50 @@ struct ExpressionTree {
 					if(!here->next->validIdentifier())
 						throw here->next->fragment.text +
 							" is not a valid identifier for a call";
-					// setup function name
-					here->child = here->next;
 
-					// no arguments
-					if(!here->next->next || here->next->next == end) {
-						here->next = NULL;
-						return here;
+					ExpressionTree *bang = here, *name = here->next,
+						*farg = name->next, *larg = end->prev;
+
+					cout << "bang text: " << bang->fragment.text << endl;
+					cout << "bang->prev text: " << bang->prev->fragment.text << endl;
+
+					bang->child = name;
+					name->prev = NULL;
+					name->next = NULL;
+
+					bang->next = farg;
+					if(farg)
+						farg->prev = bang;
+					bang->folded = true;
+
+					if(!farg || farg == end) {
+						here->child->next = NULL;
+						cout << "dropping semicolons without args" << endl;
+						return dropSemicolons(begin, end);
 					}
 
-					ExpressionTree *startOfArgs = here->next->next;
-					here->next = NULL;
+					// begind and end semicolons of args
+					ExpressionTree *bSemicolon =
+						new ExpressionTree({ ";", true }, end->eid - 1);
+					ExpressionTree *eSemicolon =
+						new ExpressionTree({ ";", true }, here->eid + 1);
 
-					startOfArgs->prev = NULL;
-					end->prev->next = NULL;
-					end->next = NULL;
-					here->rchild = startOfArgs;
-					cout << "args: ";
-					for(ExpressionTree *s = here->rchild; s; s = s->next)
-						cout << s->fragment.text << " ";
-					cout << endl;
+					// make first arg have a semicolon before it
+					farg->prev = bSemicolon;
+					bSemicolon->next = farg;
 
-					//ExpressionTree *args = startOfArgs; //treeify(startOfArgs, end);
-					//here->rchild = args;
-					return here;
+					// make the last arg have a semicolon after it
+					larg->next = eSemicolon;
+					eSemicolon->prev = larg;
+
+					ppp(bSemicolon, eSemicolon);
+					// treeify arguments
+					bang->rchild = treeify(bSemicolon, eSemicolon);
+
+					bang->next = end;
+					end->prev = bang;
+
+					return dropSemicolons(begin, end);
 				}
 
 				// loop over all operators on this level
