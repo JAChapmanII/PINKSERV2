@@ -371,6 +371,11 @@ struct TokenFragment {
 
 		return stokens;
 	} // }}}
+	bool isSpecial(string token) {
+		if(!this->special)
+			return false;
+		return (text == token);
+	}
 };
 
 void printexprends(pair<unsigned, unsigned> sexpr, vector<TokenFragment> frags) {
@@ -413,6 +418,16 @@ struct ExpressionTree {
 		fragments.insert(fragments.begin(), TokenFragment(";", true));
 		fragments.push_back(TokenFragment(";", true));
 
+		// make a pass to make sure there are no empty semicolons
+		vector<TokenFragment> fragments_noempty;
+		for(unsigned i = 0; i < fragments.size() - 1; ++i)
+			if(!(fragments[i].isSpecial(";") && fragments[i + 1].isSpecial(";")))
+				fragments_noempty.push_back(fragments[i]);
+		fragments.clear();
+		fragments.insert(fragments.begin(),
+				fragments_noempty.begin(), fragments_noempty.end());
+		fragments.push_back(TokenFragment(";", true));
+
 		// make a pass to ensure there aren't any strange mismatched sub
 		// expression related tokens and to find start and ends of all
 		// expressions
@@ -421,6 +436,14 @@ struct ExpressionTree {
 			if(fragments[i].special) {
 				// if we have a semicolon,
 				if(fragments[i].text == ";") {
+					// make sure the semicolon is duplicated
+					if((i != fragments.size() - 1) &&
+							!fragments[i - 1].isSpecial(";") &&
+							!fragments[i + 1].isSpecial(";") &&
+							!contains(stopSubCharacters, fragments[i + 1].text)) {
+						fragments.insert(fragments.begin() + i, TokenFragment(";", true));
+					}
+
 					// close current expression and start a new one here
 					sexprlist.push_back({ sexprStack.top(), i });
 					sexprStack.pop();
@@ -529,65 +552,85 @@ struct ExpressionTree {
 			cout << "treeifying" << endl;
 			printexprends(sexprlist[i], frags);
 			last = treeify(exprEnds[i].first, exprEnds[i].second);
+			if(last != NULL) {
+				cout << "last returned frome treeify: " << endl;
+				last->print();
+			}
 		}
+
+		ExpressionTree *start = last, *end = NULL;
+		for(; start->prev; start = start->prev)
+			;// "spin"
+		for(end = start; end->next; end = end->next)
+			;// "spin"
+
+		//dropSemicolons(start, end);
 
 		cout << endl << endl;
 		cout << "final: " << endl;
-		last->print();
+		start->print();
 
 		return NULL;
 	}
 
-	void print(int level = 0) {
+	void print(int level = 0) { // {{{
 		if(level == 0)
 			cout << this->fragment.text << endl;
 
-		//if(this->child)
-			//cout << string(level, ' ') << "l:" << this->child->fragment.text << endl;
 		if(this->child) {
 			cout << string(level * 2 + 2, ' ') << "l: " << this->child->fragment.text << endl;
 			this->child->print(level + 1);
-		} else {
-			;//cout << string(level + 1, ' ') << "(null)" << endl;
 		}
 
-		//if(this->rchild)
-			//cout << string(level, ' ') << "r:" << this->rchild->fragment.text << endl;
 		if(this->rchild) {
 			cout << string(level * 2 + 2, ' ') << "r: " << this->rchild->fragment.text << endl;
 			this->rchild->print(level + 1);
-		} else {
-			;//cout << string(level + 1, ' ') << "(null)" << endl;
 		}
 
-		//if(this->next)
-			//this->next->print(level);
-	}
+		if(this->next)
+			this->next->print(level);
+	} // }}}
 
-	static bool validAssignmentOperand(ExpressionTree *tree) {
-		return true;
-	}
-	static bool validOperand(ExpressionTree *tree) {
-		if(tree->fragment.special && !tree->folded)
+	bool validAssignmentOperand() { // {{{
+		if(!this->isSpecial("$"))
+			return false;
+		if(this->rchild && this->rchild->validOperand())
+			return true;
+		return false;
+	} // }}}
+	bool validOperand() { // {{{
+		if(this->fragment.special && !this->folded)
 			return false;
 		return true;
-	}
-	static bool validUrnaryOperand(ExpressionTree *tree) {
+	} // }}}
+	bool validUrnaryOperand() { // {{{
 		return false;
-	}
+	} // }}}
 
-	bool isSpecial(string token) {
+	bool validIdentifier() { // {{{
+		if(this->fragment.special)
+			return false;
+		char f = this->fragment.text.front();
+		if(!isalpha(f) && f != '_')
+			return false;
+		for(unsigned i = 1; i < this->fragment.text.length(); ++i)
+			if(!isalnum(this->fragment.text[i]))
+				return false;
+		return true;
+	} // }}}
+
+	bool isSpecial(string token) { // {{{
 		if(!this->fragment.special)
 			return false;
 		return (this->fragment.text == token);
-	}
+	} // }}}
 
 	enum OperatorType { Binary, Prefix, Suffix };
 	static ExpressionTree *treeify(ExpressionTree *begin, ExpressionTree *end) {
-		static vector<string> assignments = {
+		static vector<string> assignments = { // {{{
 				"=", "+=", "-=", "*=", "/=", "%=", "^=",
 				"++", "--"
-		};
+		}; // }}}
 		static vector<vector<pair<string, unsigned>>> precedenceMap = { // {{{
 			{ { "++", Suffix }, { "--", Suffix } },
 			{
@@ -614,7 +657,7 @@ struct ExpressionTree {
 			}
 		}; // }}}
 
-		// if we've got a parenthized subexpression, simply ditch the
+		// if we've got a parenthized subexpression, simply ditch the {{{
 		// parenthesis and hook the contents up directly
 		if(begin->isSpecial("(") && end->isSpecial(")")) {
 			cout << "parenthised expressiond" << endl;
@@ -625,11 +668,21 @@ struct ExpressionTree {
 			end->prev->next = end->next;
 			end->next->prev = end->prev;
 			delete end;
-			cout << "left with: " << endl;
-			cout << "newBegin text: " << newBegin->fragment.text << endl;
-			newBegin->next->print();
 			return newBegin->next;
-		}
+		} // }}}
+		// if we've got a braced subexpression, simply ditch the {{{
+		// braces and hook the contents up directly
+		if(begin->isSpecial("{") && end->isSpecial("}")) {
+			cout << "braced expressiond" << endl;
+			ExpressionTree *newBegin = begin->prev;
+			begin->prev->next = begin->next;
+			begin->next->prev = begin->prev;
+			delete begin;
+			end->prev->next = end->next;
+			end->next->prev = end->prev;
+			delete end;
+			return newBegin->next;
+		} // }}}
 
 		// loop over precedence levels
 		for(auto level : precedenceMap) { // {{{
@@ -655,15 +708,19 @@ struct ExpressionTree {
 						case OperatorType::Binary: // {{{
 							// check left and right sides
 							if(contains(assignments, op.first)) {
-								if(!validAssignmentOperand(here->prev))
+								if(!here->prev->validAssignmentOperand())
 									throw (string)"assignment with invalid lhs";
 							} else {
-								if(!validOperand(here->prev))
-									throw (string)"binary op with invalid lhs";
+								if(!here->prev->validOperand()) {
+									cout << "prev: " << here->prev->fragment.text << endl;
+									here->prev->print();
+									throw (string)"binary op (" + here->fragment.text +
+										") with invalid lhs";
+								}
 							}
-							if(!validOperand(here->next)) {
-								cout << "next: " << endl;
-								here->next->print();
+							if(!here->next->validOperand()) {
+								//cout << "next: " << endl;
+								//here->next->print();
 								throw (string)"binary op (" + here->fragment.text +
 									") with invalid rhs";
 							}
@@ -697,16 +754,22 @@ struct ExpressionTree {
 							break; // }}}
 						case OperatorType::Prefix: // {{{
 							// TODO: unspecial case?
-							if(op.first == "$") {
-								cout << "dollar" << endl;// do something?
+							if(op.first == "$" || op.first == "!") {
+								if(!here->next->validIdentifier())
+									throw here->next->fragment.text + " is not valid identifier";
+								;//cout << "dollar" << endl;// do something?
 							} else if(contains(assignments, op.first)) {
-								if(!validAssignmentOperand(here->next))
+								if(!here->next->validAssignmentOperand())
 									throw (string)"prefix assignment with bad operand";
 							} else {
-								if(!validUrnaryOperand(here->next))
+								if(!here->next->validUrnaryOperand())
 									continue;
 									//throw (string)"prefix operator with bad operand";
 							}
+							// TODO not special case
+							if(op.first == "+" || op.first == "-")
+								if(!here->prev->validOperand())
+									continue;
 							// right
 							here->rchild = here->next;
 							here->next = here->rchild->next;
@@ -716,15 +779,15 @@ struct ExpressionTree {
 
 							here->folded = true;
 
-							cout << "prefix" << endl;
-							here->print();
+							//cout << "prefix" << endl;
+							//here->print();
 							break; // }}}
 						case OperatorType::Suffix: // {{{
 							if(contains(assignments, op.first)) {
-								if(!validAssignmentOperand(here->prev))
+								if(!here->prev->validAssignmentOperand())
 									throw (string)"suffix assignment with bad operand";
 							} else {
-								if(!validUrnaryOperand(here->prev))
+								if(!here->prev->validUrnaryOperand())
 									continue;
 									//throw (string)"suffix operator with bad operand";
 							}
@@ -738,18 +801,31 @@ struct ExpressionTree {
 							here->folded = true;
 
 							cout << "suffix" << endl;
-							here->print();
+							//here->print();
 							break; // }}}
 					}
 				}
 			}
 		} // }}}
 
+		return dropSemicolons(begin, end);
+	}
+
+	static ExpressionTree *dropSemicolons( // {{{
+			ExpressionTree *begin, ExpressionTree *end) {
+		//cout << "REMOVING SEMICOLONS: " << begin->fragment.text << "
 		bool done = false;
-		// drop semicolons
 		for(ExpressionTree *here = begin; !done;) {
 			if(here == end)
 				done = true;
+			if(here == NULL) {
+				if(here == end)
+					break;
+				if(here == begin)
+					cout << "begin is NULL? wat" << endl;
+				cout << "ERRORRRRR" << endl;
+				break;
+			}
 			// if it's not a special token, skip it
 			if(!here->fragment.special) {
 				here = here->next;
@@ -766,13 +842,6 @@ struct ExpressionTree {
 				here->prev->next = here->next;
 			if(here->next)
 				here->next->prev = here->prev;
-			cout << "dropping semicolon:" << endl;
-			if(here->prev)
-				cout << "    semi-left: " << here->prev->fragment.text << endl;
-			//cout << "    semi-left-next: " << here->prev->next->fragment.text << endl;
-			if(here->next)
-				cout << "   semi-right: " << here->next->fragment.text << endl;
-			//cout << "   semi-right-prev: " << here->next->prev->fragment.text << endl;
 
 			ExpressionTree *tmp = here;
 			if(here == begin) {
@@ -780,16 +849,12 @@ struct ExpressionTree {
 					begin = here->prev;
 				else
 					begin = here->next;
-				//cout << "modified begin" << endl;
-				//cout << "        begin: " << begin->fragment.text << endl;
 			}
 			if(here == end) {
 				if(here->next)
 					end = here->next;
 				else
 					end = here->prev;
-				//cout << "modified end" << endl;
-				//cout << "        end: " << end->fragment.text << endl;
 			}
 
 			// advance
@@ -798,18 +863,8 @@ struct ExpressionTree {
 			delete tmp;
 		}
 
-		cout << "end of treeyfing, got: " << endl;
-		cout << "begin: " << endl;
-		begin->print();
-		//cout << "begin->next: " << endl;
-		//begin->next->print();
-		//cout << "end->prev: " << endl;
-		//end->prev->print();
-		cout << "end: " << endl;
-		end->print();
-
 		return begin;
-	}
+	} // }}}
 };
 
 void execute(string statement) {
