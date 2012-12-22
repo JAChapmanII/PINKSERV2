@@ -683,6 +683,8 @@ struct ExpressionTree {
 			}
 		}; // }}}
 
+		// TODO: if previous before parenthesis is a function call, use this as
+		// arguments? If no args currently?
 		// if we've got a parenthized subexpression, simply ditch the {{{
 		// parenthesis and hook the contents up directly
 		if(begin->isSpecial("(") && end->isSpecial(")")) {
@@ -725,32 +727,37 @@ struct ExpressionTree {
 				if(here->folded)
 					continue;
 
-				// if we have a function call, parse and bind arguments
+				// if we have a function call, parse and bind arguments {{{
 				if(here->isSpecial("!")) {
+					// make sure there is a valid function name next
 					if(!here->next)
 						throw (string)"function call with no function name";
 					if(!here->next->validIdentifier())
 						throw here->next->fragment.text +
 							" is not a valid identifier for a call";
 
+					// save the places of needed information
 					ExpressionTree *bang = here, *name = here->next,
 						*farg = name->next, *larg = end->prev;
 
-					cout << "bang text: " << bang->fragment.text << endl;
-					cout << "bang->prev text: " << bang->prev->fragment.text << endl;
-
+					// store the function name tree
 					bang->child = name;
 					name->prev = NULL;
 					name->next = NULL;
 
+					// drop the name from the tree list
 					bang->next = farg;
 					if(farg)
 						farg->prev = bang;
+
+					// mark this call as folded so we don't rehandle it
 					bang->folded = true;
 
+					// if there are no arguments
 					if(!farg || farg == end) {
+						// name shouldn't be followed by anything
 						here->child->next = NULL;
-						cout << "dropping semicolons without args" << endl;
+						// make sure we don't have extra semicolons
 						return dropSemicolons(begin, end);
 					}
 
@@ -768,15 +775,16 @@ struct ExpressionTree {
 					larg->next = eSemicolon;
 					eSemicolon->prev = larg;
 
-					ppp(bSemicolon, eSemicolon);
 					// treeify arguments
 					bang->rchild = treeify(bSemicolon, eSemicolon);
 
+					// make the list into "bang <-> end" (drop arguments)
 					bang->next = end;
 					end->prev = bang;
 
+					// make sure there aren't extra semicolons
 					return dropSemicolons(begin, end);
-				}
+				} // }}}
 
 				// loop over all operators on this level
 				for(auto op : level) {
