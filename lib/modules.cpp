@@ -38,8 +38,6 @@ bool modules::init(std::string fileName) {
 	map["erase"] = new EraseFunction();
 	map["value"] = new ValueFunction();
 	map["list"] = new ListFunction();
-	//map["lg"] = new BinaryLogFunction();
-	map["math"] = new MathFunction();
 
 	map["s"] = new RegexFunction();
 	map["push"] = new PushFunction();

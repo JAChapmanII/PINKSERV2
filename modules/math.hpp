@@ -3,12 +3,6 @@
 
 #include "function.hpp"
 
-// lg
-class BinaryLogFunction : public Function {
-	public:
-		BinaryLogFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
 // set a variable to something
 class SetFunction : public Function {
 	public:
@@ -44,13 +38,6 @@ class IncrementFunction : public Function {
 class DecrementFunction : public Function {
 	public:
 		DecrementFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
-
-// arbitrary expression function
-class MathFunction : public Function {
-	public:
-		MathFunction();
 		virtual std::string run(ChatLine line, boost::smatch matches);
 };
 
