@@ -373,14 +373,23 @@ struct TokenFragment {
 };
 
 struct ExpressionTree {
+	TokenFragment fragment;
 	ExpressionTree *child;
-	ExpressionTree *next;
+	ExpressionTree *prev, *next;
+
+	ExpressionTree(TokenFragment ifrag) : fragment(ifrag), child(NULL),
+			prev(NULL), next(NULL) {
+	}
 
 	static ExpressionTree *parse(string statement) {
 		vector<TokenFragment> frags = TokenFragment::fragment(statement);
 
 		// starts of sub expressions
 		stack<unsigned> sexprStack;
+		stack<ExpressionTree *> exprStack;
+		ExpressionTree *current = NULL;
+
+		// TODO: parse into a tree
 
 		// make a pass to ensure there aren't any strange mismatched sub
 		// expression related tokens
@@ -416,6 +425,7 @@ struct ExpressionTree {
 		if(!sexprStack.empty()) {
 			throw asString(sexprStack.size()) + " expressions unclosed";
 		}
+
 		return NULL;
 	}
 	static ExpressionTree parse() {
