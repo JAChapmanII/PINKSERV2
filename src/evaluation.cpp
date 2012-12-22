@@ -378,7 +378,7 @@ struct TokenFragment {
 	}
 };
 
-void printexprends(pair<unsigned, unsigned> sexpr, vector<TokenFragment> frags) {
+void printexprends(pair<unsigned, unsigned> sexpr, vector<TokenFragment> frags) { // {{{
 	vector<unsigned> fstarts;
 	string expr;
 	for(auto frag : frags) {
@@ -391,11 +391,7 @@ void printexprends(pair<unsigned, unsigned> sexpr, vector<TokenFragment> frags) 
 	cout << expr << endl;
 	cout << string(first, ' ') + '^' +
 		string(second - first - 1, '~') + '^' << endl;
-}
-void printexprends(vector<pair<unsigned, unsigned>> sexpr, vector<TokenFragment> frags) {
-	for(auto s : sexpr)
-		printexprends(s, frags);
-}
+} // }}}
 
 struct ExpressionTree {
 	bool folded;
@@ -529,7 +525,6 @@ struct ExpressionTree {
 
 		// find ends of expressions
 		vector<pair<unsigned, unsigned>> sexprlist = delimitExpressions(frags);
-		printexprends(sexprlist, frags);
 
 		// parse into a tree
 		vector<ExpressionTree *> exprs;
@@ -551,13 +546,8 @@ struct ExpressionTree {
 		ExpressionTree *last = NULL;
 		// convert all subexpressions into a tree
 		for(unsigned i = 0; i < exprEnds.size(); ++i) {
-			cout << "treeifying" << endl;
 			printexprends(sexprlist[i], frags);
 			last = treeify(exprEnds[i].first, exprEnds[i].second);
-			if(last != NULL) {
-				//cout << "last returned frome treeify: " << endl;
-				last->print(0, true);
-			}
 		}
 
 		ExpressionTree *start = last, *end = NULL;
@@ -640,17 +630,6 @@ struct ExpressionTree {
 		return (this->fragment.text == token);
 	} // }}}
 
-	static void ppp(ExpressionTree *begin, ExpressionTree *end) {
-		bool done = false;
-		cout << "ppp: ";
-		for(ExpressionTree *b = begin; !done; b = b->next) {
-			if(b == end)
-				done = true;
-			cout << b->fragment.text << " ";
-		}
-		cout << endl;
-	}
-
 	enum OperatorType { Binary, Prefix, Suffix };
 	static ExpressionTree *treeify(ExpressionTree *begin, ExpressionTree *end) {
 		static vector<string> assignments = { // {{{
@@ -688,7 +667,6 @@ struct ExpressionTree {
 		// if we've got a parenthized subexpression, simply ditch the {{{
 		// parenthesis and hook the contents up directly
 		if(begin->isSpecial("(") && end->isSpecial(")")) {
-			cout << "parenthised expressiond" << endl;
 			ExpressionTree *newBegin = begin->prev;
 			begin->prev->next = begin->next;
 			begin->next->prev = begin->prev;
@@ -701,7 +679,6 @@ struct ExpressionTree {
 		// if we've got a braced subexpression, simply ditch the {{{
 		// braces and hook the contents up directly
 		if(begin->isSpecial("{") && end->isSpecial("}")) {
-			cout << "braced expressiond" << endl;
 			ExpressionTree *newBegin = begin->prev;
 			begin->prev->next = begin->next;
 			begin->next->prev = begin->prev;
