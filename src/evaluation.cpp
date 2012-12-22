@@ -246,7 +246,7 @@ struct TokenFragment {
 		vector<string> special = {
 			"+=>", "=>", "&&", "||",
 			"++", "--", "<=", ">=", "==", "=~", "+=", "-=",
-			"=", "<", ">", "(", ")", "?", ":", ";",
+			"=", "<", ">", "(", ")", "?", ":", ";", "[", "]",
 			"+", "-", "*", "/", "%", "^", "{", "}", "$", "!", "~"
 		}, specialInString = { "$", "{", "}" };
 
@@ -372,28 +372,6 @@ struct TokenFragment {
 	} // }}}
 };
 
-void printfrags(vector<TokenFragment> frags, unsigned emph) {
-	cout << frags.size() << ": ";
-	for(unsigned i = 0; i < frags.size(); ++i) {
-		if(frags[i].special)
-			cout << "";
-		if(emph == i)
-			cout << "[";
-		cout << frags[i].text;
-		if(emph == i)
-			cout << "]";
-		cout << " ";
-	}
-	cout << endl;
-}
-void printsestack(stack<unsigned> sestack, vector<TokenFragment> frags) {
-	cout << "sestack: ";
-	while(!sestack.empty()) {
-		cout << frags[sestack.top()].text << " ";
-		sestack.pop();
-	}
-	cout << endl;
-}
 void printexprends(vector<pair<unsigned, unsigned>> sexpr, vector<TokenFragment> frags) {
 	vector<unsigned> fstarts;
 	string expr;
@@ -421,6 +399,9 @@ struct ExpressionTree {
 	}
 
 	static ExpressionTree *parse(string statement) {
+		static vector<string> startSubCharacters = { "(", "{", "[" },
+			stopSubCharacters = { ")", "}", "]" };
+
 		vector<TokenFragment> frags = TokenFragment::fragment(statement);
 		frags.insert(frags.begin(), TokenFragment(";", true));
 		frags.push_back(TokenFragment(";", true));
@@ -438,13 +419,10 @@ struct ExpressionTree {
 		// expression related tokens
 		sexprStack.push(0);
 		for(unsigned i = 1; i < frags.size(); ++i) {
-			cout << "i = " << i << ": ";
-			printfrags(frags, i);
-
 			if(frags[i].special) {
-				printsestack(sexprStack, frags);
-
+				// if we have a semicolon,
 				if(frags[i].text == ";") {
+					// close current expression and start a new one here
 					sexprlist.push_back({ sexprStack.top(), i });
 					sexprStack.pop();
 					sexprStack.push(i);
@@ -452,7 +430,7 @@ struct ExpressionTree {
 				}
 
 				// open sub expressions
-				if(frags[i].text == "{" || frags[i].text == "(") {
+				if(contains(startSubCharacters, frags[i].text)) {
 					sexprStack.push(i);
 					frags.insert(frags.begin() + i + 1, TokenFragment(";", true));
 					sexprStack.push(i + 1);
@@ -461,55 +439,57 @@ struct ExpressionTree {
 				}
 
 				// close expressions
-				if(frags[i].text == "}") {
-					if(!frags[i - 1].special || frags[i - 1].text != ";") {
-						frags.insert(frags.begin() + i, TokenFragment(";", true));
-						i--;
-						continue;
-					}
-					printsestack(sexprStack, frags);
-					if(sexprStack.empty())
-						throw (string)"extra " + frags[i].text;
-					if(frags[sexprStack.top()].text == ";")
-						sexprStack.pop();
-					if(frags[sexprStack.top()].text == "{") {
-						sexprlist.push_back({ sexprStack.top(), i });
-						sexprStack.pop();
-					} else
-						throw (string)"mismatched " + frags[sexprStack.top()].text +
-							" with " + frags[i].text;
+				unsigned pairIndex = 0;
+				for(; pairIndex < stopSubCharacters.size(); ++pairIndex)
+					if(stopSubCharacters[pairIndex] == frags[i].text)
+						break;
+				// couldn't find the stop character, just move on
+				if(pairIndex == stopSubCharacters.size())
+					continue;
+
+				// if we're at an end, but there was no semicolon before now, add
+				// one there and move back to it
+				if(!frags[i - 1].special || frags[i - 1].text != ";") {
+					frags.insert(frags.begin() + i, TokenFragment(";", true));
+					i--;
+					continue;
 				}
-				if(frags[i].text == ")") {
-					if(!frags[i - 1].special || frags[i - 1].text != ";") {
-						frags.insert(frags.begin() + i, TokenFragment(";", true));
-						i--;
-						continue;
-					}
-					printsestack(sexprStack, frags);
-					if(sexprStack.empty())
-						throw (string)"extra " + frags[i].text;
-					if(frags[sexprStack.top()].text == ";")
-						sexprStack.pop();
-					if(frags[sexprStack.top()].text == "(") {
-						sexprlist.push_back({ sexprStack.top(), i });
-						sexprStack.pop();
-					} else
-						throw (string)"mismatched " + frags[sexprStack.top()].text +
-							" with " + frags[i].text;
+
+				// if there is semicolon on the top (there should be for
+				// subexpressions) then ditch it as it's not needed
+				if(!sexprStack.empty() && (frags[sexprStack.top()].text == ";"))
+					sexprStack.pop();
+				// if the stack is empty there's nothing to close
+				if(sexprStack.empty())
+					throw (string)"extra " + frags[i].text;
+
+				// if the close matches up with the start
+				if(frags[sexprStack.top()].text == startSubCharacters[pairIndex]) {
+					// we have a clean end so push the pair and ditch tho top
+					sexprlist.push_back({ sexprStack.top(), i });
+					sexprStack.pop();
+				} else {
+					// otherwise we've got mismatched stuff
+					throw (string)"mismatched " + frags[sexprStack.top()].text +
+						" with " + frags[i].text;
 				}
 			}
 		}
+		// if there's exactly one thing left
 		if(sexprStack.size() == 1) {
 			unsigned i = sexprStack.top();
+			// and if it's a semicolon
 			if(frags[i].special && frags[i].text == ";") {
+				// close the final expression and pop it
 				sexprlist.push_back({ i, frags.size() });
 				sexprStack.pop();
 			}
 		}
-		if(!sexprStack.empty()) {
+		// if there's still things open, we have an error
+		if(!sexprStack.empty())
 			throw asString(sexprStack.size()) + " expressions unclosed";
-		}
 
+		// make sure there are no empty subexpressions
 		vector<pair<unsigned, unsigned>> sexprlist_noempty;
 		for(auto sexpr : sexprlist) {
 			if(sexpr.first == sexpr.second || sexpr.first == sexpr.second - 1)
@@ -517,10 +497,6 @@ struct ExpressionTree {
 			sexprlist_noempty.push_back(sexpr);
 		}
 		sexprlist = sexprlist_noempty;
-
-		for(auto sexpr : sexprlist) {
-			cout << sexpr.first << " -> " << sexpr.second << endl;
-		}
 
 		printexprends(sexprlist, frags);
 
