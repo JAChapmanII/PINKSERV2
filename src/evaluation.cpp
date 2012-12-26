@@ -17,6 +17,7 @@ using util::contains;
 using util::toOrdinal;
 using util::startsWith;
 using util::asString;
+using util::fromString;
 
 // variable, function map
 map<string, string> vars;
@@ -284,25 +285,31 @@ struct TokenFragment {
 			}
 
 			if(inString) {
-				// check for special in-string characters
-				bool isSpecial = false;
-				for(auto specialt : specialInString) {
-					// if it is a special token
-					if(startsWith(statement, specialt)) {
-						// if there is a current token, push it first
-						if(!ctoken.text.empty())
-							stokens.push_back(ctoken);
-						ctoken.clear();
-						// push our new special token
-						stokens.push_back({ specialt, true });
-						statement = statement.substr(specialt.length());
-						isSpecial = true;
-						break;
+				// TODO: this? Or is implicit concatenation enough?
+				/*
+				// allow special characters in double quoted strings
+				if(stringType == '"') {
+					// check for special in-string characters
+					bool isSpecial = false;
+					for(auto specialt : specialInString) {
+						// if it is a special token
+						if(startsWith(statement, specialt)) {
+							// if there is a current token, push it first
+							if(!ctoken.text.empty())
+								stokens.push_back(ctoken);
+							ctoken.clear();
+							// push our new special token
+							stokens.push_back({ specialt, true });
+							statement = statement.substr(specialt.length());
+							isSpecial = true;
+							break;
+						}
 					}
+					// do all previous tests again on special
+					if(isSpecial)
+						continue;
 				}
-				// do all previous tests again on special
-				if(isSpecial)
-					continue;
+				*/
 
 				// if we have an escaped character
 				if(statement.front() == '\\') {
@@ -415,6 +422,26 @@ struct ExpressionTree {
 		// insert a semicolon at the front and back to ensure correct parsing
 		fragments.insert(fragments.begin(), TokenFragment(";", true));
 		fragments.push_back(TokenFragment(";", true));
+
+		static vector<string> stringDelimiters = { "'", "\"" };
+
+		// squash strings
+		vector<TokenFragment> fragments_squashed;
+		for(unsigned i = 0; i < fragments.size(); ++i) {
+			bool isDelimiter = false;
+			for(auto delimiter : stringDelimiters) {
+				if(fragments[i].isSpecial(delimiter)) {
+					isDelimiter = true;
+					break;
+				}
+			}
+			if(isDelimiter)
+				continue;
+			fragments_squashed.push_back(fragments[i]);
+		}
+		fragments.clear();
+		fragments.insert(fragments.begin(),
+				fragments_squashed.begin(), fragments_squashed.end());
 
 		// make a pass to make sure there are no empty semicolons
 		vector<TokenFragment> fragments_noempty;
@@ -928,6 +955,33 @@ struct ExpressionTree {
 
 		return begin;
 	} // }}}
+
+	string evaluate() {
+		if(!this->fragment.special) {
+			return this->fragment.text;
+		}
+		if(this->fragment.isSpecial("+")) {
+			return asString(fromString<int>(this->child->evaluate()) +
+					fromString<int>(this->rchild->evaluate()));
+		}
+		if(this->fragment.isSpecial("-")) {
+			return asString(fromString<int>(this->child->evaluate()) -
+					fromString<int>(this->rchild->evaluate()));
+		}
+		if(this->fragment.isSpecial("*")) {
+			return asString(fromString<int>(this->child->evaluate()) *
+					fromString<int>(this->rchild->evaluate()));
+		}
+		if(this->fragment.isSpecial("/")) {
+			return asString(fromString<int>(this->child->evaluate()) /
+					fromString<int>(this->rchild->evaluate()));
+		}
+		if(this->fragment.isSpecial("%")) {
+			return asString(fromString<int>(this->child->evaluate()) %
+					fromString<int>(this->rchild->evaluate()));
+		}
+		return "0";
+	}
 };
 
 void execute(string statement) {
@@ -946,6 +1000,7 @@ int main(int argc, char **argv) {
 			// print computed AST
 			cout << "final: " << endl;
 			etree->print();
+			cout << "result: " << etree->evaluate() << endl;
 
 		} catch(string &s) {
 			cout << "\t: " << s << endl;
