@@ -822,10 +822,6 @@ struct ExpressionTree {
 									") with invalid rhs";
 							}
 
-							//cout << "binary" << endl;
-							//cout << "  left: " << here->prev->fragment.text << endl;
-							//cout << " right: " << here->next->fragment.text << endl;
-
 							// fold into tree
 							// left
 							here->child = here->prev;
@@ -963,6 +959,28 @@ struct ExpressionTree {
 		return begin;
 	} // }}}
 
+	string toString(bool all = true) {
+		if(this->isSpecial("$"))
+			return "$" + this->fragment.text;
+		if(this->isSpecial("!")) {
+			string ret = "!" + this->child->fragment.text;
+			for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
+				ret += " '" + arg->toString(false) + "' ";
+			return ret;
+		}
+		string here;
+		if(this->next && all)
+			here = "(";
+		if(this->child)
+			here += this->child->toString() + " ";
+		here += this->fragment.text;
+		if(this->rchild)
+			here += " " + this->rchild->toString();
+		if(this->next && all)
+			return here + ");" + this->next->toString();
+		return here;
+	}
+
 	string evaluate() {
 		if(!this->fragment.special) {
 			return this->fragment.text;
@@ -1013,6 +1031,8 @@ int main(int argc, char **argv) {
 			// print computed AST
 			cout << "final: " << endl;
 			etree->print();
+			cout << "stringify: " << etree->toString() << endl;
+
 			cout << "result: " << etree->evaluate() << endl;
 
 		} catch(string &s) {
