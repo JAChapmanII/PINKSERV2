@@ -660,6 +660,9 @@ struct ExpressionTree {
 		static vector<string> assignments = { // {{{
 				"=", "+=", "-=", "*=", "/=", "%=", "^=",
 				"++", "--"
+		};
+		static vector<string> fassignments = { 
+				"=>", "+=>"
 		}; // }}}
 		static vector<vector<pair<string, unsigned>>> precedenceMap = { // {{{
 			{ { "++", Suffix }, { "--", Suffix } },
@@ -684,6 +687,7 @@ struct ExpressionTree {
 				{ "+=", Binary }, { "-=", Binary },
 				{ "*=", Binary }, { "/=", Binary }, { "%=", Binary },
 				{ "^=", Binary },
+				{ "+=>", Binary }, { "=>", Binary }
 			}
 		}; // }}}
 
@@ -760,7 +764,7 @@ struct ExpressionTree {
 						// name shouldn't be followed by anything
 						here->child->next = NULL;
 						// make sure we don't have extra semicolons
-						return dropSemicolons(begin, end);
+						return treeify(begin, end);
 					}
 
 					// begind and end semicolons of args
@@ -785,7 +789,7 @@ struct ExpressionTree {
 					end->prev = bang;
 
 					// make sure there aren't extra semicolons
-					return dropSemicolons(begin, end);
+					return treeify(begin, end);
 				} // }}}
 
 				// loop over all operators on this level
@@ -800,6 +804,9 @@ struct ExpressionTree {
 							if(contains(assignments, op.first)) {
 								if(!here->prev->validAssignmentOperand())
 									throw (string)"assignment with invalid lhs";
+							} else if(contains(fassignments, op.first)) {
+								if(!here->prev->validIdentifier())
+									throw (string)"function assignment with invalid lhs";
 							} else {
 								if(!here->prev->validOperand()) {
 									cout << "prev: " << here->prev->fragment.text << endl;
@@ -980,7 +987,8 @@ struct ExpressionTree {
 			return asString(fromString<int>(this->child->evaluate()) %
 					fromString<int>(this->rchild->evaluate()));
 		}
-		return "0";
+		throw (string)"unkown node \"" + this->fragment.text + "\", " +
+			(this->fragment.special ? "" : "not") + " special";
 	}
 };
 
@@ -994,7 +1002,12 @@ int main(int argc, char **argv) {
 		cout << i << ": " << argv[i] << endl;
 		try {
 			//Permissions p = Permissions::parse(argv[i]);
-			//vector<TokenFragment> tfv = TokenFragment::fragment(argv[i]);
+			vector<TokenFragment> tfv = TokenFragment::fragment(argv[i]);
+			for(TokenFragment tf : tfv)
+				cout << (tf.special ? "_" : "") << tf.text
+					<< (tf.special ? "_" : "") << " ";
+			cout << endl;
+
 			ExpressionTree *etree = ExpressionTree::parse(argv[i]);
 
 			// print computed AST
