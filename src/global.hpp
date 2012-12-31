@@ -8,12 +8,23 @@
 #include <random>
 #include "dictionary.hpp"
 #include "chatline.hpp"
+#include "permission.hpp"
 
 namespace global {
 	extern std::ofstream log;
 	extern std::ofstream err;
 	extern std::mt19937_64 rengine;
 	extern Dictionary<std::string, unsigned> dictionary;
+
+	// variable, function map
+	extern std::map<std::string, std::string> vars;
+
+	// local variable map
+	extern std::map<std::string, std::map<std::string, std::string>> lvars;
+
+	// variable permission map
+	extern std::map<std::string, Permissions> vars_perms;
+
 
 	bool init(unsigned int seed);
 	void secondaryInit();

@@ -33,6 +33,10 @@ ofstream global::err;
 mt19937_64 global::rengine;
 Dictionary<string, unsigned> global::dictionary;
 
+map<string, string> global::vars;
+map<string, map<string, string>> global::lvars;
+map<string, Permissions> global::vars_perms;
+
 static ofstream chatFile;
 static unsigned int global_seed = 0;
 
@@ -55,6 +59,12 @@ bool global::init(unsigned int seed) {
 		cerr << "global::init: could not open error file!" << endl;
 		return false;
 	}
+
+	// TODO: these
+	// variable, function map
+	// local variable map
+	// variable permission map
+
 	return true;
 }
 
