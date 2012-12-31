@@ -11,7 +11,7 @@ vector<TokenFragment> TokenFragment::fragment(string statement) { // {{{
 		"++", "--", "<=", ">=", "==", "=~", "~=",
 		"+=", "-=", "*=", "/=", "%=", "^=",
 		"=", "<", ">", "(", ")", "?", ":", ";", "[", "]",
-		"+", "-", "*", "/", "%", "^", ".", "{", "}", "$", "!", "~"
+		"+", "-", "*", "/", "%", "^", "{", "}", "$", "!", "~"
 	}, specialInString = { "$", "{", "}" };
 
 	vector<TokenFragment> stokens;
@@ -147,7 +147,7 @@ bool TokenFragment::validIdentifier(string str) { // {{{
 	if(!isalpha(f) && f != '_')
 		return false;
 	for(unsigned i = 1; i < str.length(); ++i)
-		if(!isalnum(str[i]))
+		if(!isalnum(str[i]) && (str[i] != '.'))
 			return false;
 	return true;
 } // }}}
