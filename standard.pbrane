@@ -7,7 +7,7 @@ sl +=> $tmp.d? "{. .}" : "[.==\\"
 dubstep => "WUB WUB WUB"
 speak %s => $1
 roulette => ($shot++ > 6)? !kick $nick; "$nick shot himself!" : "click"
-spin => shot = {!rand 1 6}; "The barrel comes to a stop. Who will die next?"
+spin => $shot = {!rand 1 6}; "The barrel comes to a stop. Who will die next?"
 
 !on text ($text =~ "o/|\o")? !or "o/" "\o"
 !on text ($text =~ "(?i)(wub|dubstep)")? !dubstep
