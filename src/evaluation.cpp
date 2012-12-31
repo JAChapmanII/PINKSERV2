@@ -232,6 +232,16 @@ struct Token {
 	}
 };
 
+bool validIdentifier(string str) { // {{{
+	char f = str.front();
+	if(!isalpha(f) && f != '_')
+		return false;
+	for(unsigned i = 1; i < str.length(); ++i)
+		if(!isalnum(str[i]))
+			return false;
+	return true;
+} // }}}
+
 struct TokenFragment {
 	bool special;
 	string text;
@@ -383,6 +393,9 @@ struct TokenFragment {
 			return false;
 		return (text == token);
 	}
+	bool validIdentifier() { // {{{
+		return ::validIdentifier(this->text);
+	} // }}}
 };
 
 void printexprends(pair<unsigned, unsigned> sexpr, vector<TokenFragment> frags) { // {{{
@@ -640,13 +653,7 @@ struct ExpressionTree {
 	bool validIdentifier() { // {{{
 		if(this->fragment.special)
 			return false;
-		char f = this->fragment.text.front();
-		if(!isalpha(f) && f != '_')
-			return false;
-		for(unsigned i = 1; i < this->fragment.text.length(); ++i)
-			if(!isalnum(this->fragment.text[i]))
-				return false;
-		return true;
+		return this->fragment.validIdentifier();
 	} // }}}
 
 	bool isSpecial(string token) { // {{{
@@ -959,13 +966,21 @@ struct ExpressionTree {
 		return begin;
 	} // }}}
 
-	string toString(bool all = true) {
+	// TODO: this is far from done
+	// TODO: we could have a test suite for this... parse -> toString -> parse,
+	// TODO: compare? We modify it somewhat, but how badly do we mangle it?
+	string toString(bool all = true) { // {{{
 		if(this->isSpecial("$"))
 			return "$" + this->fragment.text;
 		if(this->isSpecial("!")) {
 			string ret = "!" + this->child->fragment.text;
-			for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
-				ret += " '" + arg->toString(false) + "' ";
+			for(ExpressionTree *arg = this->rchild; arg; arg = arg->next) {
+				string sub = arg->toString(false);
+				if(arg->fragment.special)
+					ret += " " + sub;
+				else
+					ret += " '" + arg->toString(false) + "'";
+			}
 			return ret;
 		}
 		string here;
@@ -979,7 +994,7 @@ struct ExpressionTree {
 		if(this->next && all)
 			return here + ");" + this->next->toString();
 		return here;
-	}
+	} // }}}
 
 	string evaluate() {
 		if(!this->fragment.special) {
