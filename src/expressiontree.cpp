@@ -315,17 +315,17 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 		},
 		{ { "^", Binary } },
 		{ { "*", Binary }, { "/", Binary }, { "%", Binary } },
-		// TODO: . in strange place?
-		{ { "+", Binary }, { "-", Binary }, { ".", Binary } },
+		{ { "+", Binary }, { "-", Binary } },
 		{
 			{ "<", Binary }, { "<=", Binary },
 			{ ">", Binary }, { ">=", Binary }
 		},
-		{ { "==", Binary }, { "~=", Binary } },
+		{ { "==", Binary }, { "~=", Binary }, { "=~", Binary } },
 		{ { "&&", Binary } },
 		{ { "||", Binary } },
+		{ { ":", Binary } },
+		{ { "?", Binary } },
 		{
-			{ "?", Binary }, { ":", Binary },
 			{ "=", Binary },
 			{ "+=", Binary }, { "-=", Binary },
 			{ "*=", Binary }, { "/=", Binary }, { "%=", Binary },
