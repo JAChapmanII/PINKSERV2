@@ -315,7 +315,8 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 		},
 		{ { "^", Binary } },
 		{ { "*", Binary }, { "/", Binary }, { "%", Binary } },
-		{ { "+", Binary }, { "-", Binary } },
+		// TODO: . in strange place?
+		{ { "+", Binary }, { "-", Binary }, { ".", Binary } },
 		{
 			{ "<", Binary }, { "<=", Binary },
 			{ ">", Binary }, { ">=", Binary }
@@ -607,6 +608,7 @@ ExpressionTree *ExpressionTree::dropSemicolons( // {{{
 // TODO: this is far from done
 // TODO: we could have a test suite for this... parse -> toString -> parse,
 // TODO: compare? We modify it somewhat, but how badly do we mangle it?
+// TODO: this is totally screwed up :( Needs to be parenthisized
 string ExpressionTree::toString(bool all) { // {{{
 	if(!this->fragment.special) {
 		// TODO: use type tags to not do this?
@@ -666,6 +668,9 @@ string ExpressionTree::evaluate(string nick) {
 	if(this->fragment.isSpecial("^")) {
 		return asString(pow(fromString<int>(this->child->evaluate(nick)),
 				fromString<int>(this->rchild->evaluate(nick))));
+	}
+	if(this->fragment.isSpecial(".")) {
+		return this->child->evaluate(nick) + this->rchild->evaluate(nick);
 	}
 	if(this->fragment.isSpecial("=")) {
 		// left child is $, with right child varname
