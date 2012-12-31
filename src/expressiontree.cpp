@@ -620,19 +620,21 @@ string ExpressionTree::toString(bool all) { // {{{
 	if(this->isSpecial("!")) {
 		string ret = "(!" + this->child->fragment.text;
 		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
-			ret += " " + arg->toString(false) + "";
+			ret += " (" + arg->toString(false) + ")";
 		return ret + ")";
 	}
 	string here;
-	if(this->next && all)
+	//if(this->next && all)
 		here = "(";
 	if(this->child)
 		here += this->child->toString() + " ";
 	here += this->fragment.text;
 	if(this->rchild)
 		here += " " + this->rchild->toString();
+	here += ")";
 	if(this->next && all)
-		return here + ");" + this->next->toString();
+		//return here + ");" + this->next->toString();
+		return here + ";" + this->next->toString();
 	return here;
 } // }}}
 
