@@ -608,17 +608,17 @@ ExpressionTree *ExpressionTree::dropSemicolons( // {{{
 // TODO: we could have a test suite for this... parse -> toString -> parse,
 // TODO: compare? We modify it somewhat, but how badly do we mangle it?
 string ExpressionTree::toString(bool all) { // {{{
+	if(!this->fragment.special) {
+		// TODO: use type tags to not do this?
+		return "'" + this->fragment.text + "'";
+	}
+
 	if(this->isSpecial("$"))
 		return "$" + this->rchild->fragment.text;
 	if(this->isSpecial("!")) {
 		string ret = "(!" + this->child->fragment.text;
-		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next) {
-			string sub = arg->toString(false);
-			if(arg->fragment.special)
-				ret += " " + sub;
-			else
-				ret += " '" + arg->toString(false) + "'";
-		}
+		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
+			ret += " " + arg->toString(false) + "";
 		return ret + ")";
 	}
 	string here;
