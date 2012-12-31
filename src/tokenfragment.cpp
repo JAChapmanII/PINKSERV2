@@ -142,6 +142,8 @@ vector<TokenFragment> TokenFragment::fragment(string statement) { // {{{
 } // }}}
 bool TokenFragment::validIdentifier(string str) { // {{{
 	char f = str.front();
+	if(str.length() == 1 && isalpha(f))
+		return true;
 	if(!isalpha(f) && f != '_')
 		return false;
 	for(unsigned i = 1; i < str.length(); ++i)
