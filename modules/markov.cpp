@@ -30,6 +30,9 @@ using std::endl;
 #include <queue>
 using std::queue;
 
+#include <algorithm>
+using std::remove_if;
+
 #include "config.hpp"
 #include "util.hpp"
 using util::split;
@@ -38,7 +41,6 @@ using util::subvector;
 using util::last;
 using util::contains;
 using util::trim;
-using util::filter;
 using util::asString;
 using util::fromString;
 
@@ -333,7 +335,8 @@ string CorrectionFunction::passive(ChatLine line, bool parsed) { // {{{
 } // }}}
 string CorrectionFunction::correct(string line) { // {{{
 	vector<string> words = split(line);
-	words = filter(words, [](string s){ return !s.empty(); });
+	words.erase(remove_if(words.begin(), words.end(),
+				[](const string &s){ return !s.empty(); }), words.end());
 	if(words.size() < markovOrder + 1)
 		return "";
 	global::log << "----- attempting to correct: " << line << endl;
