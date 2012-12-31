@@ -396,6 +396,14 @@ struct ExpressionTree {
 			folded(false), eid(ieid), fragment(ifrag),
 			child(NULL), rchild(NULL), prev(NULL), next(NULL) {
 	}
+	~ExpressionTree() {
+		if(this->child)
+			delete this->child;
+		if(this->rchild)
+			delete this->rchild;
+		if(this->next)
+			delete this->next;
+	}
 
 	static vector<pair<unsigned, unsigned>> delimitExpressions( // {{{
 			vector<TokenFragment> &fragments) {
@@ -678,9 +686,11 @@ struct ExpressionTree {
 			ExpressionTree *newBegin = begin->prev;
 			begin->prev->next = begin->next;
 			begin->next->prev = begin->prev;
+			begin->next = NULL;
 			delete begin;
 			end->prev->next = end->next;
 			end->next->prev = end->prev;
+			end->next = NULL;
 			delete end;
 			return newBegin->next;
 		} // }}}
@@ -690,9 +700,11 @@ struct ExpressionTree {
 			ExpressionTree *newBegin = begin->prev;
 			begin->prev->next = begin->next;
 			begin->next->prev = begin->prev;
+			begin->next = NULL;
 			delete begin;
 			end->prev->next = end->next;
 			end->next->prev = end->prev;
+			end->next = NULL;
 			delete end;
 			return newBegin->next;
 		} // }}}
@@ -932,6 +944,9 @@ struct ExpressionTree {
 			// advance
 			here = here->next;
 
+			// ditch tmp
+			// TODO: make these auto-pointers or something more C++-ey
+			tmp->next = NULL;
 			delete tmp;
 		}
 
@@ -1062,6 +1077,8 @@ int main(int argc, char **argv) {
 			cout << "stringify: " << etree->toString() << endl;
 
 			cout << "result: " << etree->evaluate("jac") << endl;
+
+			delete etree;
 
 		} catch(string &s) {
 			cout << "\t: " << s << endl;
