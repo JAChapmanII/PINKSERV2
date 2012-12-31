@@ -971,9 +971,9 @@ struct ExpressionTree {
 	// TODO: compare? We modify it somewhat, but how badly do we mangle it?
 	string toString(bool all = true) { // {{{
 		if(this->isSpecial("$"))
-			return "$" + this->fragment.text;
+			return "$" + this->rchild->fragment.text;
 		if(this->isSpecial("!")) {
-			string ret = "!" + this->child->fragment.text;
+			string ret = "(!" + this->child->fragment.text;
 			for(ExpressionTree *arg = this->rchild; arg; arg = arg->next) {
 				string sub = arg->toString(false);
 				if(arg->fragment.special)
@@ -981,7 +981,7 @@ struct ExpressionTree {
 				else
 					ret += " '" + arg->toString(false) + "'";
 			}
-			return ret;
+			return ret + ")";
 		}
 		string here;
 		if(this->next && all)
