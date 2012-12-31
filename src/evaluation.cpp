@@ -204,35 +204,6 @@ bool hasPermission(Permission p, string nick, string variable, int level) { // {
 #include <iostream>
 using namespace std;
 
-enum TokenType { Call, SubToken, Argument };
-struct Token {
-	TokenType type;
-	string text;
-	Token *sub;
-	Token *next;
-
-	Token() : type(TokenType::Argument), text(""), sub(NULL), next(NULL) {
-	}
-	void print(int ilevel = 0) {
-		for(Token *token = this; token; token = token->next) {
-			if(token->type == TokenType::SubToken) {
-				token->sub->print(ilevel + 1);
-			} else {
-				cout << string(ilevel, '\t');
-				switch(token->type) {
-					case TokenType::Call:
-						cout << "!" << token->text;
-						break;
-					case TokenType::Argument:
-						cout << token->text;
-						break;
-				}
-			}
-			cout << endl;
-		}
-	}
-};
-
 bool validIdentifier(string str) { // {{{
 	char f = str.front();
 	if(!isalpha(f) && f != '_')
