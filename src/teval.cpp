@@ -36,6 +36,8 @@ int main(int argc, char **argv) {
 	global::vars["bot.admins"] = "Jext, RGCockatrices, bonzairob, quairlzr";
 	for(int i = 1; i < argc; ++i) {
 		cout << i << ": " << argv[i] << endl;
+
+		ExpressionTree *etree = NULL;
 		try {
 			//Permissions p = Permissions::parse(argv[i]);
 			vector<TokenFragment> tfv = TokenFragment::fragment(argv[i]);
@@ -44,7 +46,7 @@ int main(int argc, char **argv) {
 					<< (tf.special ? "_" : "") << " ";
 			cout << endl;
 
-			ExpressionTree *etree = ExpressionTree::parse(argv[i]);
+			etree = ExpressionTree::parse(argv[i]);
 
 			// print computed AST
 			cout << "final: " << endl;
@@ -53,11 +55,11 @@ int main(int argc, char **argv) {
 
 			cout << "result: " << etree->evaluate("jac") << endl;
 
-			delete etree;
-
 		} catch(string &s) {
 			cout << "\t: " << s << endl;
 		}
+
+		delete etree;
 	}
 	return 0;
 }
