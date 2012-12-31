@@ -19,6 +19,8 @@ using util::contains;
 using util::asString;
 using util::fromString;
 
+#include "global.hpp"
+
 
 // TODO: remove after debug?
 #include <iostream>
@@ -695,8 +697,9 @@ string ExpressionTree::evaluate(string nick) {
 			ret += " " + arg;
 		return ret;
 	}
-	throw (string)"unkown node \"" + this->fragment.text + "\", " +
-		(this->fragment.special ? "" : "not") + " special";
+	throw (string)"unkown node { \"" + this->fragment.text + "\", " +
+		(this->fragment.special ? "" : "not") + " special }, bug " +
+		global::vars["bot.owner"] + " to fix";
 }
 
 
