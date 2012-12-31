@@ -187,6 +187,7 @@ struct Permissions {
 };
 
 bool hasPermission(Permission p, string nick, string variable, int level = 5);
+// TODO: ensurePermission. Does above, throws appropriate exception on failure
 
 // variable permission map
 map<string, Permissions> vars_perms;
@@ -996,29 +997,68 @@ struct ExpressionTree {
 		return here;
 	} // }}}
 
-	string evaluate() {
+	// TODO: ability to tag ExpressionTree as various types. string, int,
+	// TODO: double, variable, function?
+
+	string evaluate(string nick) {
 		if(!this->fragment.special) {
 			return this->fragment.text;
 		}
+		// TODO: de-int this. double? Only when "appropriate"?
+		// standard form: + - * / % {{{
 		if(this->fragment.isSpecial("+")) {
-			return asString(fromString<int>(this->child->evaluate()) +
-					fromString<int>(this->rchild->evaluate()));
+			return asString(fromString<int>(this->child->evaluate(nick)) +
+					fromString<int>(this->rchild->evaluate(nick)));
 		}
 		if(this->fragment.isSpecial("-")) {
-			return asString(fromString<int>(this->child->evaluate()) -
-					fromString<int>(this->rchild->evaluate()));
+			return asString(fromString<int>(this->child->evaluate(nick)) -
+					fromString<int>(this->rchild->evaluate(nick)));
 		}
 		if(this->fragment.isSpecial("*")) {
-			return asString(fromString<int>(this->child->evaluate()) *
-					fromString<int>(this->rchild->evaluate()));
+			return asString(fromString<int>(this->child->evaluate(nick)) *
+					fromString<int>(this->rchild->evaluate(nick)));
 		}
 		if(this->fragment.isSpecial("/")) {
-			return asString(fromString<int>(this->child->evaluate()) /
-					fromString<int>(this->rchild->evaluate()));
+			return asString(fromString<int>(this->child->evaluate(nick)) /
+					fromString<int>(this->rchild->evaluate(nick)));
 		}
 		if(this->fragment.isSpecial("%")) {
-			return asString(fromString<int>(this->child->evaluate()) %
-					fromString<int>(this->rchild->evaluate()));
+			return asString(fromString<int>(this->child->evaluate(nick)) %
+					fromString<int>(this->rchild->evaluate(nick)));
+		} // }}}
+		if(this->fragment.isSpecial("^")) {
+			return asString(pow(fromString<int>(this->child->evaluate(nick)),
+					fromString<int>(this->rchild->evaluate(nick))));
+		}
+		if(this->fragment.isSpecial("=")) {
+			// left child is $, with right child varname
+			string var = this->child->rchild->fragment.text;
+			string reval = this->rchild->evaluate(nick);
+			// TODO: standard way of doing this is going to mean that if the
+			// overall thing fails, we may have partial evals to roll back. Store
+			// in special map, and do an evaulate and then an apply?
+			if(!hasPermission(Permission::Write, nick, var))
+				throw nick + " does not have permission to write to " + var;
+			return (string)"wrote " + reval + " to $" + var;
+		}
+		if(this->fragment.isSpecial("!")) {
+			string func = this->child->fragment.text;
+			vector<string> args;
+			for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
+				args.push_back(arg->evaluate(nick));
+			// TODO: check for function existence
+			// TODO: move permission messages into throw'ing function?
+			if(!hasPermission(Permission::Execute, nick, func))
+				throw nick + " does not have permission to execute " + func;
+			string ret = "called " + func;
+			if(args.empty())
+				return ret;
+			ret += " with arg";
+			if(args.size() > 1)
+				ret += "s";
+			for(string arg : args)
+				ret += " " + arg;
+			return ret;
 		}
 		throw (string)"unkown node \"" + this->fragment.text + "\", " +
 			(this->fragment.special ? "" : "not") + " special";
@@ -1031,6 +1071,8 @@ void execute(string statement) {
 }
 
 int main(int argc, char **argv) {
+	vars["bot.owner"] = "jac";
+	vars["bot.admins"] = "Jext, RGCockatrices, bonzairob, quairlzr";
 	for(int i = 1; i < argc; ++i) {
 		cout << i << ": " << argv[i] << endl;
 		try {
@@ -1048,7 +1090,7 @@ int main(int argc, char **argv) {
 			etree->print();
 			cout << "stringify: " << etree->toString() << endl;
 
-			cout << "result: " << etree->evaluate() << endl;
+			cout << "result: " << etree->evaluate("jac") << endl;
 
 		} catch(string &s) {
 			cout << "\t: " << s << endl;
