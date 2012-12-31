@@ -15,6 +15,7 @@ namespace PermissionType {
 	enum PermissionType { Admin, Owner, User, SUser };
 }
 
+// TODO struct -> class?
 struct PermissionFragment {
 	PermissionType::PermissionType type;
 	std::string nick;
@@ -23,6 +24,7 @@ struct PermissionFragment {
 	static PermissionFragment parse(std::string pstr);
 };
 
+// TODO struct -> class?
 struct Permissions {
 	uint8_t admin;
 	std::string owner_nick;

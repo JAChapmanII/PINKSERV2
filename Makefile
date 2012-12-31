@@ -19,6 +19,7 @@ MOBJS+=${ODIR}/regex.o ${ODIR}/script.o ${ODIR}/simple.o ${ODIR}/todo.o
 # object files required for main binary
 OBJS=
 OBJS+=${MOBJS} ${ODIR}/util.o ${ODIR}/global.o ${ODIR}/config.o
+OBJS+=${ODIR}/tokenfragment.o ${ODIR}/expressiontree.o
 OBJS+=${ODIR}/permission.o ${ODIR}/variable.o
 
 CXXFLAGS=-std=c++0x -I${SDIR} -I${LDIR} -I${MDIR}
