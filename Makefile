@@ -6,20 +6,20 @@ ODIR=obj
 BDIR=.
 
 # main project binaries
-BINS=$(BDIR)/pbrane
+BINS=${BDIR}/pbrane
 
 MOBJS=
 # module related objects from lib/
-MOBJS+=$(ODIR)/brain.o $(ODIR)/modules.o $(ODIR)/util.o $(ODIR)/dictionary.o
-MOBJS+=$(ODIR)/chatline.o $(ODIR)/markovmodel.o
+MOBJS+=${ODIR}/brain.o ${ODIR}/modules.o ${ODIR}/util.o ${ODIR}/dictionary.o
+MOBJS+=${ODIR}/chatline.o ${ODIR}/markovmodel.o
 # module object files from modules/
-MOBJS+=$(ODIR)/core.o $(ODIR)/function.o $(ODIR)/markov.o $(ODIR)/math.o
-MOBJS+=$(ODIR)/regex.o $(ODIR)/script.o $(ODIR)/simple.o $(ODIR)/todo.o
+MOBJS+=${ODIR}/core.o ${ODIR}/function.o ${ODIR}/markov.o ${ODIR}/math.o
+MOBJS+=${ODIR}/regex.o ${ODIR}/script.o ${ODIR}/simple.o ${ODIR}/todo.o
 
 # object files required for main binary
-OBJS=$(MOBJS) $(ODIR)/util.o $(ODIR)/global.o $(ODIR)/config.o
+OBJS=${MOBJS} ${ODIR}/util.o ${ODIR}/global.o ${ODIR}/config.o
 
-CXXFLAGS=-std=c++0x -I$(SDIR) -I$(LDIR) -I$(MDIR)
+CXXFLAGS=-std=c++0x -I${SDIR} -I${LDIR} -I${MDIR}
 LDFLAGS=-lboost_regex -lgmp -lgmpxx
 
 ifndef release
@@ -40,21 +40,21 @@ CXXFLAGS+=-pg
 LDFLAGS+=-pg
 endif
 
-all: dir $(BINS)
+all: dir ${BINS}
 dir:
-	mkdir -p $(SDIR) $(ODIR) $(BDIR)
+	mkdir -p ${SDIR} ${ODIR} ${BDIR}
 
-$(BDIR)/pbrane: $(ODIR)/pbrane.o $(OBJS)
-	$(CXX) -o $@ $^ $(LDFLAGS)
+${BDIR}/pbrane: ${ODIR}/pbrane.o ${OBJS}
+	${CXX} -o $@ $^ ${LDFLAGS}
 
-$(ODIR)/%.o: $(SDIR)/%.cpp
-	$(CXX) -c -o $@ $^ $(CXXFLAGS)
-$(ODIR)/%.o: $(LDIR)/%.cpp
-	$(CXX) -c -o $@ $^ $(CXXFLAGS)
-$(ODIR)/%.o: $(MDIR)/%.cpp
-	$(CXX) -c -o $@ $^ $(CXXFLAGS)
+${ODIR}/%.o: ${SDIR}/%.cpp
+	${CXX} -c -o $@ $^ ${CXXFLAGS}
+${ODIR}/%.o: ${LDIR}/%.cpp
+	${CXX} -c -o $@ $^ ${CXXFLAGS}
+${ODIR}/%.o: ${MDIR}/%.cpp
+	${CXX} -c -o $@ $^ ${CXXFLAGS}
 
 clean:
-	rm -rf $(ODIR)/*.o $(BINS)
+	rm -rf ${ODIR}/*.o ${BINS}
 
 
