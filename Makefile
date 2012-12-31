@@ -6,7 +6,7 @@ ODIR=obj
 BDIR=.
 
 # main project binaries
-BINS=${BDIR}/pbrane
+BINS=${BDIR}/pbrane ${BDIR}/teval
 
 MOBJS=
 # module related objects from lib/
@@ -45,6 +45,8 @@ dir:
 	mkdir -p ${SDIR} ${ODIR} ${BDIR}
 
 ${BDIR}/pbrane: ${ODIR}/pbrane.o ${OBJS}
+	${CXX} -o $@ $^ ${LDFLAGS}
+${BDIR}/teval: ${ODIR}/teval.o ${OBJS}
 	${CXX} -o $@ $^ ${LDFLAGS}
 
 ${ODIR}/%.o: ${SDIR}/%.cpp
