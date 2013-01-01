@@ -33,6 +33,7 @@ struct Permissions {
 	uint8_t user;
 
 	Permissions();
+	Permissions(std::string owner);
 
 	static Permissions parse(std::string perms);
 

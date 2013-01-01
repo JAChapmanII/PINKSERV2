@@ -70,6 +70,10 @@ Permissions::Permissions() : admin(Permission::xawmPermissions), // {{{
 		owner_nick(""), owner(Permission::xawmPermissions),
 		suser(), user(Permission::xPermissions) {
 } // }}}
+Permissions::Permissions(string owner) : admin(Permission::xawmPermissions), // {{{
+		owner_nick(owner), owner(Permission::xawmPermissions),
+		suser(), user(Permission::xPermissions) {
+} // }}}
 
 Permissions Permissions::parse(string perms) { // {{{
 	Permissions p;
