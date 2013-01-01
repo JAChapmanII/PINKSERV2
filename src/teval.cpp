@@ -39,6 +39,7 @@ void execute(string statement) {
 int main(int argc, char **argv) {
 	global::vars["bot.owner"] = "jac";
 	global::vars["bot.admins"] = "Jext, RGCockatrices, bonzairob, quairlzr, Nybbles, ajanata";
+	global::vars["bot.maxIterations"] = "10";
 
 	random_device randomDevice;
 	unsigned int seed = randomDevice();
