@@ -9,6 +9,8 @@ using std::vector;
 using std::transform;
 #include <stack>
 using std::stack;
+#include <random>
+using std::random_device;
 #include <cctype>
 
 #include <iostream>
@@ -34,6 +36,11 @@ void execute(string statement) {
 int main(int argc, char **argv) {
 	global::vars["bot.owner"] = "jac";
 	global::vars["bot.admins"] = "Jext, RGCockatrices, bonzairob, quairlzr";
+
+	random_device randomDevice;
+	unsigned int seed = randomDevice();
+	global::init(seed);
+
 	for(int i = 1; i < argc; ++i) {
 		if(string(argv[i]).empty())
 			continue;
@@ -43,6 +50,7 @@ int main(int argc, char **argv) {
 		try {
 			//Permissions p = Permissions::parse(argv[i]);
 			vector<TokenFragment> tfv = TokenFragment::fragment(argv[i]);
+			cout << "token fragments: ";
 			for(TokenFragment tf : tfv)
 				cout << (tf.special ? "_" : "") << tf.text
 					<< (tf.special ? "_" : "") << " ";
