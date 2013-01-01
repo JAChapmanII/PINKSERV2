@@ -1,18 +1,18 @@
 fish => !or "<><" "><>"
-fishes => !for i 0 {!rand 3 8}: !fish; " "
+fishes => { !for i 0 {!rand 3 8}: !fish; " " }
 sl => $tmp.d = {!or 0 1}
 sl +=> $tmp.d? "/.==.]" : "{. .}"
 sl +=> !for $i 0 {!rand 3 4}: "[. .]"
 sl +=> $tmp.d? "{. .}" : "[.==\\"
 dubstep => "WUB WUB WUB"
 speak %s => $1
-roulette => ($shot++ > 6)? !kick $nick; "$nick shot himself!" : "click"
-spin => $shot = {!rand 1 6}; "The barrel comes to a stop. Who will die next?"
+roulette => { ($shot++ > 6)? !kick $nick; "$nick shot himself!" : "click" }
+spin => { $shot = {!rand 1 6}; "The barrel comes to a stop. Who will die next?" }
 
 !on text ($text =~ "o/|\o")? !or "o/" "\o"
 !on text ($text =~ "(?i)(wub|dubstep)")? !dubstep
 !on text ($toUs && $text =~ "<3")? !reply "<3"
 !on text ($toUs && $text =~ "</3")? !reply ":("
 
-!on join ({!drand 0 1} > 0.5}) ? "Hello, $nick!" : "Goodday, $nick!"
+!on join ({!drand 0 1} > 0.5) ? "Hello, $nick!" : "Goodday, $nick!"
 
