@@ -3,6 +3,7 @@ using std::map;
 using std::pair;
 #include <string>
 using std::string;
+using std::getline;
 #include <vector>
 using std::vector;
 #include <algorithm>
@@ -15,7 +16,9 @@ using std::random_device;
 
 #include <iostream>
 using std::cout;
+using std::cerr;
 using std::endl;
+using std::cin;
 
 #include "util.hpp"
 using util::contains;
@@ -35,41 +38,60 @@ void execute(string statement) {
 
 int main(int argc, char **argv) {
 	global::vars["bot.owner"] = "jac";
-	global::vars["bot.admins"] = "Jext, RGCockatrices, bonzairob, quairlzr";
+	global::vars["bot.admins"] = "Jext, RGCockatrices, bonzairob, quairlzr, Nybbles, ajanata";
 
 	random_device randomDevice;
 	unsigned int seed = randomDevice();
 	global::init(seed);
 
-	for(int i = 1; i < argc; ++i) {
-		if(string(argv[i]).empty())
-			continue;
-		cout << i << ": " << argv[i] << endl;
+	if(argc > 1) {
+		for(int i = 1; i < argc; ++i) {
+			if(string(argv[i]).empty())
+				continue;
+			cout << i << ": " << argv[i] << endl;
 
-		ExpressionTree *etree = NULL;
-		try {
-			//Permissions p = Permissions::parse(argv[i]);
-			vector<TokenFragment> tfv = TokenFragment::fragment(argv[i]);
-			cout << "token fragments: ";
-			for(TokenFragment tf : tfv)
-				cout << (tf.special ? "_" : "") << tf.text
-					<< (tf.special ? "_" : "") << " ";
-			cout << endl;
+			ExpressionTree *etree = NULL;
+			try {
+				etree = ExpressionTree::parse(argv[i]);
 
-			etree = ExpressionTree::parse(argv[i]);
+				// print computed AST
+				cout << "final: " << endl;
+				etree->print();
+				cout << "stringify: " << etree->toString() << endl;
 
-			// print computed AST
-			cout << "final: " << endl;
-			etree->print();
-			cout << "stringify: " << etree->toString() << endl;
+				cout << "result: " << etree->evaluate("jac") << endl;
+			} catch(string &s) {
+				cout << "\t: " << s << endl;
+			}
 
-			cout << "result: " << etree->evaluate("jac") << endl;
-
-		} catch(string &s) {
-			cout << "\t: " << s << endl;
+			delete etree;
 		}
+	} else {
+		while(cin.good() && !cin.eof()) {
+			string nick, line;
+			getline(cin, nick);
+			getline(cin, line);
+			if(nick.empty() || line.empty())
+				break;
 
-		delete etree;
+			ExpressionTree *etree = NULL;
+			try {
+				etree = ExpressionTree::parse(line);
+
+				cerr << "eval'ing: " << line << " as " << nick << endl;
+				cerr << "final AST: " << endl;
+				etree->print();
+				cerr << "stringify: " << etree->toString() << endl;
+
+				string res = etree->evaluate(nick);
+				cerr << "result: " << res << endl;
+				cout << nick + ": " << res << endl;
+			} catch(string &s) {
+				cerr << "\texception: " << s << endl;
+				cout << nick + ": error: " + s << endl;
+			}
+			delete etree;
+		}
 	}
 	return 0;
 }
