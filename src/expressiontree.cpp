@@ -9,6 +9,9 @@ using std::stack;
 #include <algorithm>
 using std::find;
 
+#include <random>
+using std::uniform_int_distribution;
+
 #include <cmath>
 
 #include "permission.hpp"
@@ -220,7 +223,7 @@ ExpressionTree *ExpressionTree::parse(string statement) { // {{{
 	ExpressionTree *last = NULL;
 	// convert all subexpressions into a tree
 	for(unsigned i = 0; i < exprEnds.size(); ++i) {
-		printexprends(sexprlist[i], frags);
+		//printexprends(sexprlist[i], frags);
 		last = treeify(exprEnds[i].first, exprEnds[i].second);
 		//last->print();
 	}
@@ -647,10 +650,10 @@ string ExpressionTree::toString(bool all) { // {{{
 			return "$" + this->rchild->fragment.text;
 	}
 	if(this->isSpecial("!")) {
-		string ret = "(!" + this->child->fragment.text;
+		string ret = "!" + this->child->fragment.text;
 		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
-			ret += " (" + arg->toString(false) + ")";
-		ret += ")";
+			ret += " " + arg->toString(false) + "";
+		ret += "";
 		if(this->next && all)
 			ret += "; " + this->next->toString();
 		return ret;
@@ -673,38 +676,16 @@ string ExpressionTree::toString(bool all) { // {{{
 // TODO: ability to tag ExpressionTree as various types. string, int,
 // TODO: double, variable, function?
 
-string ExpressionTree::evaluate(string nick) {
-	if(!this->fragment.special) {
-		return this->fragment.text;
-	}
-	// TODO: de-int this. double? Only when "appropriate"?
-	// standard form: + - * / % {{{
-	if(this->fragment.isSpecial("+")) {
-		return asString(fromString<int>(this->child->evaluate(nick)) +
-				fromString<int>(this->rchild->evaluate(nick)));
-	}
-	if(this->fragment.isSpecial("-")) {
-		return asString(fromString<int>(this->child->evaluate(nick)) -
-				fromString<int>(this->rchild->evaluate(nick)));
-	}
-	if(this->fragment.isSpecial("*")) {
-		return asString(fromString<int>(this->child->evaluate(nick)) *
-				fromString<int>(this->rchild->evaluate(nick)));
-	}
-	if(this->fragment.isSpecial("/")) {
-		return asString(fromString<int>(this->child->evaluate(nick)) /
-				fromString<int>(this->rchild->evaluate(nick)));
-	}
-	if(this->fragment.isSpecial("%")) {
-		return asString(fromString<int>(this->child->evaluate(nick)) %
-				fromString<int>(this->rchild->evaluate(nick)));
-	} // }}}
-	if(this->fragment.isSpecial("^")) {
-		return asString(pow(fromString<int>(this->child->evaluate(nick)),
-				fromString<int>(this->rchild->evaluate(nick))));
-	}
-	if(this->fragment.isSpecial(".")) {
-		return this->child->evaluate(nick) + this->rchild->evaluate(nick);
+// TODO: on throw, rollback changes. This will be a lot of work...
+
+string ExpressionTree::evaluate(string nick, bool all) {
+	// might have side effects
+	// TODO: permissions on creation with = and => (mostly execute and owner)
+	if(this->fragment.isSpecial("()")) {
+		string sexprres = this->child->evaluate(nick);
+		if(this->next && all)
+			return this->next->evaluate(nick);
+		return sexprres;
 	}
 	if(this->fragment.isSpecial("=")) {
 		// left child is $, with right child varname
@@ -715,27 +696,127 @@ string ExpressionTree::evaluate(string nick) {
 		// in special map, and do an evaulate and then an apply?
 		if(!hasPermission(Permission::Write, nick, var))
 			throw nick + " does not have permission to write to " + var;
+		global::vars[var] = reval;
+		// TODO: ugh... this is copied a bunch
+		if(this->next && all)
+			return this->next->evaluate(nick);
 		return (string)"wrote " + reval + " to $" + var;
+	}
+	if(this->fragment.isSpecial("=>")) {
+		string func = this->child->fragment.text;
+		string rtext = this->rchild->toString();
+		if(!hasPermission(Permission::Write, nick, func))
+			throw nick + " does not have permission to write to " + func;
+		global::vars[func] = rtext;
+		if(this->next && all)
+			return this->next->evaluate(nick);
+		return (string)"bound " + func + " as: " + rtext;
 	}
 	if(this->fragment.isSpecial("!")) {
 		string func = this->child->fragment.text;
 		vector<string> args;
 		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
-			args.push_back(arg->evaluate(nick));
+			args.push_back(arg->evaluate(nick, false));
 		// TODO: check for function existence
 		// TODO: move permission messages into throw'ing function?
 		if(!hasPermission(Permission::Execute, nick, func))
 			throw nick + " does not have permission to execute " + func;
+
+		string argsstr;
+		for(string arg : args)
+			argsstr += " " + arg;
+
+		// TODO: put these elsewhere...
+		if(func == "echo") {
+			// TODO: this should really just append to some other real return
+			if(this->next && all)
+				return argsstr.substr(1) + this->next->evaluate(nick);
+			return argsstr.substr(1);
+		}
+
+		if(this->next && all)
+			return this->next->evaluate(nick);
+
+		// TODO: more functions for somewhere else
+		if(func == "or") {
+			uniform_int_distribution<> uid(0, args.size() - 1);
+			unsigned target = uid(global::rengine);
+			return args[target];
+		}
+
+		// user defined function
+		if(global::vars.find(func) == global::vars.end())
+			throw func + " is undefined";
+		ExpressionTree *etree = NULL;
+		string res;
+		try {
+			etree = ExpressionTree::parse(global::vars[func]);
+			res = etree->evaluate(nick);
+		} catch(string &s) {
+			delete etree;
+			throw s;
+		}
+		delete etree;
+		
+		return res;
+
+		/*
 		string ret = "called " + func;
 		if(args.empty())
 			return ret;
 		ret += " with arg";
 		if(args.size() > 1)
 			ret += "s";
-		for(string arg : args)
-			ret += " " + arg;
-		return ret;
+		return ret + argsstr;
+		*/
 	}
+
+
+	// no side effects
+	if(this->next && all)
+		// TODO: ?
+		return this->next->evaluate(nick);
+
+	if(!this->fragment.special) {
+		return this->fragment.text;
+	}
+	if(this->isSpecial("$")) {
+		string var = this->rchild->fragment.text;
+		if(!hasPermission(Permission::Write, nick, var))
+			throw nick + " does not have permission to read " + var;
+		return global::vars[var];
+	}
+	// TODO: de-int this. double? Only when "appropriate"?
+	// standard form: + - * / % ^ {{{
+	if(this->fragment.isSpecial("+")) {
+		return asString(fromString<long>(this->child->evaluate(nick)) +
+				fromString<long>(this->rchild->evaluate(nick)));
+	}
+	if(this->fragment.isSpecial("-")) {
+		return asString(fromString<long>(this->child->evaluate(nick)) -
+				fromString<long>(this->rchild->evaluate(nick)));
+	}
+	if(this->fragment.isSpecial("*")) {
+		return asString(fromString<long>(this->child->evaluate(nick)) *
+				fromString<long>(this->rchild->evaluate(nick)));
+	}
+	if(this->fragment.isSpecial("/")) {
+		long rhs = fromString<long>(this->rchild->evaluate(nick));
+		if(rhs == 0)
+			throw (string)"attempted to divide by 0";
+		return asString(fromString<long>(this->child->evaluate(nick)) / rhs);
+	}
+	if(this->fragment.isSpecial("%")) {
+		long rhs = fromString<long>(this->rchild->evaluate(nick));
+		if(rhs == 0)
+			throw (string)"attempted to mod by 0";
+		return asString(fromString<long>(this->child->evaluate(nick)) % rhs);
+	}
+	if(this->fragment.isSpecial("^")) {
+		return asString(pow(fromString<long>(this->child->evaluate(nick)),
+				fromString<long>(this->rchild->evaluate(nick))));
+	} // }}}
+
 	throw (string)"unkown node { \"" + this->fragment.text + "\", " +
 		(this->fragment.special ? "" : "not") + " special }, bug " +
 		global::vars["bot.owner"] + " to fix";

@@ -39,7 +39,11 @@ struct ExpressionTree {
 	// TODO: ability to tag ExpressionTree as various types. string, int,
 	// TODO: double, variable, function?
 
-	std::string evaluate(std::string nick);
+	std::string evaluate(std::string nick, bool all = true);
+
+	protected:
+		ExpressionTree(const ExpressionTree &rhs);
+		ExpressionTree &operator=(const ExpressionTree &rhs);
 };
 
 #endif // EXPRESSIONTREE_HPP
