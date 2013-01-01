@@ -222,6 +222,7 @@ ExpressionTree *ExpressionTree::parse(string statement) { // {{{
 	for(unsigned i = 0; i < exprEnds.size(); ++i) {
 		printexprends(sexprlist[i], frags);
 		last = treeify(exprEnds[i].first, exprEnds[i].second);
+		//last->print();
 	}
 
 	// find the real starts and ends of the overall expression
@@ -239,10 +240,11 @@ ExpressionTree *ExpressionTree::parse(string statement) { // {{{
 
 // TODO: remove after debug?
 void ExpressionTree::print(int level, bool sprint) { // {{{
+	//cerr << "(l:" << level << ") ";
 	if(level == 0)
 		cerr << this->fragment.text << endl;
 	else if(sprint)
-		cerr << string(level * 2, ' ') << "a: " << this->fragment.text << endl;
+		cerr << string(level * 2, ' ') << "a: '" << this->fragment.text << "'" << endl;
 
 	string sstring(level * 2 + 2, ' ');
 	if(this->isSpecial("!")) {
@@ -253,6 +255,11 @@ void ExpressionTree::print(int level, bool sprint) { // {{{
 				a->print(level + 1, true);
 			} else
 				cerr << sstring << "arg: " << a->fragment.text << endl;
+		}
+	} else if(this->isSpecial("()")) {
+		cerr << sstring << "(): " << endl;
+		for(ExpressionTree *sexpr = this->child; sexpr; sexpr = sexpr->next) {
+			sexpr->print(level + 1, true);
 		}
 	} else {
 		if(this->child) {
@@ -297,6 +304,9 @@ bool ExpressionTree::isSpecial(string token) { // {{{
 	return (this->fragment.text == token);
 } // }}}
 
+// TODO: failure of: $t = (thing1; thing2) and
+// TODO: func => (thing1; thing2)
+
 // TODO: various debug things in here
 ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *end) {
 	static vector<string> assignments = { // {{{
@@ -329,40 +339,44 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 			{ "=", Binary },
 			{ "+=", Binary }, { "-=", Binary },
 			{ "*=", Binary }, { "/=", Binary }, { "%=", Binary },
-			{ "^=", Binary },
-			{ "+=>", Binary }, { "=>", Binary }
-		}
+			{ "^=", Binary }
+		},
+		{ { "+=>", Binary }, { "=>", Binary } }
 	}; // }}}
 
 	// TODO: if previous before parenthesis is a function call, use this as
 	// arguments? If no args currently?
-	// if we've got a parenthized subexpression, simply ditch the {{{
-	// parenthesis and hook the contents up directly
-	if(begin->isSpecial("(") && end->isSpecial(")")) {
-		ExpressionTree *newBegin = begin->prev;
-		begin->prev->next = begin->next;
-		begin->next->prev = begin->prev;
+	// if we've got a parenthized or braced subexpression, simply ditch the {{{
+	// surroundings and hook the contents up directly
+	if((begin->isSpecial("(") && end->isSpecial(")")) ||
+			(begin->isSpecial("{") && end->isSpecial("}"))) {
+		// make the inner semicolon enclosed sequence it's own thing
+		ExpressionTree *sexpr0 = begin->next, *sexpr1 = end->prev;
+		sexpr0->prev = NULL;
+		sexpr1->next = NULL;
+
+		// create a new expression tree for the expression
+		ExpressionTree *here = new ExpressionTree(TokenFragment("()", true), 0);
+		// set its child to be the inner sequence
+		here->child = dropSemicolons(sexpr0, sexpr1);
+		here->folded = true;
+
+		// hook up start to surroundings
+		here->prev = begin->prev;
+		begin->prev->next = here;
+
+		// hook up end to surroundings
+		here->next = end->next;
+		end->next->prev = here;
+
+		// delete now unused () or {} tokens
 		begin->next = NULL;
-		delete begin;
-		end->prev->next = end->next;
-		end->next->prev = end->prev;
 		end->next = NULL;
-		delete end;
-		return newBegin->next;
-	} // }}}
-	// if we've got a braced subexpression, simply ditch the {{{
-	// braces and hook the contents up directly
-	if(begin->isSpecial("{") && end->isSpecial("}")) {
-		ExpressionTree *newBegin = begin->prev;
-		begin->prev->next = begin->next;
-		begin->next->prev = begin->prev;
-		begin->next = NULL;
 		delete begin;
-		end->prev->next = end->next;
-		end->next->prev = end->prev;
-		end->next = NULL;
 		delete end;
-		return newBegin->next;
+
+		// return the inner contents
+		return here;
 	} // }}}
 
 	// loop over precedence levels
@@ -449,8 +463,10 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 					case OperatorType::Binary: // {{{
 						// check left and right sides
 						if(contains(assignments, op.first)) {
-							if(!here->prev->validAssignmentOperand())
+							if(!here->prev->validAssignmentOperand()) {
+								cerr << here->prev->fragment.text << endl;
 								throw (string)"assignment with invalid lhs";
+							}
 						} else if(contains(fassignments, op.first)) {
 							if(!here->prev->validIdentifier())
 								throw (string)"function assignment with invalid lhs";
@@ -549,7 +565,6 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 // TODO: some error stuff in here too
 ExpressionTree *ExpressionTree::dropSemicolons( // {{{
 		ExpressionTree *begin, ExpressionTree *end) {
-	//cout << "REMOVING SEMICOLONS: " << begin->fragment.text << "
 	bool done = false;
 	for(ExpressionTree *here = begin; !done;) {
 		if(here == end)
@@ -612,29 +627,46 @@ ExpressionTree *ExpressionTree::dropSemicolons( // {{{
 string ExpressionTree::toString(bool all) { // {{{
 	if(!this->fragment.special) {
 		// TODO: use type tags to not do this?
-		return "'" + this->fragment.text + "'";
+		if(this->next && all)
+			return "'" + this->fragment.text + "'; " + this->next->toString();
+		else
+			return "'" + this->fragment.text + "'";
 	}
 
-	if(this->isSpecial("$"))
-		return "$" + this->rchild->fragment.text;
+	if(this->isSpecial("()")) {
+		string ret = "(" + this->child->toString() + ")";
+		if(this->next && all)
+			ret += "; " + this->next->toString();
+		return ret;
+	}
+
+	if(this->isSpecial("$")) {
+		if(this->next && all)
+			return "$" + this->rchild->fragment.text + "; " + this->next->toString();
+		else
+			return "$" + this->rchild->fragment.text;
+	}
 	if(this->isSpecial("!")) {
 		string ret = "(!" + this->child->fragment.text;
 		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
 			ret += " (" + arg->toString(false) + ")";
-		return ret + ")";
+		ret += ")";
+		if(this->next && all)
+			ret += "; " + this->next->toString();
+		return ret;
 	}
 	string here;
-	//if(this->next && all)
+	if(this->next && all)
 		here = "(";
 	if(this->child)
 		here += this->child->toString() + " ";
 	here += this->fragment.text;
 	if(this->rchild)
 		here += " " + this->rchild->toString();
-	here += ")";
+	//here += ")";
 	if(this->next && all)
-		//return here + ");" + this->next->toString();
-		return here + ";" + this->next->toString();
+		return here + ");" + this->next->toString();
+		//return here + "; " + this->next->toString(true);
 	return here;
 } // }}}
 
