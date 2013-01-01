@@ -728,6 +728,12 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		// left child is $, with right child varname
 		string var = this->child->rchild->fragment.text;
 		string reval = this->rchild->evaluate(nick);
+		if(global::vars.find(var) == global::vars.end()) {
+			global::vars[var] = reval;
+			global::vars_perms[var] = Permissions(nick);
+			return (string)"created " + var + " as " + reval;
+		}
+
 		// TODO: standard way of doing this is going to mean that if the
 		// overall thing fails, we may have partial evals to roll back. Store
 		// in special map, and do an evaulate and then an apply?
@@ -742,6 +748,13 @@ string ExpressionTree::evaluate(string nick, bool all) {
 	if(this->fragment.isSpecial("=>") || this->fragment.isSpecial("+=>")) {
 		string func = this->child->fragment.text;
 		string rtext = this->rchild->toString();
+
+		if(global::vars.find(func) == global::vars.end()) {
+			global::vars[func] = rtext;
+			global::vars_perms[func] = Permissions(nick);
+			return (string)"created " + func + " as " + rtext;
+		}
+
 		if(!hasPermission(Permission::Write, nick, func))
 			throw nick + " does not have permission to write to " + func;
 		if(this->fragment.text == "+=>")
