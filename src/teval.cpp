@@ -35,6 +35,8 @@ int main(int argc, char **argv) {
 	global::vars["bot.owner"] = "jac";
 	global::vars["bot.admins"] = "Jext, RGCockatrices, bonzairob, quairlzr";
 	for(int i = 1; i < argc; ++i) {
+		if(string(argv[i]).empty())
+			continue;
 		cout << i << ": " << argv[i] << endl;
 
 		ExpressionTree *etree = NULL;
