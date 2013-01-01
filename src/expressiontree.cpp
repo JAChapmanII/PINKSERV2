@@ -627,6 +627,18 @@ ExpressionTree *ExpressionTree::dropSemicolons( // {{{
 	return begin;
 } // }}}
 
+// TODO: put this somewhere usefull
+static string escape(string str);
+string escape(string str) {
+	string res;
+	for(char c : str)
+		if(c == '\\')
+			res += "\\\\";
+		else
+			res += c;
+	return res;
+}
+
 // TODO: this is far from done
 // TODO: we could have a test suite for this... parse -> toString -> parse,
 // TODO: compare? We modify it somewhat, but how badly do we mangle it?
@@ -635,9 +647,9 @@ string ExpressionTree::toString(bool all) { // {{{
 	if(!this->fragment.special) {
 		// TODO: use type tags to not do this?
 		if(this->next && all)
-			return "'" + this->fragment.text + "'; " + this->next->toString();
+			return "'" + escape(this->fragment.text) + "'; " + this->next->toString();
 		else
-			return "'" + this->fragment.text + "'";
+			return "'" + escape(this->fragment.text) + "'";
 	}
 
 	if(this->isSpecial("()")) {
@@ -727,17 +739,20 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			return this->next->evaluate(nick);
 		return (string)"wrote " + reval + " to $" + var;
 	}
-	if(this->fragment.isSpecial("=>")) {
+	if(this->fragment.isSpecial("=>") || this->fragment.isSpecial("+=>")) {
 		string func = this->child->fragment.text;
 		string rtext = this->rchild->toString();
 		if(!hasPermission(Permission::Write, nick, func))
 			throw nick + " does not have permission to write to " + func;
-		global::vars[func] = rtext;
+		if(this->fragment.text == "+=>")
+			global::vars[func] += ";(" + rtext + ")";
+		else
+			global::vars[func] = rtext;
 		if(this->next && all)
 			return this->next->evaluate(nick);
-		return (string)"bound " + func + " as: " + rtext;
+		return (string)"bound " + func + " as: " + global::vars[func];
 	}
-	if(this->fragment.isSpecial("!")) {
+	if(this->fragment.isSpecial("!")) { // {{{
 		string func = this->child->fragment.text;
 		// TODO: check for function existence
 		// TODO: move permission messages into throw'ing function?
@@ -749,7 +764,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			argTrees.push_back(arg);
 
 		// TODO: this should be elsewhere?
-		if(func == "for") {
+		if(func == "for") { // {{{
 			if(argTrees.size() != 3)
 				throw (string)"for takes three parameters and a body";
 			if(!argTrees[0]->validAssignmentOperand())
@@ -771,13 +786,14 @@ string ExpressionTree::evaluate(string nick, bool all) {
 
 			// actually execute the thing
 			ExpressionTree *body = argTrees[2]->rchild;
+			//cerr << "body: " << body->toString() << endl;
 			string ret;
 			for(long i = low; i < high; ++i) {
 				global::vars[loopVar] = asString(i);
 				ret += body->evaluate(nick);
 			}
 			return ret;
-		}
+		} // }}}
 
 		// figure out the result of the arguments
 		vector<string> args;
@@ -789,7 +805,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			argsstr += " " + arg;
 
 		// TODO: put these elsewhere...
-		if(func == "echo") {
+		if(func == "echo") { // {{{
 			argsstr = "";
 			for(string arg : args)
 				argsstr += arg;
@@ -797,18 +813,19 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			if(this->next && all)
 				return argsstr + this->next->evaluate(nick);
 			return argsstr;
-		}
+		} // }}}
 
+		// TODO: this shouldn't be here....
 		if(this->next && all)
 			return this->next->evaluate(nick);
 
 		// TODO: more functions for somewhere else
-		if(func == "or") {
+		if(func == "or") { // {{{
 			uniform_int_distribution<> uid(0, args.size() - 1);
 			unsigned target = uid(global::rengine);
 			return args[target];
-		}
-		if(func == "rand") {
+		} // }}}
+		if(func == "rand") { // {{{
 			if(args.size() != 2)
 				throw (string)"rand takes two parameters; the bounds";
 			long low = fromString<long>(args[0]), high = fromString<long>(args[1]);
@@ -818,8 +835,8 @@ string ExpressionTree::evaluate(string nick, bool all) {
 				return asString(low);
 			uniform_int_distribution<long> lrng(low, high);
 			return asString(lrng(global::rengine));
-		}
-		if(func == "drand") {
+		} // }}}
+		if(func == "drand") { // {{{
 			if(args.size() != 2)
 				throw (string)"drand takes two parameters; the bounds";
 			double low = fromString<double>(args[0]), high = fromString<double>(args[1]);
@@ -827,7 +844,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 				throw (string)"drand's second parameter must be larger";
 			uniform_real_distribution<double> lrng(low, high);
 			return asString(lrng(global::rengine));
-		}
+		} // }}}
 
 		// user defined function
 		if(global::vars.find(func) == global::vars.end())
@@ -844,17 +861,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		delete etree;
 		
 		return res;
-
-		/*
-		string ret = "called " + func;
-		if(args.empty())
-			return ret;
-		ret += " with arg";
-		if(args.size() > 1)
-			ret += "s";
-		return ret + argsstr;
-		*/
-	}
+	} // }}}
 
 
 	// no side effects
