@@ -11,6 +11,7 @@ using std::find;
 
 #include <random>
 using std::uniform_int_distribution;
+using std::uniform_real_distribution;
 
 #include <cmath>
 
@@ -311,6 +312,8 @@ bool ExpressionTree::isSpecial(string token) { // {{{
 // TODO: func => (thing1; thing2)
 
 // TODO: various debug things in here
+// TODO: ternary operators incorrectly get joined into function call
+// TODO: arguments. this probably means we need another stack option in fragment
 ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *end) {
 	static vector<string> assignments = { // {{{
 			"=", "+=", "-=", "*=", "/=", "%=", "^=",
@@ -320,9 +323,10 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 			"=>", "+=>"
 	}; // }}}
 	static vector<vector<pair<string, unsigned>>> precedenceMap = { // {{{
+		{ { "$", Prefix } },
 		{ { "++", Suffix }, { "--", Suffix } },
 		{
-			{ "!", Prefix }, { "$", Prefix },
+			{ "!", Prefix },
 			{ "++", Prefix }, { "--", Prefix },
 			{ "+", Prefix }, { "-", Prefix }, { "~", Prefix }
 		},
@@ -687,6 +691,27 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			return this->next->evaluate(nick);
 		return sexprres;
 	}
+	if(this->fragment.isSpecial("?")) {
+		ExpressionTree *trueTree = this->rchild, *falseTree = NULL;
+		if(this->rchild->isSpecial(":")) {
+			trueTree = this->rchild->child;
+			falseTree = this->rchild->rchild;
+		}
+		string condition = this->child->evaluate(nick);
+		ExpressionTree *target = trueTree;
+		if(condition != "true")
+			target = falseTree;
+		if(target == NULL) {
+			if(this->next && all)
+				return this->next->evaluate(nick);
+			return "";
+		}
+
+		string ret = target->evaluate(nick);
+		if(this->next && all)
+			return this->next->evaluate(nick);
+		return ret;
+	}
 	if(this->fragment.isSpecial("=")) {
 		// left child is $, with right child varname
 		string var = this->child->rchild->fragment.text;
@@ -714,13 +739,50 @@ string ExpressionTree::evaluate(string nick, bool all) {
 	}
 	if(this->fragment.isSpecial("!")) {
 		string func = this->child->fragment.text;
-		vector<string> args;
-		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
-			args.push_back(arg->evaluate(nick, false));
 		// TODO: check for function existence
 		// TODO: move permission messages into throw'ing function?
 		if(!hasPermission(Permission::Execute, nick, func))
 			throw nick + " does not have permission to execute " + func;
+
+		vector<ExpressionTree *> argTrees;
+		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
+			argTrees.push_back(arg);
+
+		// TODO: this should be elsewhere?
+		if(func == "for") {
+			if(argTrees.size() != 3)
+				throw (string)"for takes three parameters and a body";
+			if(!argTrees[0]->validAssignmentOperand())
+				throw (string)"first parameter to for must be assignable";
+			string loopVar = argTrees[0]->rchild->fragment.text;
+			if(!hasPermission(Permission::Write, nick, loopVar))
+				throw nick + " cannot write to loop var " + loopVar;
+			if(!argTrees[2]->isSpecial(":"))
+				throw (string)"for syntax is: !for $var low high: body";
+			// TODO: support for over characters?
+			long low = fromString<long>(argTrees[1]->evaluate(nick, false)),
+				high = fromString<long>(argTrees[2]->child->evaluate(nick, false));
+			// TODO: uh?
+			if(low > high)
+				return "";
+			if(high - low > fromString<long>(global::vars["bot.maxIterations"]))
+				throw (string)"for cannot exceed " +
+					global::vars["bot.maxIterations"] + " iterations";
+
+			// actually execute the thing
+			ExpressionTree *body = argTrees[2]->rchild;
+			string ret;
+			for(long i = low; i < high; ++i) {
+				global::vars[loopVar] = asString(i);
+				ret += body->evaluate(nick);
+			}
+			return ret;
+		}
+
+		// figure out the result of the arguments
+		vector<string> args;
+		for(auto arg : argTrees)
+			args.push_back(arg->evaluate(nick, false));
 
 		string argsstr;
 		for(string arg : args)
@@ -728,10 +790,13 @@ string ExpressionTree::evaluate(string nick, bool all) {
 
 		// TODO: put these elsewhere...
 		if(func == "echo") {
+			argsstr = "";
+			for(string arg : args)
+				argsstr += arg;
 			// TODO: this should really just append to some other real return
 			if(this->next && all)
-				return argsstr.substr(1) + this->next->evaluate(nick);
-			return argsstr.substr(1);
+				return argsstr + this->next->evaluate(nick);
+			return argsstr;
 		}
 
 		if(this->next && all)
@@ -742,6 +807,26 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			uniform_int_distribution<> uid(0, args.size() - 1);
 			unsigned target = uid(global::rengine);
 			return args[target];
+		}
+		if(func == "rand") {
+			if(args.size() != 2)
+				throw (string)"rand takes two parameters; the bounds";
+			long low = fromString<long>(args[0]), high = fromString<long>(args[1]);
+			if(low > high)
+				throw (string)"rand's second parameter must be larger";
+			if(low == high)
+				return asString(low);
+			uniform_int_distribution<long> lrng(low, high);
+			return asString(lrng(global::rengine));
+		}
+		if(func == "drand") {
+			if(args.size() != 2)
+				throw (string)"drand takes two parameters; the bounds";
+			double low = fromString<double>(args[0]), high = fromString<double>(args[1]);
+			if(low > high)
+				throw (string)"drand's second parameter must be larger";
+			uniform_real_distribution<double> lrng(low, high);
+			return asString(lrng(global::rengine));
 		}
 
 		// user defined function
@@ -815,6 +900,43 @@ string ExpressionTree::evaluate(string nick, bool all) {
 	if(this->fragment.isSpecial("^")) {
 		return asString(pow(fromString<long>(this->child->evaluate(nick)),
 				fromString<long>(this->rchild->evaluate(nick))));
+	} // }}}
+
+	// TODO: un-double this? Also, unstring for == and ~=
+	// conditionals: > < >= <= == ~= {{{
+	if(this->fragment.isSpecial(">")) {
+		if(fromString<double>(this->child->evaluate(nick)) >
+				fromString<double>(this->rchild->evaluate(nick)))
+			return "true";
+		return "false";
+	}
+	if(this->fragment.isSpecial(">")) {
+		if(fromString<double>(this->child->evaluate(nick)) >=
+				fromString<double>(this->rchild->evaluate(nick)))
+			return "true";
+		return "false";
+	}
+	if(this->fragment.isSpecial("<")) {
+		if(fromString<double>(this->child->evaluate(nick)) <
+				fromString<double>(this->rchild->evaluate(nick)))
+			return "true";
+		return "false";
+	}
+	if(this->fragment.isSpecial("<")) {
+		if(fromString<double>(this->child->evaluate(nick)) <=
+				fromString<double>(this->rchild->evaluate(nick)))
+			return "true";
+		return "false";
+	}
+	if(this->fragment.isSpecial("==")) {
+		if(this->child->evaluate(nick) == this->rchild->evaluate(nick))
+			return "true";
+		return "false";
+	}
+	if(this->fragment.isSpecial("~=")) {
+		if(this->child->evaluate(nick) != this->rchild->evaluate(nick))
+			return "true";
+		return "false";
 	} // }}}
 
 	throw (string)"unkown node { \"" + this->fragment.text + "\", " +
