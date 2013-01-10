@@ -1,7 +1,3 @@
-sl => $tmp.d = {!or 0 1}
-sl +=> $tmp.d? "/.==.]" : "{. .}"
-sl +=> !for $i 0 {!rand 3 4}: "[. .]"
-sl +=> $tmp.d? "{. .}" : "[.==\\"
 dubstep => "WUB WUB WUB"
 speak %s => $1
 roulette => { ($shot++ > 6)? { !kick $nick; "$nick shot himself!" } : "click" }
