@@ -43,11 +43,6 @@ bool modules::init(std::string fileName) {
 
 	map["help"] = new HelpFunction();
 
-	map["on"] = new OnRegexFunction();
-	map["explain"] = new ExplainFunction();
-
-	map["text"] = new TextFunction();
-
 	ifstream in(fileName, fstream::binary);
 	cerr << "  init: " << endl;
 	uint8_t hasDict = false;
