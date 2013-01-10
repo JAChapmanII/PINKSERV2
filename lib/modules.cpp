@@ -28,9 +28,6 @@ bool modules::init(std::string fileName) {
 	if(modules_inited)
 		return true;
 
-	map["yes"] = new YesFunction(config::nick);
-	map["tell"] = new TellFunction();
-
 	map["s"] = new RegexFunction();
 	map["push"] = new PushFunction();
 	map["rlist"] = new ListRegexesFunction();

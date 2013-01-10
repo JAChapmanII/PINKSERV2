@@ -1,0 +1,3 @@
+!on text ($text =~ (!echo "/" $nick "/"))? !echo "yes"
+TODO: this is bad :(
+

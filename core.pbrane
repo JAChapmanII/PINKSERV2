@@ -13,3 +13,6 @@ op => !irc MODE +o $1
 
 list will need to be re-implemented
 	keep track of =>, return list
+
+tell => !irc PRIVMSG $1 :$2
+
