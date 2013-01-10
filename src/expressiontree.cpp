@@ -694,13 +694,20 @@ string ExpressionTree::toString(bool all) { // {{{
 
 // TODO: on throw, rollback changes. This will be a lot of work...
 
+// TODO: better timing control
+// TODO: max recursion depth? Just run in thread and abort after x time?
 string ExpressionTree::evaluate(string nick, bool all) {
+	if(this->next && all) {
+		vector<string> results;
+		for(ExpressionTree *expr = this; expr; expr = expr->next)
+			results.push_back(expr->evaluate(nick, false));
+		return results.back();
+	}
+
 	// might have side effects
 	// TODO: permissions on creation with = and => (mostly execute and owner)
 	if(this->fragment.isSpecial("()")) {
 		string sexprres = this->child->evaluate(nick);
-		if(this->next && all)
-			return this->next->evaluate(nick);
 		return sexprres;
 	}
 	if(this->fragment.isSpecial("?")) {
@@ -714,14 +721,10 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		if(condition != "true")
 			target = falseTree;
 		if(target == NULL) {
-			if(this->next && all)
-				return this->next->evaluate(nick);
 			return "";
 		}
 
 		string ret = target->evaluate(nick);
-		if(this->next && all)
-			return this->next->evaluate(nick);
 		return ret;
 	}
 	if(this->fragment.isSpecial("=")) {
@@ -731,7 +734,8 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		if(global::vars.find(var) == global::vars.end()) {
 			global::vars[var] = reval;
 			global::vars_perms[var] = Permissions(nick);
-			return (string)"created " + var + " as " + reval;
+			// TODO: conditonally return old message?
+			return reval;//(string)"created " + var + " as " + reval;
 		}
 
 		// TODO: standard way of doing this is going to mean that if the
@@ -740,10 +744,8 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		if(!hasPermission(Permission::Write, nick, var))
 			throw nick + " does not have permission to write to " + var;
 		global::vars[var] = reval;
-		// TODO: ugh... this is copied a bunch
-		if(this->next && all)
-			return this->next->evaluate(nick);
-		return (string)"wrote " + reval + " to $" + var;
+		// TODO: conditionally return message?
+		return reval;//(string)"wrote " + reval + " to $" + var;
 	}
 	if(this->fragment.isSpecial("=>") || this->fragment.isSpecial("+=>")) {
 		string func = this->child->fragment.text;
@@ -761,8 +763,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			global::vars[func] += ";(" + rtext + ")";
 		else
 			global::vars[func] = rtext;
-		if(this->next && all)
-			return this->next->evaluate(nick);
+		// TODO: return just bound function body?
 		return (string)"bound " + func + " as: " + global::vars[func];
 	}
 	if(this->fragment.isSpecial("!")) { // {{{
@@ -823,14 +824,12 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			for(string arg : args)
 				argsstr += arg;
 			// TODO: this should really just append to some other real return
+			// TODO: this is broken now >_>
 			if(this->next && all)
 				return argsstr + this->next->evaluate(nick);
 			return argsstr;
 		} // }}}
 
-		// TODO: this shouldn't be here....
-		if(this->next && all)
-			return this->next->evaluate(nick);
 
 		// TODO: more functions for somewhere else
 		if(func == "or") { // {{{
@@ -876,11 +875,6 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		return res;
 	} // }}}
 
-
-	// no side effects
-	if(this->next && all)
-		// TODO: ?
-		return this->next->evaluate(nick);
 
 	if(!this->fragment.special) {
 		return this->fragment.text;
