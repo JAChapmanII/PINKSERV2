@@ -34,6 +34,7 @@ struct Permissions {
 
 	Permissions();
 	Permissions(std::string owner);
+	Permissions(Permission::Permission p);
 
 	static Permissions parse(std::string perms);
 
