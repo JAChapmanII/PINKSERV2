@@ -157,3 +157,11 @@ special var namespaces: local, tmp
 	$tmp.r would be a special $r that only exists during this execution of the
 		function
 
+
+Full text-index will be implemented in stages.
+	Initially, have it open a log file and do a standard search
+	at some point, we will be constructing an FM-index at startup for old
+	stuff, keeping new stuff in memory (most likely).
+	Possibly some other special strcutures? For various fuzzy searches?
+
+
