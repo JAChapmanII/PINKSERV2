@@ -1,0 +1,5 @@
+$variable = "value";
+!erase variable ?
+$var--
+$var++
+
