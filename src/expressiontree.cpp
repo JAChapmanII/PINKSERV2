@@ -13,6 +13,9 @@ using std::find;
 using std::uniform_int_distribution;
 using std::uniform_real_distribution;
 
+#include <boost/regex.hpp>
+using boost::regex;
+
 #include <cmath>
 
 #include "permission.hpp"
@@ -934,13 +937,71 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			return asString(ival);
 	} // }}}
 
+	if(this->fragment.isSpecial("=~")) {
+		string text = this->child->fragment.text,
+				rstring = this->rchild->fragment.text;
+
+		size_t rend = 0;
+		char sep = rstring.front();
+		rstring = rstring.substr(1);
+
+		if(rstring.front() == sep)
+			throw (string)"empty regex not supported";
+		for(rend = 1; rend < rstring.length(); ++rend) {
+			if(rstring[rend] == '\\')
+				rend++;
+			else if(rstring[rend] == sep)
+				break;
+		}
+		if(rend == rstring.length())
+			throw (string)"unterminated regex";
+		string replacement = rstring.substr(rend + 1);
+		rstring = rstring.substr(0, rend);
+
+		string flags;
+		// if we have a replacement, we may have flags
+		if(replacement.length() > 0) {
+			if(replacement.front() == sep) {
+				flags = replacement.substr(1);
+				replacement = "";
+			} else {
+				for(rend = 1; rend < replacement.length(); ++rend) {
+					if(replacement[rend] == '\\')
+						rend++;
+					else if(replacement[rend] == sep)
+						break;
+				}
+				cerr << "found flags? rend: " << rend << endl;
+				if(rend != replacement.length()) {
+					flags = replacement.substr(rend + 1);
+					replacement = replacement.substr(0, rend);
+				}
+			}
+		}
+
+		// TODO: parse flags?
+		//return (string)"regex \"" + rstring + "\" replace with \"" +
+			//replacement + "\": and flags \"" + flags + "\" regex, sep is " + sep;
+
+		// note: may throw
+		boost::regex rregex(rstring, regex::perl);
+		string str = regex_replace(text, rregex, replacement,
+				boost::match_default | boost::format_all);
+		if(str != text) {
+			global::vars["0"] = str;
+			global::vars_perms["0"] = Permissions(Permission::Execute);
+			return "true";
+		}
+
+		return "false";
+	}
 
 	if(!this->fragment.special) {
 		return this->fragment.text;
 	}
 	if(this->isSpecial("$")) {
 		string var = this->rchild->fragment.text;
-		if(!hasPermission(Permission::Write, nick, var))
+		if(!hasPermission(Permission::Execute, nick, var))
 			throw nick + " does not have permission to read " + var;
 		return global::vars[var];
 	}
