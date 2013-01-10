@@ -331,11 +331,12 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 		{
 			{ "!", Prefix },
 			{ "++", Prefix }, { "--", Prefix },
-			{ "+", Prefix }, { "-", Prefix }, { "~", Prefix }
+			{ "+", Prefix }, { "-", Prefix }
 		},
 		{ { "^", Binary } },
 		{ { "*", Binary }, { "/", Binary }, { "%", Binary } },
 		{ { "+", Binary }, { "-", Binary } },
+		{ { "~", Binary } },
 		{
 			{ "<", Binary }, { "<=", Binary },
 			{ ">", Binary }, { ">=", Binary }
@@ -937,9 +938,9 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			return asString(ival);
 	} // }}}
 
-	if(this->fragment.isSpecial("=~")) {
-		string text = this->child->fragment.text,
-				rstring = this->rchild->fragment.text;
+	if(this->fragment.isSpecial("=~") || this->fragment.isSpecial("~")) {
+		string text = this->child->evaluate(nick),
+				rstring = this->rchild->evaluate(nick);
 
 		size_t rend = 0;
 		char sep = rstring.front();
@@ -990,9 +991,13 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		if(str != text) {
 			global::vars["0"] = str;
 			global::vars_perms["0"] = Permissions(Permission::Execute);
+			if(this->fragment.isSpecial("~"))
+				return str;
 			return "true";
 		}
 
+		if(this->fragment.isSpecial("~"))
+			return str;
 		return "false";
 	}
 
