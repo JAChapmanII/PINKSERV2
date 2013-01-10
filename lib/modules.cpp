@@ -11,14 +11,11 @@ using std::ofstream;
 using std::fstream;
 
 #include "config.hpp"
+#include "global.hpp"
 
 // module includes
-#include "core.hpp"
 #include "markov.hpp"
-#include "math.hpp"
 #include "regex.hpp"
-#include "script.hpp"
-#include "simple.hpp"
 #include "todo.hpp"
 
 std::map<string, Function *> modules::map;
@@ -40,8 +37,6 @@ bool modules::init(std::string fileName) {
 	map["rword"] = new RandomWordFunction();
 
 	map["todo"] = new TodoFunction(config::todoFileName);
-
-	map["help"] = new HelpFunction();
 
 	ifstream in(fileName, fstream::binary);
 	cerr << "  init: " << endl;

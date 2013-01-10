@@ -3,7 +3,7 @@ SDIR=src
 LDIR=lib
 MDIR=modules
 ODIR=obj
-BDIR=.
+BDIR=bin
 
 # main project binaries
 BINS=${BDIR}/pbrane ${BDIR}/teval
@@ -13,8 +13,7 @@ MOBJS=
 MOBJS+=${ODIR}/brain.o ${ODIR}/modules.o ${ODIR}/util.o ${ODIR}/dictionary.o
 MOBJS+=${ODIR}/chatline.o ${ODIR}/markovmodel.o
 # module object files from modules/
-MOBJS+=${ODIR}/core.o ${ODIR}/function.o ${ODIR}/markov.o ${ODIR}/math.o
-MOBJS+=${ODIR}/regex.o ${ODIR}/script.o ${ODIR}/simple.o ${ODIR}/todo.o
+MOBJS+=${ODIR}/function.o ${ODIR}/markov.o ${ODIR}/regex.o ${ODIR}/todo.o
 
 # object files required for main binary
 OBJS=
