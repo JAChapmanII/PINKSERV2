@@ -875,6 +875,65 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		return res;
 	} // }}}
 
+	if(this->fragment.isSpecial("++")) { // {{{
+		string vname = "";
+		bool pre = false;
+		// TODO: hard coded paths? How about a resolve var name function?
+		if(this->child)
+			pre = false, vname = this->child->rchild->fragment.text;
+		else
+			pre = true, vname = this->rchild->rchild->fragment.text;
+
+		// creating it
+		if(global::vars.find(vname) == global::vars.end()) {
+			global::vars[vname] = "1";
+			global::vars_perms[vname] = Permissions(nick);
+			if(pre)
+				return "1";
+			else
+				return "0";
+		}
+
+		if(!hasPermission(Permission::Write, nick, vname))
+			throw nick + " does not have permission to write to " + vname;
+
+		long ival = fromString<long>(global::vars[vname]);
+		global::vars[vname] = asString(ival + 1);
+		if(pre)
+			return asString(ival + 1);
+		else
+			return asString(ival);
+	} // }}}
+	if(this->fragment.isSpecial("--")) { // {{{
+		string vname = "";
+		bool pre = false;
+		// TODO: hard coded paths? How about a resolve var name function?
+		if(this->child)
+			pre = false, vname = this->child->rchild->fragment.text;
+		else
+			pre = true, vname = this->rchild->rchild->fragment.text;
+
+		// creating it
+		if(global::vars.find(vname) == global::vars.end()) {
+			global::vars[vname] = "-1";
+			global::vars_perms[vname] = Permissions(nick);
+			if(pre)
+				return "-1";
+			else
+				return "0";
+		}
+
+		if(!hasPermission(Permission::Write, nick, vname))
+			throw nick + " does not have permission to write to " + vname;
+
+		long ival = fromString<long>(global::vars[vname]);
+		global::vars[vname] = asString(ival - 1);
+		if(pre)
+			return asString(ival - 1);
+		else
+			return asString(ival);
+	} // }}}
+
 
 	if(!this->fragment.special) {
 		return this->fragment.text;
