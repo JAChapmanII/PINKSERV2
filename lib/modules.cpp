@@ -28,15 +28,9 @@ bool modules::init(std::string fileName) {
 	if(modules_inited)
 		return true;
 
-	map["or"] = new OrFunction();
 	map["yes"] = new YesFunction(config::nick);
 	map["tell"] = new TellFunction();
 
-	map["set"] = new SetFunction();
-	map["++"] = new IncrementFunction();
-	map["--"] = new DecrementFunction();
-	map["erase"] = new EraseFunction();
-	map["value"] = new ValueFunction();
 	map["list"] = new ListFunction();
 
 	map["s"] = new RegexFunction();
@@ -52,11 +46,7 @@ bool modules::init(std::string fileName) {
 
 	map["todo"] = new TodoFunction(config::todoFileName);
 
-	map["ignore"] = new IgnoreFunction();
 	map["help"] = new HelpFunction();
-	map["shutup"] = new ShutupFunction();
-	map["unshutup"] = new UnShutupFunction();
-	map["kick"] = new KickFunction();
 
 	map["on"] = new OnRegexFunction();
 	map["explain"] = new ExplainFunction();
