@@ -74,7 +74,7 @@ vector<TokenFragment> TokenFragment::fragment(string statement) { // {{{
 			*/
 
 			// if we have an escaped character
-			if(statement.front() == '\\') {
+			if(stringType == '"' && statement.front() == '\\') {
 				// skip the delimiter so we get just the real char
 				statement = statement.substr(1);
 				// if we escaped the end of the string it's an oopsie
