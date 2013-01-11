@@ -14,7 +14,7 @@ MOBJS=
 MOBJS+=${ODIR}/brain.o ${ODIR}/modules.o ${ODIR}/util.o ${ODIR}/dictionary.o
 MOBJS+=${ODIR}/chatline.o ${ODIR}/markovmodel.o
 # module object files from modules/
-MOBJS+=${ODIR}/function.o ${ODIR}/markov.o ${ODIR}/regex.o ${ODIR}/todo.o
+MOBJS+=${ODIR}/function.o ${ODIR}/markov.o ${ODIR}/regex.o
 
 # object files required for main binary
 OBJS=

@@ -16,3 +16,5 @@ list will need to be re-implemented
 
 tell => !irc PRIVMSG $1 :$2
 
+todo - builtin
+

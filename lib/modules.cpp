@@ -16,7 +16,6 @@ using std::fstream;
 // module includes
 #include "markov.hpp"
 #include "regex.hpp"
-#include "todo.hpp"
 
 std::map<string, Function *> modules::map;
 static bool modules_inited = false;
@@ -35,8 +34,6 @@ bool modules::init(std::string fileName) {
 	map["correct"] = new CorrectionFunction();
 	map["dsize"] = new DictionarySizeFunction();
 	map["rword"] = new RandomWordFunction();
-
-	map["todo"] = new TodoFunction(config::todoFileName);
 
 	ifstream in(fileName, fstream::binary);
 	cerr << "  init: " << endl;
