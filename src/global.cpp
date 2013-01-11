@@ -22,7 +22,6 @@ using boost::match_extra;
 #include <ctime>
 
 #include "config.hpp"
-#include "function.hpp"
 #include "modules.hpp"
 #include "util.hpp"
 using util::contains;
@@ -195,6 +194,7 @@ ExpressionResult global::run(ChatLine line, string message, int turtles) {
 		return ret;
 
 	ret.doSend = true;
+	/*
 	for(auto mod : modules::map) {
 		regex cmodr(mod.second->regex(), regex::perl);
 		// if this module matches
@@ -232,6 +232,7 @@ ExpressionResult global::run(ChatLine line, string message, int turtles) {
 			return ret;
 		}
 	}
+	*/
 
 	return ret;
 }

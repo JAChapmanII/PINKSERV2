@@ -1,3 +1,8 @@
 bin/pbrane
 bin/teval
+bin/cycle_brain
+
 *.o
+
+lib/modules_gen.cpp
+

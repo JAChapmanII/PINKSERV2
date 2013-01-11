@@ -7,7 +7,7 @@ ODIR=obj
 BDIR=bin
 
 # main project binaries
-BINS=${BDIR}/pbrane ${BDIR}/teval
+BINS=${BDIR}/pbrane ${BDIR}/teval ${BDIR}/cycle_brain
 
 MOBJS=
 # module related objects from lib/
@@ -52,6 +52,13 @@ ${BDIR}/pbrane: ${ODIR}/pbrane.o ${OBJS}
 	${CXX} -o $@ $^ ${LDFLAGS}
 ${BDIR}/teval: ${ODIR}/teval.o ${OBJS}
 	${CXX} -o $@ $^ ${LDFLAGS}
+${BDIR}/cycle_brain: ${ODIR}/cycle_brain.o ${OBJS}
+	${CXX} -o $@ $^ ${LDFLAGS}
+
+${LDIR}/modules_gen.cpp:
+	${BDIR}/makemods
+${ODIR}/modules.o: ${LDIR}/modules.cpp ${LDIR}/modules_gen.cpp
+	${CXX} -c -o $@ $< ${CXXFLAGS}
 
 ${ODIR}/%.o: ${SDIR}/%.cpp
 	${CXX} -c -o $@ $^ ${CXXFLAGS}
@@ -63,6 +70,6 @@ ${ODIR}/%.o: ${MDIR}/%.cpp
 	${CXX} -c -o $@ $^ ${CXXFLAGS}
 
 clean:
-	rm -rf ${ODIR}/*.o ${BINS}
+	rm -rf ${ODIR}/*.o ${LDIR}/modules_gen.cpp ${BINS}
 
 

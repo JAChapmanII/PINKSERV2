@@ -45,11 +45,6 @@ int main(int argc, char **argv) {
 	regex joinRegex(config::regex::join, regex::perl);
 
 	modules::init(config::brainFileName);
-	global::log << "loaded modules: ";
-	for(auto module : modules::map)
-		global::log << module.second->name() << " ";
-	global::log << endl;;
-
 	global::secondaryInit();
 
 	// while there is more input coming

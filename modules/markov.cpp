@@ -257,11 +257,12 @@ unsigned occurrences(vector<string> seed) { // {{{
 } // }}}
 
 
-istream &markovLoad(istream &in) { // {{{
-	return markovModel.read(in);
+// TODO: we're ignoring the return here...
+void markovLoad(istream &in) { // {{{
+	markovModel.read(in);
 } // }}}
-ostream &markovSave(ostream &out) { // {{{
-	return markovModel.write(out);
+void markovSave(ostream &out) { // {{{
+	markovModel.write(out);
 } // }}}
 
 string markov(vector<string> arguments) { // {{{

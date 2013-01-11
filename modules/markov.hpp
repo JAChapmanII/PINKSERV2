@@ -5,16 +5,15 @@
 #include <vector>
 #include <string>
 
-// #mload: markovLoad
-std::istream &markovLoad(std::istream &in);
-// #msave: markovSave
-std::ostream &markovSave(std::ostream &out);
+// #m: markov: markovLoad: markovSave: markov data
+void markovLoad(std::istream &in);
+void markovSave(std::ostream &out);
 
 
-// f#: markov: returns a markov chain given a seed string
+// #f: markov: returns a markov chain given a seed string
 std::string markov(std::vector<std::string> arguments);
 
-// f#: ccount: return number of markov chains
+// #f: ccount: return number of markov chains
 std::string ccount(std::vector<std::string> arguments);
 
 // #f: correct: magically corrects you
