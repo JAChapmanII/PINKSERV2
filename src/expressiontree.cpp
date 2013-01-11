@@ -993,8 +993,8 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		string str = regex_replace(text, rregex, replacement,
 				boost::match_default | boost::format_all);
 		if(str != text) {
-			global::vars["0"] = str;
-			global::vars_perms["0"] = Permissions(Permission::Execute);
+			global::vars["r_"] = str;
+			global::vars_perms["r_"] = Permissions(Permission::Execute);
 			if(this->fragment.isSpecial("~"))
 				return str;
 			return "true";
