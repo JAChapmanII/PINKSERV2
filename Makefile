@@ -1,6 +1,7 @@
 # places to find and put files
 SDIR=src
 LDIR=lib
+PDIR=pbrane
 MDIR=modules
 ODIR=obj
 BDIR=bin
@@ -21,7 +22,7 @@ OBJS+=${MOBJS} ${ODIR}/util.o ${ODIR}/global.o ${ODIR}/config.o
 OBJS+=${ODIR}/tokenfragment.o ${ODIR}/expressiontree.o
 OBJS+=${ODIR}/permission.o ${ODIR}/variable.o
 
-CXXFLAGS=-std=c++0x -I${SDIR} -I${LDIR} -I${MDIR}
+CXXFLAGS=-std=c++0x -I${SDIR} -I${LDIR} -I${PDIR} -I${MDIR}
 LDFLAGS=-lboost_regex
 # -lgmp -lgmpxx
 
@@ -55,6 +56,8 @@ ${BDIR}/teval: ${ODIR}/teval.o ${OBJS}
 ${ODIR}/%.o: ${SDIR}/%.cpp
 	${CXX} -c -o $@ $^ ${CXXFLAGS}
 ${ODIR}/%.o: ${LDIR}/%.cpp
+	${CXX} -c -o $@ $^ ${CXXFLAGS}
+${ODIR}/%.o: ${PDIR}/%.cpp
 	${CXX} -c -o $@ $^ ${CXXFLAGS}
 ${ODIR}/%.o: ${MDIR}/%.cpp
 	${CXX} -c -o $@ $^ ${CXXFLAGS}
