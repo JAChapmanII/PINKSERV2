@@ -15,7 +15,6 @@ using std::fstream;
 
 // module includes
 #include "markov.hpp"
-#include "regex.hpp"
 
 std::map<string, Function *> modules::map;
 static bool modules_inited = false;
@@ -23,11 +22,6 @@ static bool modules_inited = false;
 bool modules::init(std::string fileName) {
 	if(modules_inited)
 		return true;
-
-	map["s"] = new RegexFunction();
-	map["push"] = new PushFunction();
-	map["rlist"] = new ListRegexesFunction();
-	map["invoke"] = new InvokeFunction();
 
 	map["markov"] = new MarkovFunction();
 	map["count"] = new ChainCountFunction();

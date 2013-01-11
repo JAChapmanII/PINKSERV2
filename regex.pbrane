@@ -1,0 +1,7 @@
+Special implement !s and regular s commands?
+!push will probably change syntax ->
+	!push "name" "/regex/replacement/flags"
+	(it's not that different)
+
+!rlist will be standard module function with it's own registry by !push?
+
