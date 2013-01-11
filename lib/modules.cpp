@@ -13,24 +13,18 @@ using std::fstream;
 #include "config.hpp"
 #include "global.hpp"
 
-// module includes
-#include "markov.hpp"
-
-std::map<string, Function *> modules::map;
+//std::map<string, Function *> modules::map;
 static bool modules_inited = false;
 
 bool modules::init(std::string fileName) {
 	if(modules_inited)
 		return true;
 
-	map["markov"] = new MarkovFunction();
-	map["count"] = new ChainCountFunction();
-	map["correct"] = new CorrectionFunction();
-	map["dsize"] = new DictionarySizeFunction();
-	map["rword"] = new RandomWordFunction();
+	// TODO: generate function to call which initaliazes things?
 
-	ifstream in(fileName, fstream::binary);
 	cerr << "  init: " << endl;
+	/*
+	ifstream in(fileName, fstream::binary);
 	uint8_t hasDict = false;
 	if(!in.eof() && in.good())
 		hasDict = in.get();
@@ -63,11 +57,13 @@ bool modules::init(std::string fileName) {
 		}
 		cerr << " " << name;
 	}
+	*/
 	cerr << endl;
 	return true;
 }
 
 bool modules::deinit(std::string fileName) {
+	/*
 	ofstream out(fileName, fstream::binary | fstream::trunc);
 	cerr << "  DEinit: " << endl;
 	out.put('y');
@@ -90,6 +86,7 @@ bool modules::deinit(std::string fileName) {
 
 	for(auto m : map)
 		delete m.second;
+	*/
 	return true;
 }
 

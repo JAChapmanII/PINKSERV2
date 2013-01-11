@@ -3,10 +3,10 @@
 
 #include <map>
 #include <string>
-#include "function.hpp"
 
 namespace modules {
-	extern std::map<std::string, Function *> map;
+	//extern std::map<std::string, Function *> map;
+	// TODO: all of this...
 
 	bool init(std::string fileName);
 	bool deinit(std::string fileName);

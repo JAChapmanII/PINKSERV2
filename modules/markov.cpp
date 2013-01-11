@@ -1,7 +1,8 @@
 #include "markov.hpp"
 using std::ostream;
 using std::istream;
-using boost::smatch;
+using std::vector;
+using std::string;
 
 #include <random>
 using std::uniform_real_distribution;
@@ -10,12 +11,6 @@ using std::generate_canonical;
 
 #include <map>
 using std::map;
-
-#include <string>
-using std::string;
-
-#include <vector>
-using std::vector;
 
 #include <utility>
 using std::pair;
@@ -56,21 +51,28 @@ static MarkovModel<markovOrder> markovModel;
 // TODO: uhm, hmm?
 static string joinSeparator = " ";
 // TODO: best values for these?
+// TODO: adjustable? that would be cool :D same with order?
 static vector<double> coefficientTable = { 1.0/128.0, 1.0/8.0, 1.0 };
 
-// TODO: oh god why
-static bool lastWasQuestion = false;
+// TODO: move these into util?
+template<typename T> T sum(vector<pair<string, T>> &l);
+template<typename T> T value(vector<pair<string, T>> &l, string str);
 
-template<typename T>
-		T sum(vector<pair<string, T>> &l);
-template<typename T>
-		T value(vector<pair<string, T>> &l, string str);
+// insert each possible map for a set of words using a specific order
 void insert(string text);
+// simple way to push all possible orders of splits for a string
 void push(vector<string> words, unsigned order);
+
+// return a random endpoint given a seed
 string fetch(vector<string> words);
+// Handles returning markov chains by calling fetch repeatedly
 string recover(string initial);
+
+// list chain count
 string count(string initial);
+// count the occurrences of a seed
 unsigned occurrences(vector<string> seed);
+
 
 template<typename T> // {{{
 		T sum(vector<pair<string, T>> &l) {
@@ -87,7 +89,6 @@ template<typename T> // {{{
 	return 0;
 } // }}}
 
-// insert each possible map for a set of words using a specific order
 void push(vector<string> words, unsigned order) { // {{{
 	if(words.size() <= order)
 		return;
@@ -112,8 +113,6 @@ void push(vector<string> words, unsigned order) { // {{{
 		markovModel.increment(chain, words[e]);
 	}
 } // }}}
-
-// simple way to push all possible orders of splits for a string
 void insert(string text) { // {{{
 	vector<string> words = split(text);
 	if(words.empty())
@@ -122,7 +121,6 @@ void insert(string text) { // {{{
 		push(words, o);
 } // }}}
 
-// return a random endpoint given a seed
 string fetch(vector<string> seed) { // {{{
 	queue<string> chain;
 	for(auto i : seed)
@@ -170,8 +168,6 @@ string fetch(vector<string> seed) { // {{{
 	}
 	return dictionary[i->first];
 } // }}}
-
-// Handles returning markov chains by calling fetch repeatedly
 string recover(string initial) { // {{{
 	vector<string> chain = split(initial);
 	unsigned initialSize = chain.size();
@@ -224,15 +220,6 @@ string recover(string initial) { // {{{
 	return join(chain, " ");
 } // }}}
 
-// count the occurrences of a seed
-unsigned occurrences(vector<string> seed) { // {{{
-	queue<string> chain;
-	for(auto i : seed)
-		chain.push(i);
-	return markovModel.total(chain);
-} // }}}
-
-// list chain count
 string count(string initial) { // {{{
 	vector<string> chain = split(initial);
 
@@ -262,83 +249,37 @@ string count(string initial) { // {{{
 
 	return ss.str();
 } // }}}
-
-
-MarkovFunction::MarkovFunction() : Function( // {{{
-		"markov", "Returns a markov chain.", "^!markov\\s+(.+)", true) {
+unsigned occurrences(vector<string> seed) { // {{{
+	queue<string> chain;
+	for(auto i : seed)
+		chain.push(i);
+	return markovModel.total(chain);
 } // }}}
-string MarkovFunction::run(ChatLine line, smatch matches) { // {{{
-	string seed = matches[1], r = recover(seed);
+
+
+istream &markovLoad(istream &in) { // {{{
+	return markovModel.read(in);
+} // }}}
+ostream &markovSave(ostream &out) { // {{{
+	return markovModel.write(out);
+} // }}}
+
+string markov(vector<string> arguments) { // {{{
+	string seed = join(arguments, " "), r = recover(seed);
 	if(r == seed)
 		return "Sorry, I don't know anything about that";
 	return r;
 } // }}}
-string MarkovFunction::passive(ChatLine line, bool parsed) { // {{{
-	if(!parsed && !line.text.empty())
-		insert(line.text);
-	if(lastWasQuestion) {
-		lastWasQuestion = false;
-		return "Ah, OK! Thanks!";
-	}
+string correct(vector<string> arguments) { // {{{
+	string line = join(arguments, " ");
 
-	if(generate_canonical<double, 16>(global::rengine) <
-			config::markovResponseChance) {
-		string res = recover(join(last(split(line.text), markovOrder + 1), " "));
-		if(res != line.text) {
-			if(res[res.length() - 1] == '?')
-				lastWasQuestion = true;
-			return res;
-		}
-	}
-	return "";
-} // }}}
-ostream &MarkovFunction::output(ostream &out) { // {{{
-	return markovModel.write(out);
-} // }}}
-istream &MarkovFunction::input(istream &in) { // {{{
-	return markovModel.read(in);
-} // }}}
-
-
-ChainCountFunction::ChainCountFunction() : Function( // {{{
-		"ccount", "Return number of markov chains", "^!c+ount\\s+(.+)", false) {
-} // }}}
-string ChainCountFunction::run(ChatLine line, smatch matches) { // {{{
-	return count(matches[1]);
-} // }}}
-
-
-CorrectionFunction::CorrectionFunction() : Function( // {{{
-		"correct", "Magically corrects you", "^!correct(\\s+.*)?", false) {
-} // }}}
-string CorrectionFunction::run(ChatLine line, smatch matches) { // {{{
-	for(auto l = global::lastLog.rbegin(); l != global::lastLog.rend(); ++l) {
-		string cline = this->correct(l->text);
-		if(!cline.empty())
-			return line.nick + ": maybe they meant " + cline;
-		break;
-	}
-	return line.nick + ": nothing irregular found, sorry";
-} // }}}
-string CorrectionFunction::passive(ChatLine line, bool parsed) { // {{{
-	if(parsed)
-		return "";
-	if(generate_canonical<double, 16>(global::rengine) <
-			config::correctionResponseChance) {
-		string cline = this->correct(line.text);
-		if(cline.empty())
-			return "";
-		// TODO: remove this entirely? Config option?
-		return /*line.nick + ": did you mean " +*/ cline;
-	}
-	return "";
-} // }}}
-string CorrectionFunction::correct(string line) { // {{{
 	vector<string> words = split(line);
 	words.erase(remove_if(words.begin(), words.end(),
 				[](const string &s){ return !s.empty(); }), words.end());
 	if(words.size() < markovOrder + 1)
 		return "";
+
+	// TODO: this needs some cleanup
 	global::log << "----- attempting to correct: " << line << endl;
 	string prefix = "";
 	unsigned last = words.size() - (markovOrder + 1);
@@ -372,20 +313,24 @@ string CorrectionFunction::correct(string line) { // {{{
 	return "";
 } // }}}
 
+string ccount(vector<string> arguments) { // {{{
+	return count(join(arguments, " "));
+} // }}}
+string dsize(vector<string> arguments) { // {{{
+	return asString(dictionary.size());
+} // }}}
+string rword(vector<string> arguments) { // {{{
+	// TODO: proper bail under new system?
+	if(arguments.size() > 2)
+		throw (string)"rword may only take two numeric endpoints";
 
-DictionarySizeFunction::DictionarySizeFunction() : Function( // {{{
-		"dsize", "Return number of unique 1-grams", "^!dsize(\\s+.*)?", false) {
-} // }}}
-string DictionarySizeFunction::run(ChatLine line, smatch matches) { // {{{
-	return line.nick + ": " + asString(dictionary.size());
-} // }}}
+	string mins, maxs;
+	if(arguments.size() > 0)
+		mins = arguments[0];
+	if(arguments.size() > 1)
+		maxs = arguments[1];
 
-RandomWordFunction::RandomWordFunction() : Function( // {{{
-		"rword", "Returns a random word (can be restricted to range)",
-		"^!rword(\\s+([\\d\\.-]+)\\s+([\\d\\.-]+).*?)?") {
-} // }}}
-string RandomWordFunction::run(ChatLine line, smatch matches) { // {{{
-	string mins = matches[2], maxs = matches[3];
+	// TODO: type check arguments? Let caller handle it?
 
 	queue<string> chain;
 	// get 0th order model
@@ -404,6 +349,8 @@ string RandomWordFunction::run(ChatLine line, smatch matches) { // {{{
 	// pick a random number in [0, total)
 	uniform_real_distribution<> urd(min, max * totalWeight);
 	double r = urd(global::rengine);
+
+	// TODO: must sort the model for the range restriction to work properly
 
 	// find the end point corresponding to that
 	auto i = model0.begin();

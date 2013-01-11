@@ -1,50 +1,29 @@
 #ifndef MODULES_MARKOV_HPP
 #define MODULES_MARKOV_HPP
 
-#include "function.hpp"
+#include <iostream>
+#include <vector>
+#include <string>
 
-// Handles returning markov chains
-class MarkovFunction : public Function {
-	public:
-		MarkovFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string passive(ChatLine line, bool parsed);
+// #mload: markovLoad
+std::istream &markovLoad(std::istream &in);
+// #msave: markovSave
+std::ostream &markovSave(std::ostream &out);
 
-	protected:
-		std::ostream &output(std::ostream &out);
-		std::istream &input(std::istream &in);
-};
-// list chain count
-class ChainCountFunction : public Function {
-	public:
-		ChainCountFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
 
-// autocorrect function
-class CorrectionFunction : public Function {
-	public:
-		CorrectionFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-		virtual std::string passive(ChatLine line, bool parsed);
+// f#: markov: returns a markov chain given a seed string
+std::string markov(std::vector<std::string> arguments);
 
-	protected:
-		std::string correct(std::string line);
-};
+// f#: ccount: return number of markov chains
+std::string ccount(std::vector<std::string> arguments);
 
-// dictionary size
-class DictionarySizeFunction : public Function {
-	public:
-		DictionarySizeFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
+// #f: correct: magically corrects you
+std::string correct(std::vector<std::string> arguments);
 
-// random word
-class RandomWordFunction : public Function {
-	public:
-		RandomWordFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
+// #f: dsize: return number of unique 1-grams
+std::string dsize(std::vector<std::string> arguments);
 
+// #f: rword: returns a random word (can be restricted to frequency range)
+std::string rword(std::vector<std::string> arguments);
 
 #endif // MODULES_MARKOV_HPP
