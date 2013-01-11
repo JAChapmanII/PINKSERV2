@@ -825,8 +825,12 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		// TODO: put these elsewhere...
 		if(func == "echo") { // {{{
 			argsstr = "";
-			for(string arg : args)
+			for(string arg : args) {
+				// TODO: old semantics of echo
+				if(!argsstr.empty() && (!isspace(argsstr.back()) && !isspace(arg[0])))
+					argsstr += " ";
 				argsstr += arg;
+			}
 			// TODO: this should really just append to some other real return
 			// TODO: this is broken now >_>
 			if(this->next && all)
