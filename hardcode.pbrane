@@ -1,10 +1,11 @@
 # special defined:
 or %x -> %d =>
-reply %s -> %d =>
+echo %s -> %d =>
 for %w %i %i %i? -> %d =>
 rand %f %f[$v > $1] -> %f
 rand %d %d[$v > $1] -> %d
 
+# operators:
 (%e)? %e : %e -> %d =>
 %w > %w -> %b =>
 %w < %w -> %b =>
@@ -19,6 +20,7 @@ rand %d %d[$v > $1] -> %d
 --%w -> %d =>
 %w-- -> %d =>
 
+# math
 math.pow %d %d
 math.pow %f %f
 math.sqrt %f
