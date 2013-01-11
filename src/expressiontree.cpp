@@ -942,7 +942,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			return asString(ival);
 	} // }}}
 
-	if(this->fragment.isSpecial("=~") || this->fragment.isSpecial("~")) {
+	if(this->fragment.isSpecial("=~") || this->fragment.isSpecial("~")) { // {{{
 		string text = this->child->evaluate(nick),
 				rstring = this->rchild->evaluate(nick);
 
@@ -984,9 +984,8 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			}
 		}
 
-		// TODO: parse flags?
-		//return (string)"regex \"" + rstring + "\" replace with \"" +
-			//replacement + "\": and flags \"" + flags + "\" regex, sep is " + sep;
+		// TODO: parse flags
+		// TODO: group variables, r0, r1, etc
 
 		// note: may throw
 		boost::regex rregex(rstring, regex::perl);
@@ -1003,7 +1002,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		if(this->fragment.isSpecial("~"))
 			return str;
 		return "false";
-	}
+	} // }}}
 
 	if(!this->fragment.special) {
 		return this->fragment.text;
@@ -1086,5 +1085,4 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		(this->fragment.special ? "" : "not") + " special }, bug " +
 		global::vars["bot.owner"] + " to fix";
 }
-
 
