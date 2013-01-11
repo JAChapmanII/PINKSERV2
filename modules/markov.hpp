@@ -9,6 +9,8 @@
 void markovLoad(std::istream &in);
 void markovSave(std::ostream &out);
 
+// observes a line and adds it into the markov model
+void observe(std::string text);
 
 // #f: markov: returns a markov chain given a seed string
 std::string markov(std::vector<std::string> arguments);

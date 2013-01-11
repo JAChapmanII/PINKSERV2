@@ -24,6 +24,7 @@ using global::isOwner;
 #include "util.hpp"
 using util::contains;
 using util::fromString;
+#include "markov.hpp"
 
 int main(int argc, char **argv) {
 	unsigned int seed = 0;
@@ -71,6 +72,9 @@ int main(int argc, char **argv) {
 				global::log << "----- DIEING -----" << endl;
 				return 77;
 			}
+
+			// TODO: make this simpler
+			observe(line);
 
 			if(message.empty())
 				global::err << "main: message empty" << endl;

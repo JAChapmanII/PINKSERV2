@@ -265,6 +265,10 @@ void markovSave(ostream &out) {
 	markovModel.write(out);
 }
 
+void observe(std::string text) {
+	insert(text);
+}
+
 string markov(vector<string> arguments) {
 	string seed = join(arguments, " "), r = recover(seed);
 	if(r == seed)
