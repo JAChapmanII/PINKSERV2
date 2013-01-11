@@ -39,7 +39,7 @@ template<int O> void MarkovModel<O>::increment(std::queue<std::string> chain,
 	return this->increment(uqueue, global::dictionary[target], count, atStart);
 }
 
-template<int O> std::string MarkovModel<O>::random(std::queue<std::string> chain) { // {{{
+template<int O> std::string MarkovModel<O>::random(std::queue<std::string> chain) {
 	// if there are two many words in the prefix, pop them off
 	while(chain.size() > this->m_order)
 		chain.pop();
@@ -51,8 +51,8 @@ template<int O> std::string MarkovModel<O>::random(std::queue<std::string> chain
 
 	// fetch random from the appropriate lower order model
 	return this->m_model[v].random(chain);
-} // }}}
-template<int O> bool MarkovModel<O>::contains(std::queue<std::string> chain) { // {{{
+}
+template<int O> bool MarkovModel<O>::contains(std::queue<std::string> chain) {
 	// if there are two many words in the prefix, pop them off
 	while(chain.size() > this->m_order)
 		chain.pop();
@@ -68,8 +68,8 @@ template<int O> bool MarkovModel<O>::contains(std::queue<std::string> chain) { /
 
 	// find out if the lower order model has seen this seed
 	return this->m_model[v].contains(chain);
-} // }}}
-template<int O> unsigned MarkovModel<O>::operator[](std::queue<std::string> chain) { // {{{
+}
+template<int O> unsigned MarkovModel<O>::operator[](std::queue<std::string> chain) {
 	// if there are two many words in the prefix, pop them off
 	while(chain.size() > this->m_order)
 		chain.pop();
@@ -81,10 +81,10 @@ template<int O> unsigned MarkovModel<O>::operator[](std::queue<std::string> chai
 
 	// fetch value from the appropriate lower order model
 	return this->m_model[v][chain];
-} // }}}
-template<int O> MarkovModel<O - 1> MarkovModel<O>::operator[](std::string word) { // {{{
+}
+template<int O> MarkovModel<O - 1> MarkovModel<O>::operator[](std::string word) {
 	return this->m_model[global::dictionary[word]];
-} // }}}
+}
 template<int O> MarkovModel<O - 1> MarkovModel<O>::operator[](unsigned word) {
 	return this->m_model[word];
 }
@@ -96,10 +96,10 @@ template<int O> typename std::map<unsigned, MarkovModel<O - 1>>::iterator
 		MarkovModel<O>::end() {
 	return this->m_model.end();
 }
-template<int O> unsigned MarkovModel<O>::size() const { // {{{
+template<int O> unsigned MarkovModel<O>::size() const {
 	return this->m_model.size();
-} // }}}
-template<int O> std::ostream &MarkovModel<O>::write(std::ostream &out) { // {{{
+}
+template<int O> std::ostream &MarkovModel<O>::write(std::ostream &out) {
 	unsigned s = this->m_model.size();
 	brain::write(out, s);
 	for(auto i : this->m_model) {
@@ -108,8 +108,8 @@ template<int O> std::ostream &MarkovModel<O>::write(std::ostream &out) { // {{{
 		i.second.write(out);
 	}
 	return out;
-} // }}}
-template<int O> std::istream &MarkovModel<O>::read(std::istream &in) { // {{{
+}
+template<int O> std::istream &MarkovModel<O>::read(std::istream &in) {
 	unsigned s = 0;
 	brain::read(in, s);
 	for(unsigned i = 0; i < s; ++i) {
@@ -120,8 +120,8 @@ template<int O> std::istream &MarkovModel<O>::read(std::istream &in) { // {{{
 		this->m_model[key] = value;
 	}
 	return in;
-} // }}}
-template<int O> std::map<unsigned, unsigned> MarkovModel<O>::endpoint( // {{{
+}
+template<int O> std::map<unsigned, unsigned> MarkovModel<O>::endpoint(
 		std::queue<std::string> chain) {
 	std::queue<unsigned> uqueue;
 	while(!chain.empty()) {
@@ -129,7 +129,7 @@ template<int O> std::map<unsigned, unsigned> MarkovModel<O>::endpoint( // {{{
 		chain.pop();
 	}
 	return this->endpoint(uqueue);
-} // }}}
+}
 template<int O> std::map<unsigned, unsigned> MarkovModel<O>::endpoint(
 		std::queue<unsigned> chain) {
 	// if there are two many words in the prefix, pop them off
@@ -144,7 +144,7 @@ template<int O> std::map<unsigned, unsigned> MarkovModel<O>::endpoint(
 	// fetch value from the appropriate lower order model
 	return this->m_model[v].endpoint(chain);
 }
-template<int O> unsigned MarkovModel<O>::total(std::queue<std::string> chain) { // {{{
+template<int O> unsigned MarkovModel<O>::total(std::queue<std::string> chain) {
 	// if there are two many words in the prefix, pop them off
 	while(chain.size() > this->m_order)
 		chain.pop();
@@ -156,6 +156,6 @@ template<int O> unsigned MarkovModel<O>::total(std::queue<std::string> chain) { 
 
 	// fetch value from the appropriate lower order model
 	return this->m_model[v].total(chain);
-} // }}}
+}
 
 // vim: ft=cpp:

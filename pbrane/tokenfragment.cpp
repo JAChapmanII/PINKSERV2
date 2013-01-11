@@ -5,7 +5,7 @@ using std::vector;
 #include "util.hpp"
 using util::startsWith;
 
-vector<TokenFragment> TokenFragment::fragment(string statement) { // {{{
+vector<TokenFragment> TokenFragment::fragment(string statement) {
 	vector<string> special = {
 		"+=>", "=>", "&&", "||",
 		"++", "--", "<=", ">=", "==", "=~", "~=",
@@ -139,8 +139,8 @@ vector<TokenFragment> TokenFragment::fragment(string statement) { // {{{
 		throw (string)"string encountered with no end";
 
 	return stokens;
-} // }}}
-bool TokenFragment::validIdentifier(string str) { // {{{
+}
+bool TokenFragment::validIdentifier(string str) {
 	char f = str.front();
 	if(str.length() == 1 && isdigit(f))
 		return true;
@@ -150,27 +150,27 @@ bool TokenFragment::validIdentifier(string str) { // {{{
 		if(!isalnum(str[i]) && (str[i] != '.'))
 			return false;
 	return true;
-} // }}}
+}
 
-TokenFragment::TokenFragment() : special(false), text() { // {{{
-} // }}}
-TokenFragment::TokenFragment(string itext, bool ispecial) : // {{{
+TokenFragment::TokenFragment() : special(false), text() {
+}
+TokenFragment::TokenFragment(string itext, bool ispecial) :
 		special(ispecial), text(itext) {
-} // }}}
+}
 
 
-void TokenFragment::clear() { // {{{
+void TokenFragment::clear() {
 	text.clear();
 	special = false;
-} // }}}
+}
 
-bool TokenFragment::isSpecial(string token) { // {{{
+bool TokenFragment::isSpecial(string token) {
 	if(!this->special)
 		return false;
 	return (text == token);
-} // }}}
+}
 
-bool TokenFragment::validIdentifier() { // {{{
+bool TokenFragment::validIdentifier() {
 	return validIdentifier(this->text);
-} // }}}
+}
 

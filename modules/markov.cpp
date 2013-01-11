@@ -74,22 +74,22 @@ string count(string initial);
 unsigned occurrences(vector<string> seed);
 
 
-template<typename T> // {{{
+template<typename T>
 		T sum(vector<pair<string, T>> &l) {
 	T s = 0;
 	for(auto i : l)
 		s += i.second;
 	return s;
-} // }}}
-template<typename T> // {{{
+}
+template<typename T>
 		T value(vector<pair<string, T>> &l, string str) {
 	for(auto i : l)
 		if(i.first == str)
 			return i.second;
 	return 0;
-} // }}}
+}
 
-void push(vector<string> words, unsigned order) { // {{{
+void push(vector<string> words, unsigned order) {
 	if(words.size() <= order)
 		return;
 	// special case the 0th order chain
@@ -112,16 +112,16 @@ void push(vector<string> words, unsigned order) { // {{{
 		chain.push(words[e - 1]);
 		markovModel.increment(chain, words[e]);
 	}
-} // }}}
-void insert(string text) { // {{{
+}
+void insert(string text) {
 	vector<string> words = split(text);
 	if(words.empty())
 		return;
 	for(unsigned o = 0; o <= markovOrder; ++o)
 		push(words, o);
-} // }}}
+}
 
-string fetch(vector<string> seed) { // {{{
+string fetch(vector<string> seed) {
 	queue<string> chain;
 	for(auto i : seed)
 		chain.push(i);
@@ -167,8 +167,8 @@ string fetch(vector<string> seed) { // {{{
 		return "";
 	}
 	return dictionary[i->first];
-} // }}}
-string recover(string initial) { // {{{
+}
+string recover(string initial) {
 	vector<string> chain = split(initial);
 	unsigned initialSize = chain.size();
 
@@ -218,9 +218,9 @@ string recover(string initial) { // {{{
 
 	// return the generated string
 	return join(chain, " ");
-} // }}}
+}
 
-string count(string initial) { // {{{
+string count(string initial) {
 	vector<string> chain = split(initial);
 
 	string seed;
@@ -248,30 +248,30 @@ string count(string initial) { // {{{
 		<< totalEnds << "]";
 
 	return ss.str();
-} // }}}
-unsigned occurrences(vector<string> seed) { // {{{
+}
+unsigned occurrences(vector<string> seed) {
 	queue<string> chain;
 	for(auto i : seed)
 		chain.push(i);
 	return markovModel.total(chain);
-} // }}}
+}
 
 
 // TODO: we're ignoring the return here...
-void markovLoad(istream &in) { // {{{
+void markovLoad(istream &in) {
 	markovModel.read(in);
-} // }}}
-void markovSave(ostream &out) { // {{{
+}
+void markovSave(ostream &out) {
 	markovModel.write(out);
-} // }}}
+}
 
-string markov(vector<string> arguments) { // {{{
+string markov(vector<string> arguments) {
 	string seed = join(arguments, " "), r = recover(seed);
 	if(r == seed)
 		return "Sorry, I don't know anything about that";
 	return r;
-} // }}}
-string correct(vector<string> arguments) { // {{{
+}
+string correct(vector<string> arguments) {
 	string line = join(arguments, " ");
 
 	vector<string> words = split(line);
@@ -312,15 +312,15 @@ string correct(vector<string> arguments) { // {{{
 		}
 	}
 	return "";
-} // }}}
+}
 
-string ccount(vector<string> arguments) { // {{{
+string ccount(vector<string> arguments) {
 	return count(join(arguments, " "));
-} // }}}
-string dsize(vector<string> arguments) { // {{{
+}
+string dsize(vector<string> arguments) {
 	return asString(dictionary.size());
-} // }}}
-string rword(vector<string> arguments) { // {{{
+}
+string rword(vector<string> arguments) {
 	// TODO: proper bail under new system?
 	if(arguments.size() > 2)
 		throw (string)"rword may only take two numeric endpoints";
@@ -362,5 +362,5 @@ string rword(vector<string> arguments) { // {{{
 		return "";
 	}
 	return dictionary[i->first];
-} // }}}
+}
 

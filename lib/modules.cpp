@@ -65,14 +65,14 @@ bool modules::init(std::string brainFileName) {
 			break;
 
 		// read in the name of the module
-		string mname; // {{{
+		string mname;
 		for(int i = 0; i < length; ++i) {
 			int c = brain.get();
 			// TODO: this isn't good
 			if(!brain.good())
 				break;
 			mname += (string)"" + (char)c;
-		} // }}}
+		}
 
 		// TODO: error handling?
 		Module mod = findModule(mname);

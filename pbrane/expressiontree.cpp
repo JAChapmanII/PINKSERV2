@@ -35,7 +35,7 @@ using std::cerr;
 using std::endl;
 static void printexprends(pair<unsigned, unsigned> sexpr, vector<TokenFragment> frags);
 
-void printexprends(pair<unsigned, unsigned> sexpr, vector<TokenFragment> frags) { // {{{
+void printexprends(pair<unsigned, unsigned> sexpr, vector<TokenFragment> frags) {
 	vector<unsigned> fstarts;
 	string expr;
 	for(auto frag : frags) {
@@ -48,23 +48,23 @@ void printexprends(pair<unsigned, unsigned> sexpr, vector<TokenFragment> frags) 
 	cerr << expr << endl;
 	cerr << string(first, ' ') + '^' +
 		string(second - first - 1, '~') + '^' << endl;
-} // }}}
+}
 
 
-ExpressionTree::ExpressionTree(TokenFragment ifrag, unsigned ieid) : // {{{
+ExpressionTree::ExpressionTree(TokenFragment ifrag, unsigned ieid) :
 		folded(false), eid(ieid), fragment(ifrag),
 		child(NULL), rchild(NULL), prev(NULL), next(NULL) {
-} // }}}
-ExpressionTree::~ExpressionTree() { // {{{
+}
+ExpressionTree::~ExpressionTree() {
 	if(this->child)
 		delete this->child;
 	if(this->rchild)
 		delete this->rchild;
 	if(this->next)
 		delete this->next;
-} // }}}
+}
 
-vector<pair<unsigned, unsigned>> ExpressionTree::delimitExpressions( // {{{
+vector<pair<unsigned, unsigned>> ExpressionTree::delimitExpressions(
 		vector<TokenFragment> &fragments) {
 	static vector<string> startSubCharacters = { "(", "{", "[" },
 		stopSubCharacters = { ")", "}", "]" };
@@ -199,8 +199,8 @@ vector<pair<unsigned, unsigned>> ExpressionTree::delimitExpressions( // {{{
 	}
 
 	return sexprlist_noempty;
-} // }}}
-ExpressionTree *ExpressionTree::parse(string statement) { // {{{
+}
+ExpressionTree *ExpressionTree::parse(string statement) {
 	// turn string into a set of fragments
 	vector<TokenFragment> frags = TokenFragment::fragment(statement);
 
@@ -243,10 +243,10 @@ ExpressionTree *ExpressionTree::parse(string statement) { // {{{
 	start = dropSemicolons(start, end);
 
 	return start;
-} // }}}
+}
 
 // TODO: remove after debug?
-void ExpressionTree::print(int level, bool sprint) { // {{{
+void ExpressionTree::print(int level, bool sprint) {
 	//cerr << "(l:" << level << ") ";
 	if(level == 0)
 		cerr << this->fragment.text << endl;
@@ -281,35 +281,35 @@ void ExpressionTree::print(int level, bool sprint) { // {{{
 
 	if(this->next && !sprint)
 		this->next->print(level);
-} // }}}
+}
 
-bool ExpressionTree::validAssignmentOperand() { // {{{
+bool ExpressionTree::validAssignmentOperand() {
 	if(!this->isSpecial("$"))
 		return false;
 	if(this->rchild && this->rchild->validOperand())
 		return true;
 	return false;
-} // }}}
-bool ExpressionTree::validOperand() { // {{{
+}
+bool ExpressionTree::validOperand() {
 	if(this->fragment.special && !this->folded)
 		return false;
 	return true;
-} // }}}
-bool ExpressionTree::validUrnaryOperand() { // {{{
+}
+bool ExpressionTree::validUrnaryOperand() {
 	return false;
-} // }}}
+}
 
-bool ExpressionTree::validIdentifier() { // {{{
+bool ExpressionTree::validIdentifier() {
 	if(this->fragment.special)
 		return false;
 	return this->fragment.validIdentifier();
-} // }}}
+}
 
-bool ExpressionTree::isSpecial(string token) { // {{{
+bool ExpressionTree::isSpecial(string token) {
 	if(!this->fragment.special)
 		return false;
 	return (this->fragment.text == token);
-} // }}}
+}
 
 // TODO: failure of: $t = (thing1; thing2) and
 // TODO: func => (thing1; thing2)
@@ -318,14 +318,14 @@ bool ExpressionTree::isSpecial(string token) { // {{{
 // TODO: ternary operators incorrectly get joined into function call
 // TODO: arguments. this probably means we need another stack option in fragment
 ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *end) {
-	static vector<string> assignments = { // {{{
+	static vector<string> assignments = {
 			"=", "+=", "-=", "*=", "/=", "%=", "^=",
 			"++", "--"
 	};
 	static vector<string> fassignments = { 
 			"=>", "+=>"
-	}; // }}}
-	static vector<vector<pair<string, unsigned>>> precedenceMap = { // {{{
+	};
+	static vector<vector<pair<string, unsigned>>> precedenceMap = {
 		{ { "$", Prefix } },
 		{ { "++", Suffix }, { "--", Suffix } },
 		{
@@ -353,7 +353,7 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 			{ "^=", Binary }
 		},
 		{ { "+=>", Binary }, { "=>", Binary } }
-	}; // }}}
+	};
 
 	// TODO: if previous before parenthesis is a function call, use this as
 	// arguments? If no args currently?
@@ -388,10 +388,10 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 
 		// return the inner contents
 		return here;
-	} // }}}
+	}
 
 	// loop over precedence levels
-	for(auto level : precedenceMap) { // {{{
+	for(auto level : precedenceMap) {
 		// loop over the expression
 		for(ExpressionTree *here = begin->next; here != end; here = here->next) {
 			if(!here) {
@@ -462,7 +462,7 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 
 				// make sure there aren't extra semicolons
 				return treeify(begin, end);
-			} // }}}
+			}
 
 			// loop over all operators on this level
 			for(auto op : level) {
@@ -471,7 +471,7 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 					continue;
 				// make sure it's the proper type
 				switch(op.second) {
-					case OperatorType::Binary: // {{{
+					case OperatorType::Binary:
 						// check left and right sides
 						if(contains(assignments, op.first)) {
 							if(!here->prev->validAssignmentOperand()) {
@@ -517,8 +517,8 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 						//cout << "  child: " << here->child->fragment.text << endl;
 						//cout << " rchild: " << here->rchild->fragment.text << endl;
 
-						break; // }}}
-					case OperatorType::Prefix: // {{{
+						break;
+					case OperatorType::Prefix:
 						// TODO: unspecial case?
 						if(op.first == "$") {
 							if(!here->next->validIdentifier())
@@ -545,8 +545,8 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 
 						here->folded = true;
 
-						break; // }}}
-					case OperatorType::Suffix: // {{{
+						break;
+					case OperatorType::Suffix:
 						if(contains(assignments, op.first)) {
 							if(!here->prev->validAssignmentOperand())
 								throw (string)"suffix assignment with bad operand";
@@ -564,17 +564,17 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 
 						here->folded = true;
 
-						break; // }}}
+						break;
 				}
 			}
 		}
-	} // }}}
+	}
 
 	return dropSemicolons(begin, end);
 }
 
 // TODO: some error stuff in here too
-ExpressionTree *ExpressionTree::dropSemicolons( // {{{
+ExpressionTree *ExpressionTree::dropSemicolons(
 		ExpressionTree *begin, ExpressionTree *end) {
 	bool done = false;
 	for(ExpressionTree *here = begin; !done;) {
@@ -629,7 +629,7 @@ ExpressionTree *ExpressionTree::dropSemicolons( // {{{
 	}
 
 	return begin;
-} // }}}
+}
 
 // TODO: put this somewhere usefull
 static string escape(string str);
@@ -647,7 +647,7 @@ string escape(string str) {
 // TODO: we could have a test suite for this... parse -> toString -> parse,
 // TODO: compare? We modify it somewhat, but how badly do we mangle it?
 // TODO: this is totally screwed up :( Needs to be parenthisized
-string ExpressionTree::toString(bool all) { // {{{
+string ExpressionTree::toString(bool all) {
 	if(!this->fragment.special) {
 		// TODO: use type tags to not do this?
 		if(this->next && all)
@@ -691,7 +691,7 @@ string ExpressionTree::toString(bool all) { // {{{
 		return here + ");" + this->next->toString();
 		//return here + "; " + this->next->toString(true);
 	return here;
-} // }}}
+}
 
 // TODO: ability to tag ExpressionTree as various types. string, int,
 // TODO: double, variable, function?
@@ -770,7 +770,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		// TODO: return just bound function body?
 		return (string)"bound " + func + " as: " + global::vars[func];
 	}
-	if(this->fragment.isSpecial("!")) { // {{{
+	if(this->fragment.isSpecial("!")) {
 		string func = this->child->fragment.text;
 		// TODO: check for function existence
 		// TODO: move permission messages into throw'ing function?
@@ -782,7 +782,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			argTrees.push_back(arg);
 
 		// TODO: this should be elsewhere?
-		if(func == "for") { // {{{
+		if(func == "for") {
 			if(argTrees.size() != 3)
 				throw (string)"for takes three parameters and a body";
 			if(!argTrees[0]->validAssignmentOperand())
@@ -811,7 +811,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 				ret += body->evaluate(nick);
 			}
 			return ret;
-		} // }}}
+		}
 
 		// figure out the result of the arguments
 		vector<string> args;
@@ -823,7 +823,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			argsstr += " " + arg;
 
 		// TODO: put these elsewhere...
-		if(func == "echo") { // {{{
+		if(func == "echo") {
 			argsstr = "";
 			for(string arg : args) {
 				// TODO: old semantics of echo
@@ -836,16 +836,16 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			if(this->next && all)
 				return argsstr + this->next->evaluate(nick);
 			return argsstr;
-		} // }}}
+		}
 
 
 		// TODO: more functions for somewhere else
-		if(func == "or") { // {{{
+		if(func == "or") {
 			uniform_int_distribution<> uid(0, args.size() - 1);
 			unsigned target = uid(global::rengine);
 			return args[target];
-		} // }}}
-		if(func == "rand") { // {{{
+		}
+		if(func == "rand") {
 			if(args.size() != 2)
 				throw (string)"rand takes two parameters; the bounds";
 			long low = fromString<long>(args[0]), high = fromString<long>(args[1]);
@@ -855,8 +855,8 @@ string ExpressionTree::evaluate(string nick, bool all) {
 				return asString(low);
 			uniform_int_distribution<long> lrng(low, high);
 			return asString(lrng(global::rengine));
-		} // }}}
-		if(func == "drand") { // {{{
+		}
+		if(func == "drand") {
 			if(args.size() != 2)
 				throw (string)"drand takes two parameters; the bounds";
 			double low = fromString<double>(args[0]), high = fromString<double>(args[1]);
@@ -864,7 +864,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 				throw (string)"drand's second parameter must be larger";
 			uniform_real_distribution<double> lrng(low, high);
 			return asString(lrng(global::rengine));
-		} // }}}
+		}
 
 		// user defined function
 		if(global::vars.find(func) == global::vars.end())
@@ -881,9 +881,9 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		delete etree;
 		
 		return res;
-	} // }}}
+	}
 
-	if(this->fragment.isSpecial("++")) { // {{{
+	if(this->fragment.isSpecial("++")) {
 		string vname = "";
 		bool pre = false;
 		// TODO: hard coded paths? How about a resolve var name function?
@@ -911,8 +911,8 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			return asString(ival + 1);
 		else
 			return asString(ival);
-	} // }}}
-	if(this->fragment.isSpecial("--")) { // {{{
+	}
+	if(this->fragment.isSpecial("--")) {
 		string vname = "";
 		bool pre = false;
 		// TODO: hard coded paths? How about a resolve var name function?
@@ -940,9 +940,9 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			return asString(ival - 1);
 		else
 			return asString(ival);
-	} // }}}
+	}
 
-	if(this->fragment.isSpecial("=~") || this->fragment.isSpecial("~")) { // {{{
+	if(this->fragment.isSpecial("=~") || this->fragment.isSpecial("~")) {
 		string text = this->child->evaluate(nick),
 				rstring = this->rchild->evaluate(nick);
 
@@ -1002,7 +1002,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		if(this->fragment.isSpecial("~"))
 			return str;
 		return "false";
-	} // }}}
+	}
 
 	if(!this->fragment.special) {
 		return this->fragment.text;
@@ -1042,7 +1042,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 	if(this->fragment.isSpecial("^")) {
 		return asString(pow(fromString<long>(this->child->evaluate(nick)),
 				fromString<long>(this->rchild->evaluate(nick))));
-	} // }}}
+	}
 
 	// TODO: un-double this? Also, unstring for == and ~=
 	// conditionals: > < >= <= == ~= {{{
@@ -1079,7 +1079,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		if(this->child->evaluate(nick) != this->rchild->evaluate(nick))
 			return "true";
 		return "false";
-	} // }}}
+	}
 
 	throw (string)"unkown node { \"" + this->fragment.text + "\", " +
 		(this->fragment.special ? "" : "not") + " special }, bug " +

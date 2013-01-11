@@ -18,7 +18,7 @@ using util::toOrdinal;
 #include "global.hpp"
 #include "variable.hpp"
 
-PermissionFragment PermissionFragment::parse(string pstr) { // {{{
+PermissionFragment PermissionFragment::parse(string pstr) {
 	PermissionFragment pf = { PermissionType::User, "", 0x0 };
 
 	// split this part on "=",
@@ -64,23 +64,23 @@ PermissionFragment PermissionFragment::parse(string pstr) { // {{{
 
 	// return the built fragment
 	return pf;
-} // }}}
+}
 
-Permissions::Permissions() : admin(Permission::xawmPermissions), // {{{
+Permissions::Permissions() : admin(Permission::xawmPermissions),
 		owner_nick(""), owner(Permission::xawmPermissions),
 		suser(), user(Permission::xPermissions) {
-} // }}}
-Permissions::Permissions(string owner) : admin(Permission::xawmPermissions), // {{{
+}
+Permissions::Permissions(string owner) : admin(Permission::xawmPermissions),
 		owner_nick(owner), owner(Permission::xawmPermissions),
 		suser(), user(Permission::xPermissions) {
-} // }}}
-Permissions::Permissions(Permission::Permission p) : // {{{
+}
+Permissions::Permissions(Permission::Permission p) :
 		admin(Permission::xawmPermissions),
 		owner_nick(), owner(p),
 		suser(), user(p) {
-} // }}}
+}
 
-Permissions Permissions::parse(string perms) { // {{{
+Permissions Permissions::parse(string perms) {
 	Permissions p;
 
 	// split perms into parts by ",", trim extra whitespace
@@ -106,9 +106,9 @@ Permissions Permissions::parse(string perms) { // {{{
 
 	// return the built permissions object
 	return p;
-} // }}}
+}
 
-void Permissions::apply(PermissionFragment pfrag) { // {{{
+void Permissions::apply(PermissionFragment pfrag) {
 	switch(pfrag.type) {
 		case PermissionType::Admin: this->admin = pfrag.perms; break;
 		case PermissionType::Owner: this->owner = pfrag.perms; break;
@@ -119,8 +119,8 @@ void Permissions::apply(PermissionFragment pfrag) { // {{{
 		default:
 			throw (string)"invalid permission type";
 	}
-} // }}}
-bool Permissions::allowed(Permission::Permission p, string nick, int level) { // {{{
+}
+bool Permissions::allowed(Permission::Permission p, string nick, int level) {
 	uint8_t fperms = 0x0;
 	int mlevel = 0;
 
@@ -153,14 +153,14 @@ bool Permissions::allowed(Permission::Permission p, string nick, int level) { //
 		return false;
 	// make sure the user has permissions and is at a higher level
 	return (p & fperms) && (mlevel > level);
-} // }}}
+}
 
-bool hasPermission(Permission::Permission p, string nick, string variable, int level) { // {{{
+bool hasPermission(Permission::Permission p, string nick, string variable, int level) {
 	// the bot owner can do whatever they want
 	if(global::vars["bot.owner"] == nick)
 		return true;
 
 	Permissions perms = global::vars_perms[variable];
 	return perms.allowed(p, nick, level);
-} // }}}
+}
 

@@ -3,7 +3,7 @@ using std::vector;
 using std::string;
 #include <unistd.h>
 
-vector<string> util::split(string str, string on) { // {{{
+vector<string> util::split(string str, string on) {
 	vector<string> fields;
 	// there are no separators
 	if(str.find_first_of(on) == string::npos) {
@@ -19,15 +19,15 @@ vector<string> util::split(string str, string on) { // {{{
 		fields.push_back(str);
 	}
 	return fields;
-} // }}}
-string util::join(vector<string> strs, string with) { // {{{
+}
+string util::join(vector<string> strs, string with) {
 	if(strs.empty())
 		return "";
 	string res;
 	for(auto str : strs)
 		res += str + with;
 	return res.substr(0, res.length() - with.length());
-} // }}}
+}
 
 string util::trim(string str, string what) {
 	size_t firstNotOf = str.find_first_not_of(what);

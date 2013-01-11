@@ -1,6 +1,6 @@
 #include <sstream>
 
-template<typename T> T util::split(std::string str, std::string on) { // {{{
+template<typename T> T util::split(std::string str, std::string on) {
 	T fields;
 	// there are no separators
 	if(str.find_first_of(on) == std::string::npos) {
@@ -15,8 +15,8 @@ template<typename T> T util::split(std::string str, std::string on) { // {{{
 	if(!str.empty())
 		fields.push(str);
 	return fields;
-} // }}}
-template<typename T> std::string util::join(T strs, std::string with) { // {{{
+}
+template<typename T> std::string util::join(T strs, std::string with) {
 	if(strs.empty())
 		return "";
 	std::string res;
@@ -25,9 +25,9 @@ template<typename T> std::string util::join(T strs, std::string with) { // {{{
 		strs.pop();
 	}
 	return res.substr(0, res.length() - with.length());
-} // }}}
+}
 
-template<typename T> std::vector<T> util::subvector(std::vector<T> vec, // {{{
+template<typename T> std::vector<T> util::subvector(std::vector<T> vec,
 		size_t s, size_t n) {
 	std::vector<T> res;
 	if(s >= vec.size())
@@ -36,7 +36,7 @@ template<typename T> std::vector<T> util::subvector(std::vector<T> vec, // {{{
 		n = vec.size() - s;
 	res.insert(res.begin(), vec.begin() + s, vec.begin() + s + n);
 	return res;
-} // }}}
+}
 template<typename T> std::vector<T> util::last(std::vector<T> vec, size_t n) {
 	if(n > vec.size())
 		n = vec.size();
@@ -56,19 +56,19 @@ template<typename T> std::string util::asString(T val) {
 }
 
 template<typename T> bool
-		util::contains(std::vector<T> vec, T val) { // {{{
+		util::contains(std::vector<T> vec, T val) {
 	return (find(vec.begin(), vec.end(), val) != vec.end());
-} // }}}
+}
 template<typename K, typename V> bool
-		util::contains(std::map<K, V> map, K key) { // {{{
+		util::contains(std::map<K, V> map, K key) {
 	return (map.find(key) != map.end());
-} // }}}
+}
 template<typename K, typename V>
-		bool util::contains(std::vector<std::pair<K, V>> list, K key) { // {{{
+		bool util::contains(std::vector<std::pair<K, V>> list, K key) {
 	for(auto i : list)
 		if(i.first == key)
 			return true;
 	return false;
-} // }}}
+}
 
 // vim: ft=cpp:
