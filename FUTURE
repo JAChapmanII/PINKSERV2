@@ -168,3 +168,5 @@ Full text-index will be implemented in stages.
 Switch from using only doubles or strings into type checked system. Add back
 in GMP support for large numbers.
 
+Automatically address caller if $nick.addressMe is set? Function specific?
+
