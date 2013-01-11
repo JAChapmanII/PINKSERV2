@@ -22,7 +22,8 @@ OBJS+=${ODIR}/tokenfragment.o ${ODIR}/expressiontree.o
 OBJS+=${ODIR}/permission.o ${ODIR}/variable.o
 
 CXXFLAGS=-std=c++0x -I${SDIR} -I${LDIR} -I${MDIR}
-LDFLAGS=-lboost_regex -lgmp -lgmpxx
+LDFLAGS=-lboost_regex
+# -lgmp -lgmpxx
 
 ifndef release
 CXXFLAGS+=-g

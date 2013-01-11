@@ -165,3 +165,6 @@ Full text-index will be implemented in stages.
 	Possibly some other special strcutures? For various fuzzy searches?
 
 
+Switch from using only doubles or strings into type checked system. Add back
+in GMP support for large numbers.
+
