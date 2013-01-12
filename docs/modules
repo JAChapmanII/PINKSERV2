@@ -1,0 +1,14 @@
+Modules should be defined in the modules/ directory.
+
+To get your modules detected and integrated at compile time, you must add
+special comments denoting how to load/unload the module and what functions
+belong to it.
+
+If your module has data that must be loaded at startup or saved at shutdown,
+make sure you have a #m line. The general format is:
+	// #m: module name: name of load function: name of save function: description
+
+For any functions you want accesible from the running pbrane environment, you
+should have a #f line. The format of these lines is:
+	// #f: function name: description (used as help message)
+
