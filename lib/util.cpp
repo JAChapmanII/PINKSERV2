@@ -56,6 +56,9 @@ bool util::startsWith(string str, string prefix) {
 bool util::contains(std::string str, char c) {
 	return (str.find(c) != string::npos);
 }
+bool util::contains(string str, string s) {
+	return (str.find(s) != string::npos);
+}
 
 string util::toOrdinal(long num) {
 	string nums = asString(num);

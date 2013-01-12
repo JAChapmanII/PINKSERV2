@@ -31,6 +31,7 @@ namespace util {
 	template<typename K, typename V>
 			bool contains(std::vector<std::pair<K, V>> list, K key);
 	bool contains(std::string str, char c);
+	bool contains(std::string str, std::string s);
 
 	// appends an ordinal string to the number (1 -> 1st, 2 -> 2nd, etc)
 	std::string toOrdinal(long num);
