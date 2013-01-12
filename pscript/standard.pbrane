@@ -1,0 +1,11 @@
+on => "dummy function TODO"; ""
+!on text ($text =~ "/o/|\o/")? !or "o/" "\o"
+!on text ($toUs && $text =~ ":<3:")? !echo "<3"
+!on text ($toUs && $text =~ ":</3:")? !echo ":("
+
+!on join ({!drand 0 1} > 0.5) ? "Hello, $nick!" : "Goodday, $nick!"
+
+"o/"
+"<3"
+"</3"
+

@@ -1,6 +1,0 @@
-!on text ($text =~ "o/|\o")? !or "o/" "\o"
-!on text ($toUs && $text =~ "<3")? !reply "<3"
-!on text ($toUs && $text =~ "</3")? !reply ":("
-
-!on join ({!drand 0 1} > 0.5) ? "Hello, $nick!" : "Goodday, $nick!"
-
