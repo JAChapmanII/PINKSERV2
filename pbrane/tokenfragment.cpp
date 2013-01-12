@@ -147,7 +147,8 @@ bool TokenFragment::validIdentifier(string str) {
 	if(!isalpha(f) && f != '_')
 		return false;
 	for(unsigned i = 1; i < str.length(); ++i)
-		if(!isalnum(str[i]) && (str[i] != '.'))
+		// TODO: this needs to be standardized better
+		if(!isalnum(str[i]) && (str[i] != '.') && (str[i] != '_'))
 			return false;
 	return true;
 }
