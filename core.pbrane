@@ -1,5 +1,3 @@
-$bot.ignore list of nicks to ignore
-
 help? Hmm.... Default help function? Special function in function namespace:
 	!func.help?
 	!help => !eval "!echo $1.help"

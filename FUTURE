@@ -1,87 +1,35 @@
-maybe special defined for arbitrary args? Like a choose sort of function
-or ->
-	r = {!rand 0 1};
-	(r == 0)? $1 : $2
+default args is %v
+return type if left off is inferred, or %d ?
 
-$nick ->
-	!tell $here "yes"
-
-specification is commandname1|commandname2|etc...||regex trigger
-	"||regex trigger" part is optional
-	all secondary command names are optional
-
-=~ operator for regex matching...
-	matches go into r0, r1, r2, etc...
-	result goes into r_
-
-!def for defining functions? or set var name to {!func} or something?
-	both depending on purpose?
-	fname => function body
-	fname +=> something to append to function body (implicit ; added)
-	fname %s %i %args -> %return %type => body
-		both are optional, "-> %return %type" is one piece, both must exist
-
-	default args is %v
-	return type if left off is inferred
-
-!tell is special defined
 !reply sends back either $nick: text to a channel or just text to user
-math related functions are special defined:
-	++, --
-ternary are special defined
 if just text is result, !tell $here?
-rand and drand hard coded
 hard coded "!has %d" to check for existence of (optional) arg
-markov things hardcoded:
-	ccount, dsize, rword
-	rword maybe is like choose? expose markov data as variables?
-variable manipulation hardcoded:
-	tests, erase, list (ditch?)
+markov::rword maybe is like choose? expose markov data as variables?
+ditch list variables?
 !push, !rlist and !s?
 
-management functions hardcoded?
-	kick
-	maybe ignore is variable? like
-	bot.ignore += user
-	bot.ignore -= user
-	bot.ignore = just_user
 
+$bot.ignore list of nicks to ignore
 
 execute things on events:
 	join
-	part/quit (same?)
-	speak
+	part/quit (same? or have "leave" as either?)
+	text
 	in (in 5m)
 	on (date)
-triggers can depend on variables... like so:
-	!on speak (nick == "jac" && {!drand 0 1} > oheart%)? "I love you, jac"
-	now if oheart% is changed, this will be conditionally executed less or more
+	every (every 5m) -- only let owner use? min time > 1 hour?
+		$bot.minEvery ?
 
-
-$here ->
-	either a channel or a nick depending on where the command is coming from
-$nick ->
-	the nick of the invoker
-$nicks ->
-	set of nicks that are here
-$text ->
-	the body of what was just said
-$ltext ->
-	the body of what was last said
-$toUs ->
-	true if to us, false otherwise
-$bot.nick ->
-	the bot's nick
-$bot.owner ->
-	the bot's owner
-$bot.admins ->
-	set of nicks which are admins
-$bot.maxLineLength ->
-	maximum length of output
-$bot.markov% ->
-	percent chance of markov
-$bot.correct% ->
-	percent chance of correction
+$here: either a channel or a nick depending on where the command is coming from
+$nick: the nick of the invoker
+$nicks: set of nicks that are here
+$text: the body of what was just said
+$ltext: the body of what was last said
+$toUs: true if to us, false otherwise
+$bot.nick: the bot's nick
+$bot.owner: the bot's owner
+$bot.admins: set of nicks which are admins
+$bot.maxLineLength: maximum length of output
 
 
 modes for everything:
@@ -89,7 +37,7 @@ modes for everything:
 	a (admin), o (owner), u (user), n:specific_nick (a specific person)
 		admin has all owner permissions
 		owner has all user permissions
-	w (write permission), x (execute permission), a (all)
+	r (read), w (writen), x (execute), m (modify), a (all)
 
 	default spec: [aax]
 		admin and owner have all permissions,
@@ -150,6 +98,7 @@ user registration
 password
 gender:
 	$nick.pronoun, etc?
+
 
 special var namespaces: local, tmp
 	$local.shot for instance, would be a $shot variable that is only defined
