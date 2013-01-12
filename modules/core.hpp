@@ -21,4 +21,7 @@ std::string rand(std::vector<std::string> arguments);
 // #f: drand: return a random double in a given range
 std::string drand(std::vector<std::string> arguments);
 
+// #f: rm: wipe a variable form existence
+std::string rm(std::vector<std::string> arguments);
+
 #endif // MODULES_CORE_HPP

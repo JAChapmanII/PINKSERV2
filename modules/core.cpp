@@ -66,3 +66,11 @@ string drand(vector<string> arguments) {
 	return asString(lrng(global::rengine));
 }
 
+// TODO: how to do this partly? Gah... :(
+string rm(vector<string> arguments) {
+	// TODO: we need to know the caller for this to work...
+	//for(auto var : arguments) {
+	//}
+	return "(not-implemented, bug " + global::vars["bot.owner"] + ")";
+}
+
