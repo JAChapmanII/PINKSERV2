@@ -7,7 +7,6 @@
 #include <list>
 #include <utility>
 #include <vector>
-#include "chatline.hpp"
 
 namespace brain {
 	std::ostream &write(std::ostream &out, unsigned &variable);
@@ -15,9 +14,6 @@ namespace brain {
 
 	std::ostream &write(std::ostream &out, const std::string &variable);
 	std::istream &read(std::istream &in, std::string &variable);
-
-	std::ostream &write(std::ostream &out, ChatLine &variable);
-	std::istream &read(std::istream &in, ChatLine &variable);
 
 	template<typename K, typename V> std::ostream &write(
 			std::ostream &out, std::map<K, V> &variable);

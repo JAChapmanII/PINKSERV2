@@ -12,7 +12,7 @@ BINS=${BDIR}/pbrane ${BDIR}/teval ${BDIR}/cycle_brain
 MOBJS=
 # module related objects from lib/
 MOBJS+=${ODIR}/brain.o ${ODIR}/modules.o ${ODIR}/util.o ${ODIR}/dictionary.o
-MOBJS+=${ODIR}/chatline.o ${ODIR}/markovmodel.o
+MOBJS+=${ODIR}/markovmodel.o
 # module object files from modules/
 # TODO: have this auto-generated?
 MOBJS+=${ODIR}/markov.o ${ODIR}/core.o
