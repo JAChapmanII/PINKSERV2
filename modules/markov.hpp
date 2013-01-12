@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 
-// #m: markov: markovLoad: markovSave: markov data
+// #m: markov: markov data: markovLoad: markovSave
 void markovLoad(std::istream &in);
 void markovSave(std::ostream &out);
 

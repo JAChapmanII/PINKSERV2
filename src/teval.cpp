@@ -30,6 +30,8 @@ using util::fromString;
 #include "variable.hpp"
 #include "global.hpp"
 #include "expressiontree.hpp"
+#include "modules.hpp"
+#include "config.hpp"
 
 void execute(string statement) {
 	// tmp variable map
@@ -40,6 +42,9 @@ int main(int argc, char **argv) {
 	global::vars["bot.owner"] = "jac";
 	global::vars["bot.admins"] = "Jext, RGCockatrices, bonzairob, quairlzr, Nybbles, ajanata";
 	global::vars["bot.maxIterations"] = "10";
+
+	// initialize modules
+	modules::init(config::brainFileName);
 
 	random_device randomDevice;
 	unsigned int seed = randomDevice();
@@ -94,6 +99,11 @@ int main(int argc, char **argv) {
 			delete etree;
 		}
 	}
+
+	// free memory associated with modules
+	modules::deinit(config::brainFileName);
+
 	return 0;
+
 }
 

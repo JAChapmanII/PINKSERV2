@@ -2,9 +2,11 @@
 using std::map;
 using std::vector;
 using std::string;
+using std::istream;
+using std::ostream;
+using std::fstream;
 using std::ifstream;
 using std::ofstream;
-using std::fstream;
 
 using modules::Function;
 using modules::Module;
@@ -20,12 +22,16 @@ map<string, Function> modules::hfmap;
 vector<Module> modules::modules;
 static bool modules_inited = false;
 
-Module findModule(std::string mname);
-bool moduleLoaded(std::string mname);
+Module findModule(string mname);
+bool moduleLoaded(string mname);
 
 void defineModules();
 void setupFunctions();
 
+void none(istream &brain);
+void none(ostream &brain);
+void none(istream &brain) { }
+void none(ostream &brain) { }
 
 Module findModule(std::string mname) {
 	for(auto mod : modules::modules)

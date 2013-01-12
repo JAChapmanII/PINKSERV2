@@ -27,6 +27,7 @@ using util::asString;
 using util::fromString;
 
 #include "global.hpp"
+#include "modules.hpp"
 
 
 // TODO: remove after debug?
@@ -822,48 +823,10 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		for(string arg : args)
 			argsstr += " " + arg;
 
-		// TODO: put these elsewhere...
-		if(func == "echo") {
-			argsstr = "";
-			for(string arg : args) {
-				// TODO: old semantics of echo
-				if(!argsstr.empty() && (!isspace(argsstr.back()) && !isspace(arg[0])))
-					argsstr += " ";
-				argsstr += arg;
-			}
-			// TODO: this should really just append to some other real return
-			// TODO: this is broken now >_>
-			if(this->next && all)
-				return argsstr + this->next->evaluate(nick);
-			return argsstr;
-		}
-
-
-		// TODO: more functions for somewhere else
-		if(func == "or") {
-			uniform_int_distribution<> uid(0, args.size() - 1);
-			unsigned target = uid(global::rengine);
-			return args[target];
-		}
-		if(func == "rand") {
-			if(args.size() != 2)
-				throw (string)"rand takes two parameters; the bounds";
-			long low = fromString<long>(args[0]), high = fromString<long>(args[1]);
-			if(low > high)
-				throw (string)"rand's second parameter must be larger";
-			if(low == high)
-				return asString(low);
-			uniform_int_distribution<long> lrng(low, high);
-			return asString(lrng(global::rengine));
-		}
-		if(func == "drand") {
-			if(args.size() != 2)
-				throw (string)"drand takes two parameters; the bounds";
-			double low = fromString<double>(args[0]), high = fromString<double>(args[1]);
-			if(low > high)
-				throw (string)"drand's second parameter must be larger";
-			uniform_real_distribution<double> lrng(low, high);
-			return asString(lrng(global::rengine));
+		// a module function
+		if(contains(modules::hfmap, func)) {
+			modules::Function mfunc = modules::hfmap[func];
+			return mfunc(args);
 		}
 
 		// user defined function
