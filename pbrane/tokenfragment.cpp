@@ -12,7 +12,7 @@ vector<TokenFragment> TokenFragment::fragment(string statement) {
 		"+=", "-=", "*=", "/=", "%=", "^=",
 		"=", "<", ">", "(", ")", "?", ":", ";", "[", "]",
 		"+", "-", "*", "/", "%", "^", "{", "}", "$", "!", "~"
-	}, specialInString = { "$", "{", "}" };
+	};
 
 	vector<TokenFragment> stokens;
 	bool inString = false;
@@ -47,31 +47,7 @@ vector<TokenFragment> TokenFragment::fragment(string statement) {
 		}
 
 		if(inString) {
-			// TODO: this? Or is implicit concatenation enough?
-			/*
-			// allow special characters in double quoted strings
-			if(stringType == '"') {
-				// check for special in-string characters
-				bool isSpecial = false;
-				for(auto specialt : specialInString) {
-					// if it is a special token
-					if(startsWith(statement, specialt)) {
-						// if there is a current token, push it first
-						if(!ctoken.text.empty())
-							stokens.push_back(ctoken);
-						ctoken.clear();
-						// push our new special token
-						stokens.push_back({ specialt, true });
-						statement = statement.substr(specialt.length());
-						isSpecial = true;
-						break;
-					}
-				}
-				// do all previous tests again on special
-				if(isSpecial)
-					continue;
-			}
-			*/
+			// TODO: Allow expressions inside of strings?
 
 			// if we have an escaped character
 			if(stringType == '"' && statement.front() == '\\') {
