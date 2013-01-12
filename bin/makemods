@@ -39,7 +39,7 @@ for f in modules/*.hpp; do
 		echo "  has function $pfname ($fdesc)"
 
 		# save the function information to a file
-		echo -e "\tcerr << \"\\\t$fname ($fdesc) [$mname]\" << endl;" >> mfuncs;
+		echo -e "\tcerr << \"\\\t$pfname ($fdesc) [$mname]\" << endl;" >> mfuncs;
 		echo -e "\tmodules::hfmap[\"$pfname\"] = &$fname;" >> mfuncs
 		echo -e "\tglobal::vars[\"${pfname}\"] = \"{ hard coded }\";" >> mfuncs
 		echo -e "\tglobal::vars[\"${pfname}.help\"] = \"$fdesc\";" >> mfuncs
