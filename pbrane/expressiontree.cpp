@@ -814,10 +814,16 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			return ret;
 		}
 
+		global::vars["0"] = func;
+		global::vars_perms["0"] = Permissions(nick);
 		// figure out the result of the arguments
 		vector<string> args;
-		for(auto arg : argTrees)
-			args.push_back(arg->evaluate(nick, false));
+		for(unsigned i = 0; i < argTrees.size(); ++i) {
+			string arg = argTrees[i]->evaluate(nick, false);
+			global::vars[asString(i + 1)] = arg;
+			global::vars_perms[asString(i + 1)] = Permissions(nick);
+			args.push_back(arg);
+		}
 
 		string argsstr;
 		for(string arg : args)
