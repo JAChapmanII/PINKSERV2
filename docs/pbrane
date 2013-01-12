@@ -39,13 +39,21 @@ $r_ is the resulting text after replacement. $r1, $r2, ... will be the groups.
 Operators
 =========
 
-It currently supports (or
-will soon support) the following operations:
+It currently supports (or will soon support) the following operations:
 
 	=  This assigns the result of the rhs to the lhs
 	=> This binds the rhs expression as a function
 	~  This applies a regex of the rhs on the lhs and returns the text
 	=~ This applies a regex of the rhs on the lhs and returns true/false
+	?  This runs the rhs if the lhs is true
+	?: This is the standard ternary operator, it runs the middle if lhs is
+	     true, and the rhs otherwise
+
+Standard logical operators:    <   >   >=   <=   ==   !=   &&   ||
+Standard arithmetic operators: +   -   /   *   %   ^
+Combination assignments:       +=  -=  /=  *=  %=  ^=  ~=
+
+Post- and prefix increment and decrement.
 
 
 Built-in functions/modules
