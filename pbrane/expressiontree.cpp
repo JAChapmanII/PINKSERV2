@@ -840,7 +840,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		return res;
 	}
 
-	if(this->fragment.isSpecial("++")) {
+	if(this->fragment.isSpecial("++") || this->fragment.isSpecial("--")) {
 		string vname = "";
 		bool pre = false;
 		// TODO: hard coded paths? How about a resolve var name function?
@@ -851,11 +851,17 @@ string ExpressionTree::evaluate(string nick, bool all) {
 
 		// creating it
 		if(global::vars.find(vname) == global::vars.end()) {
-			global::vars[vname] = "1";
-			global::vars_perms[vname] = Permissions(nick);
-			if(pre)
-				return "1";
+			if(this->isSpecial("++"))
+				global::vars[vname] = "1";
 			else
+				global::vars[vname] = "-1";
+			global::vars_perms[vname] = Permissions(nick);
+			if(pre) {
+				if(this->isSpecial("++"))
+					return "1";
+				else
+					return "-1";
+			} else
 				return "0";
 		}
 
@@ -863,38 +869,14 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			throw nick + " does not have permission to write to " + vname;
 
 		long ival = fromString<long>(global::vars[vname]);
-		global::vars[vname] = asString(ival + 1);
-		if(pre)
-			return asString(ival + 1);
+		long res = ival;
+		if(this->isSpecial("++"))
+			res++;
 		else
-			return asString(ival);
-	}
-	if(this->fragment.isSpecial("--")) {
-		string vname = "";
-		bool pre = false;
-		// TODO: hard coded paths? How about a resolve var name function?
-		if(this->child)
-			pre = false, vname = this->child->rchild->fragment.text;
-		else
-			pre = true, vname = this->rchild->rchild->fragment.text;
-
-		// creating it
-		if(global::vars.find(vname) == global::vars.end()) {
-			global::vars[vname] = "-1";
-			global::vars_perms[vname] = Permissions(nick);
-			if(pre)
-				return "-1";
-			else
-				return "0";
-		}
-
-		if(!hasPermission(Permission::Write, nick, vname))
-			throw nick + " does not have permission to write to " + vname;
-
-		long ival = fromString<long>(global::vars[vname]);
-		global::vars[vname] = asString(ival - 1);
+			res--;
+		global::vars[vname] = asString(res);
 		if(pre)
-			return asString(ival - 1);
+			return asString(res);
 		else
 			return asString(ival);
 	}
