@@ -56,7 +56,7 @@ ${BDIR}/teval: ${ODIR}/teval.o ${OBJS}
 ${BDIR}/cycle_brain: ${ODIR}/cycle_brain.o ${OBJS}
 	${CXX} -o $@ $^ ${LDFLAGS}
 
-${LDIR}/modules_gen.cpp:
+${LDIR}/modules_gen.cpp: ${MDIR}/*.hpp
 	${BDIR}/makemods
 ${ODIR}/modules.o: ${LDIR}/modules.cpp ${LDIR}/modules_gen.cpp
 	${CXX} -c -o $@ $< ${CXXFLAGS}
