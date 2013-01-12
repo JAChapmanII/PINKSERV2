@@ -6,10 +6,20 @@ using std::string;
 using std::uniform_int_distribution;
 using std::uniform_real_distribution;
 
+#include <iostream>
+using std::cout;
+using std::endl;
+
 #include "global.hpp"
 #include "util.hpp"
 using util::fromString;
 using util::asString;
+using util::join;
+
+string irc(vector<string> arguments) {
+	cout << join(arguments, " ") << endl;
+	return "";
+}
 
 string echo(vector<string> arguments) {
 	string res;

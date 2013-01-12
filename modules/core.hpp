@@ -6,6 +6,9 @@
 
 // #m: core: core functions: none: none
 
+// #f: irc: issues an IRC command
+std::string irc(std::vector<std::string> arguments);
+
 // #f: echo: displays it's arguments
 std::string echo(std::vector<std::string> arguments);
 
