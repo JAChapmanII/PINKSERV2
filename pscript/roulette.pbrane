@@ -1,0 +1,10 @@
+kick => "dummy function for testing"; !echo ""
+roulette => { ($shot++ > 6)? { !kick $nick; "$nick shot himself!" } : "click" }
+spin => { $shot = {!rand 1 6}; "The barrel comes to a stop. Who will die next?" }
+
+!spin
+!roulette
+!roulette
+!roulette
+!roulette
+
