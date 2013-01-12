@@ -25,6 +25,7 @@ using util::startsWith;
 using util::contains;
 using util::asString;
 using util::fromString;
+using util::join;
 
 #include "global.hpp"
 #include "modules.hpp"
@@ -649,48 +650,35 @@ string escape(string str) {
 // TODO: compare? We modify it somewhat, but how badly do we mangle it?
 // TODO: this is totally screwed up :( Needs to be parenthisized
 string ExpressionTree::toString(bool all) {
+	if(this->next && all) {
+		vector<string> parts;
+		for(ExpressionTree *expr = this; expr; expr = expr->next)
+			parts.push_back(expr->toString(false));
+		return join(parts, "; ");
+	}
 	if(!this->fragment.special) {
 		// TODO: use type tags to not do this?
-		if(this->next && all)
-			return "'" + escape(this->fragment.text) + "'; " + this->next->toString();
-		else
-			return "'" + escape(this->fragment.text) + "'";
+		return "\"" + escape(this->fragment.text) + "\"";
 	}
 
-	if(this->isSpecial("()")) {
-		string ret = "(" + this->child->toString() + ")";
-		if(this->next && all)
-			ret += "; " + this->next->toString();
-		return ret;
-	}
+	if(this->isSpecial("()"))
+		return "(" + this->child->toString() + ")";
 
-	if(this->isSpecial("$")) {
-		if(this->next && all)
-			return "$" + this->rchild->fragment.text + "; " + this->next->toString();
-		else
-			return "$" + this->rchild->fragment.text;
-	}
+	if(this->isSpecial("$"))
+		return "$" + this->rchild->fragment.text;
+
 	if(this->isSpecial("!")) {
 		string ret = "!" + this->child->fragment.text;
 		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
-			ret += " " + arg->toString(false) + "";
-		ret += "";
-		if(this->next && all)
-			ret += "; " + this->next->toString();
+			ret += " " + arg->toString(false);
 		return ret;
 	}
 	string here;
-	if(this->next && all)
-		here = "(";
 	if(this->child)
 		here += this->child->toString() + " ";
 	here += this->fragment.text;
 	if(this->rchild)
 		here += " " + this->rchild->toString();
-	//here += ")";
-	if(this->next && all)
-		return here + ");" + this->next->toString();
-		//return here + "; " + this->next->toString(true);
 	return here;
 }
 
@@ -765,7 +753,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		if(!hasPermission(Permission::Write, nick, func))
 			throw nick + " does not have permission to write to " + func;
 		if(this->fragment.text == "+=>")
-			global::vars[func] += ";(" + rtext + ")";
+			global::vars[func] += "; " + rtext;
 		else
 			global::vars[func] = rtext;
 		// TODO: return just bound function body?
