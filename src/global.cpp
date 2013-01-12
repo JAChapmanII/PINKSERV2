@@ -25,6 +25,7 @@ using boost::match_extra;
 #include "util.hpp"
 using util::contains;
 using util::split;
+using util::fromString;
 
 ofstream global::log;
 ofstream global::err;
@@ -92,8 +93,10 @@ bool global::deinit() {
 
 void global::send(string target, string line, bool send) {
 	log << " -> " << target << " :" << line << endl;
-	if(line.length() > config::maxLineLength) {
-		line = line.substr(0, config::maxLineLength);
+	unsigned maxLineLength =
+		fromString<unsigned>(global::vars["bot.maxLineLength"]);
+	if(line.length() > maxLineLength) {
+		line = line.substr(0, maxLineLength);
 		log << "\t(line had to be shortened)" << endl;;
 	}
 	if(!send)
@@ -103,9 +106,9 @@ void global::send(string target, string line, bool send) {
 }
 
 bool global::isOwner(std::string nick) {
-	return (nick == config::owner);
+	return (nick == global::vars["bot.owner"]);
 }
 bool global::isAdmin(std::string nick) {
-	return contains(config::admins, nick);
+	return contains(global::vars["bot.admins"], " " + nick + " ");
 }
 

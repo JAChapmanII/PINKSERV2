@@ -10,12 +10,6 @@ using std::getline;
 #include <random>
 using std::random_device;
 
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::smatch;
-using boost::regex_match;
-using boost::match_extra;
-
 #include "global.hpp"
 using global::isOwner;
 #include "config.hpp"
@@ -38,11 +32,8 @@ int main(int argc, char **argv) {
 		cerr << "pbrane: global::init failed" << endl;
 		return -1;
 	}
-	global::log << "----- " << config::nick << " started -----" << endl;
-	cerr << "----- " << config::nick << " started -----" << endl;
-
-	regex privmsgRegex(config::regex::privmsg, regex::perl);
-	regex joinRegex(config::regex::join, regex::perl);
+	global::log << "----- " << global::vars["bot.nick"] << " started -----" << endl;
+	cerr << "----- " << global::vars["bot.nick"] << " started -----" << endl;
 
 	modules::init(config::brainFileName);
 	global::secondaryInit();
@@ -54,23 +45,13 @@ int main(int argc, char **argv) {
 		string line;
 		getline(cin, line);
 
-		smatch matches;
+		// TODO: LogItem::parse, switch on type
 		// if the current line is a PRIVMSG...
-		if(regex_match(line, matches, privmsgRegex)) {
-			string nick(matches[1]), target(matches[3]), message(matches[4]);
+		/*if(is text) {
+			// create ExpressionTree and evaluate
 
-			// start out by trying to match the reload command
-			if(isOwner(nick) && (message == config::reload)) {
-				global::log << "----- RESTARTING -----" << endl;
-				global::log.flush();
-				done = 78;
-				break;
-			}
-			// next try to just die
-			if(isOwner(nick) && (message == config::die)) {
-				global::log << "----- DIEING -----" << endl;
-				return 77;
-			}
+			// TODO: must do restart and sleep here?
+			// TODO: set global::done to 78 on reload, 77 on sleep?
 
 			// TODO: make this simpler
 			observe(line);
@@ -78,10 +59,9 @@ int main(int argc, char **argv) {
 			if(message.empty()) {
 				global::err << "main: message empty" << endl;
 			} else {
-				;// TODO: LogItem::parse, create ExpressionTree and evaluate
 			}
 		// if the current line is a JOIN...
-		} else if(regex_match(line, matches, joinRegex)) {
+		} else if(is join) {
 			// log all the join messages
 			global::log << matches[1] << " (" << matches[2] << ")"
 				<< " has joined " << matches[3] << endl;
@@ -89,7 +69,7 @@ int main(int argc, char **argv) {
 		} else {
 			// log all the failures
 			global::err << "NO MATCH: " + line << endl;;
-		}
+		}*/
 	}
 
 	// free memory associated with modules

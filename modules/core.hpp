@@ -24,4 +24,10 @@ std::string drand(std::vector<std::string> arguments);
 // #f: rm: wipe a variable form existence
 std::string rm(std::vector<std::string> arguments);
 
+// #f: reload: reload bot code
+std::string reload(std::vector<std::string> arguments);
+
+// #f: sleep: stop being awake
+std::string sleep(std::vector<std::string> arguments);
+
 #endif // MODULES_CORE_HPP

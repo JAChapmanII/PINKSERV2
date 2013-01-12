@@ -74,3 +74,13 @@ string rm(vector<string> arguments) {
 	return "(not-implemented, bug " + global::vars["bot.owner"] + ")";
 }
 
+string reload(vector<string> arguments) {
+	// TODO: can we just exit(0)?
+	return "(uh-oh, bug " + global::vars["bot.owner"] + ")";
+}
+
+string sleep(vector<string> arguments) {
+	// TODO: can we just exit(non-0)?
+	return "(uh-oh, bug " + global::vars["bot.owner"] + ")";
+}
+

@@ -1,0 +1,7 @@
+(!undefined bot.nick)? $bot.nick = "PINKSERV2"
+(!undefined bot.owner)? $bot.owner = "jac"
+(!undefined bot.admins)? $bot.admins = " RGCockatrices bonzairob quairlzr "
+(!undefined bot.maxLineLength)? $bot.maxLineLength = 256;
+(!undefined bot.markovChance)? $bot.markovChance = 0.06;
+(!undefined bot.correctChance)? $bot.correctChance = 0.06;
+
