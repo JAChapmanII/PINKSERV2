@@ -7,7 +7,6 @@
 #include <map>
 #include <random>
 #include "dictionary.hpp"
-#include "chatline.hpp"
 #include "permission.hpp"
 
 namespace global {
@@ -30,28 +29,13 @@ namespace global {
 	void secondaryInit();
 	bool deinit();
 
-	extern std::vector<ChatLine> lastLog;
 	extern std::vector<std::string> ignoreList;
 	extern unsigned minSpeakTime;
 
-	bool parse(ChatLine line);
-	struct ExpressionResult {
-		std::string result;
-		bool matched;
-		bool doSend;
-		int turtles = 0;
-
-		ExpressionResult() : result(""), matched(false), doSend(false) {
-		}
-	};
-	ExpressionResult run(ChatLine line, std::string message, int turtles = 0);
 	void send(std::string target, std::string line, bool send = true);
 
 	bool isOwner(std::string nick);
 	bool isAdmin(std::string nick);
-
-
-	void kick(std::string from, std::string nick, std::string message = "");
 }
 
 #endif // GLOBAL_HPP
