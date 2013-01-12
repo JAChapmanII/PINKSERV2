@@ -170,3 +170,11 @@ in GMP support for large numbers.
 
 Automatically address caller if $nick.addressMe is set? Function specific?
 
+Keep track of various statistics:
+	bot.birthTime: first start date
+	bot.awakeTime: cumulative time bot is running
+	when things are defined
+	when things are last modified
+	how many times a function has been invoked
+	how many times a user has invoked functionality
+
