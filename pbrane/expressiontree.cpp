@@ -731,11 +731,8 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			return reval;//(string)"created " + var + " as " + reval;
 		}
 
-		// TODO: standard way of doing this is going to mean that if the
-		// overall thing fails, we may have partial evals to roll back. Store
-		// in special map, and do an evaulate and then an apply?
-		if(!hasPermission(Permission::Write, nick, var))
-			throw nick + " does not have permission to write to " + var;
+		ensurePermission(Permission::Write, nick, var);
+
 		global::vars[var] = reval;
 		// TODO: conditionally return message?
 		return reval;//(string)"wrote " + reval + " to $" + var;
@@ -750,8 +747,8 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			return (string)"created " + func + " as " + rtext;
 		}
 
-		if(!hasPermission(Permission::Write, nick, func))
-			throw nick + " does not have permission to write to " + func;
+		ensurePermission(Permission::Write, nick, func);
+
 		if(this->fragment.text == "+=>")
 			global::vars[func] += "; " + rtext;
 		else
@@ -762,9 +759,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 	if(this->fragment.isSpecial("!")) {
 		string func = this->child->fragment.text;
 		// TODO: check for function existence
-		// TODO: move permission messages into throw'ing function?
-		if(!hasPermission(Permission::Execute, nick, func))
-			throw nick + " does not have permission to execute " + func;
+		ensurePermission(Permission::Execute, nick, func);
 
 		vector<ExpressionTree *> argTrees;
 		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
@@ -777,8 +772,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			if(!argTrees[0]->validAssignmentOperand())
 				throw (string)"first parameter to for must be assignable";
 			string loopVar = argTrees[0]->rchild->fragment.text;
-			if(!hasPermission(Permission::Write, nick, loopVar))
-				throw nick + " cannot write to loop var " + loopVar;
+			ensurePermission(Permission::Write, nick, loopVar);
 			if(!argTrees[2]->isSpecial(":"))
 				throw (string)"for syntax is: !for $var low high: body";
 			// TODO: support for over characters?
@@ -865,8 +859,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 				return "0";
 		}
 
-		if(!hasPermission(Permission::Write, nick, vname))
-			throw nick + " does not have permission to write to " + vname;
+		ensurePermission(Permission::Write, nick, vname);
 
 		long ival = fromString<long>(global::vars[vname]);
 		long res = ival;
@@ -948,8 +941,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 	}
 	if(this->isSpecial("$")) {
 		string var = this->rchild->fragment.text;
-		if(!hasPermission(Permission::Execute, nick, var))
-			throw nick + " does not have permission to read " + var;
+		ensurePermission(Permission::Read, nick, var);
 		return global::vars[var];
 	}
 	// TODO: de-int this. double? Only when "appropriate"?

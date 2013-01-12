@@ -5,14 +5,17 @@
 #include <map>
 
 namespace Permission {
-	enum Permission { Execute = 0x1, Append = 0x2, Write = 0x4, Modify = 0x8 };
-	static uint8_t xPermissions = Permission::Execute;
-	static uint8_t xawPermissions = xPermissions |
-		Permission::Append | Permission::Write;
-	static uint8_t xawmPermissions = xawPermissions | Permission::Modify;
+	enum Permission { Read = 0x1, Write = 0x2, Execute = 0x4, Modify = 0x8 };
+	std::string asString(Permission p);
+
+	extern uint8_t all;
+	extern uint8_t rx;
+
+	bool hasPermission(Permission p, std::string nick, std::string variable);
+	void ensurePermission(Permission p, std::string nick, std::string variable);
 }
 namespace PermissionType {
-	enum PermissionType { Admin, Owner, User, SUser };
+	enum PermissionType { Owner = 0x1, Admin = 0x2, User = 0x4, SUser = 0x8 };
 }
 
 // TODO struct -> class?
@@ -31,18 +34,18 @@ struct Permissions {
 	uint8_t owner;
 	std::map<std::string, uint8_t> suser;
 	uint8_t user;
+	uint8_t sticky;
 
 	Permissions();
-	Permissions(std::string owner);
+	Permissions(std::string iowner);
 	Permissions(Permission::Permission p);
 
 	static Permissions parse(std::string perms);
 
 	void apply(PermissionFragment pfrag);
+	// TODO: what the hell is level?
 	bool allowed(Permission::Permission p, std::string nick, int level = 5);
 };
 
-bool hasPermission(Permission::Permission p, std::string nick, std::string variable, int level = 5);
-// TODO: ensurePermission. Does above, throws appropriate exception on failure
 
 #endif // PERMISSION_HPP

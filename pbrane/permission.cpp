@@ -18,6 +18,20 @@ using util::toOrdinal;
 #include "global.hpp"
 #include "variable.hpp"
 
+uint8_t Permission::all = Read | Write | Execute | Modify;
+uint8_t Permission::rx = Read | Execute;
+
+string Permission::asString(Permission p) {
+	switch(p) {
+		case Read: return "read from";
+		case Write: return "write to";
+		case Execute: return "execute";
+		case Modify: return "modify";
+		default: return "(undefined-permission)";
+	}
+	return "(undefined-permission)";
+}
+
 PermissionFragment PermissionFragment::parse(string pstr) {
 	PermissionFragment pf = { PermissionType::User, "", 0x0 };
 
@@ -30,26 +44,26 @@ PermissionFragment PermissionFragment::parse(string pstr) {
 	transform(frags.begin(), frags.end(), frags.begin(), trimWhitespace);
 
 	// make sure there aren't wonky letters in the perms part
-	static string validPermissionCharacters = "xawm0";
+	static string validPermissionCharacters = "rwxm0";
 	for(auto c : frags[1])
 		if(!contains(validPermissionCharacters, (c)))
 			throw string(1, c) + " is not a valid permission";
 
 	// determine the actual permissions value
-	if(contains(frags[1], 'x'))
-		pf.perms |= Permission::Execute;
-	if(contains(frags[1], 'a'))
-		pf.perms |= Permission::Append;
+	if(contains(frags[1], 'r'))
+		pf.perms |= Permission::Read;
 	if(contains(frags[1], 'w'))
 		pf.perms |= Permission::Write;
+	if(contains(frags[1], 'x'))
+		pf.perms |= Permission::Execute;
 	if(contains(frags[1], 'm'))
 		pf.perms |= Permission::Modify;
 
 	// apply it to the proper thing
 	if(frags[0].length() == 1) {
 		switch(frags[0][0]) {
-			case 'a': pf.type = PermissionType::Admin; break;
 			case 'o': pf.type = PermissionType::Owner; break;
+			case 'a': pf.type = PermissionType::Admin; break;
 			case 'u': pf.type = PermissionType::User; break;
 			default:
 				throw string(1, frags[0][0]) + " is not valid identifier";
@@ -66,18 +80,18 @@ PermissionFragment PermissionFragment::parse(string pstr) {
 	return pf;
 }
 
-Permissions::Permissions() : admin(Permission::xawmPermissions),
-		owner_nick(""), owner(Permission::xawmPermissions),
-		suser(), user(Permission::xPermissions) {
+Permissions::Permissions() : admin(Permission::all),
+		owner_nick(""), owner(Permission::all),
+		suser(), user(Permission::rx), sticky(0x0) {
 }
-Permissions::Permissions(string owner) : admin(Permission::xawmPermissions),
-		owner_nick(owner), owner(Permission::xawmPermissions),
-		suser(), user(Permission::xPermissions) {
+Permissions::Permissions(string iowner) : admin(Permission::all),
+		owner_nick(iowner), owner(Permission::all),
+		suser(), user(Permission::rx), sticky(0x0) {
 }
 Permissions::Permissions(Permission::Permission p) :
-		admin(Permission::xawmPermissions),
+		admin(Permission::all),
 		owner_nick(), owner(p),
-		suser(), user(p) {
+		suser(), user(p), sticky(0x0) {
 }
 
 Permissions Permissions::parse(string perms) {
@@ -155,12 +169,17 @@ bool Permissions::allowed(Permission::Permission p, string nick, int level) {
 	return (p & fperms) && (mlevel > level);
 }
 
-bool hasPermission(Permission::Permission p, string nick, string variable, int level) {
+bool Permission::hasPermission(Permission p, string nick, string variable) {
 	// the bot owner can do whatever they want
 	if(global::vars["bot.owner"] == nick)
 		return true;
 
 	Permissions perms = global::vars_perms[variable];
-	return perms.allowed(p, nick, level);
+	return perms.allowed(p, nick);
+}
+void Permission::ensurePermission(Permission p, std::string nick, std::string variable) {
+	if(hasPermission(p, nick, variable))
+		return;
+	throw nick + " does not have permission to " + asString(p) + " " + variable;
 }
 
