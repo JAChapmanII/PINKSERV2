@@ -321,7 +321,7 @@ bool ExpressionTree::isSpecial(string token) {
 // TODO: arguments. this probably means we need another stack option in fragment
 ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *end) {
 	static vector<string> assignments = {
-			"=", "+=", "-=", "*=", "/=", "%=", "^=",
+			"=", "+=", "-=", "*=", "/=", "%=", "^=", "~=",
 			"++", "--"
 	};
 	static vector<string> fassignments = { 
@@ -343,7 +343,7 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 			{ "<", Binary }, { "<=", Binary },
 			{ ">", Binary }, { ">=", Binary }
 		},
-		{ { "==", Binary }, { "~=", Binary }, { "=~", Binary } },
+		{ { "==", Binary }, { "!=", Binary }, { "=~", Binary } },
 		{ { "&&", Binary } },
 		{ { "||", Binary } },
 		{ { ":", Binary } },
