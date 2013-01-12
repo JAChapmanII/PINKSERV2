@@ -682,6 +682,11 @@ string ExpressionTree::toString(bool all) {
 	return here;
 }
 
+bool isTrue(string str);
+bool isTrue(string str) {
+	return (str == "true");
+}
+
 // TODO: ability to tag ExpressionTree as various types. string, int,
 // TODO: double, variable, function?
 
@@ -711,7 +716,7 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		}
 		string condition = this->child->evaluate(nick);
 		ExpressionTree *target = trueTree;
-		if(condition != "true")
+		if(isTrue(condition))
 			target = falseTree;
 		if(target == NULL) {
 			return "";
@@ -1006,8 +1011,20 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			return "true";
 		return "false";
 	}
-	if(this->fragment.isSpecial("~=")) {
+	if(this->fragment.isSpecial("!=")) {
 		if(this->child->evaluate(nick) != this->rchild->evaluate(nick))
+			return "true";
+		return "false";
+	}
+	if(this->fragment.isSpecial("&&")) {
+		if(isTrue(this->child->evaluate(nick)) &&
+			isTrue(this->rchild->evaluate(nick)))
+			return "true";
+		return "false";
+	}
+	if(this->fragment.isSpecial("||")) {
+		if(isTrue(this->child->evaluate(nick)) ||
+			isTrue(this->rchild->evaluate(nick)))
 			return "true";
 		return "false";
 	}
