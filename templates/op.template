@@ -1,0 +1,4 @@
+	if(this->fragment.isSpecial("OP")) {
+		return asString(fromString<long>(this->child->evaluate(nick)) OP
+				fromString<long>(this->rchild->evaluate(nick)));
+	}

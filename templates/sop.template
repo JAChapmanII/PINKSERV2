@@ -1,0 +1,6 @@
+	if(this->fragment.isSpecial("SOP")) {
+		long rhs = fromString<long>(this->rchild->evaluate(nick));
+		if(rhs == 0)
+			throw (string)"SOP cannot take 0 as rhs";
+		return asString(fromString<long>(this->child->evaluate(nick)) SOP rhs);
+	}

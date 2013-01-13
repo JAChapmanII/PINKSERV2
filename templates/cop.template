@@ -1,0 +1,25 @@
+	if(this->fragment.isSpecial("COP")) {
+		ExpressionTree op({ "OP", true }, 0);
+		op.child = this->child;
+		op.rchild = this->rchild;
+		string res;
+		try {
+			res = op.evaluate(nick);
+		} catch(string &s) {
+			op.child = op.rchild = NULL;
+			throw s;
+		}
+		op.child = op.rchild = NULL;
+
+		ExpressionTree assign({ "=", true }, 0), rhs({ res }, 0);
+		assign.child = this->child;
+		assign.rchild = &rhs;
+		try {
+			assign.evaluate(nick);
+		} catch(string &s) {
+			assign.child = assign.rchild = NULL;
+			throw s;
+		}
+		assign.child = assign.rchild = NULL;
+		return this->child->evaluate(nick);
+	}

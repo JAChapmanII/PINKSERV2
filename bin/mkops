@@ -1,0 +1,30 @@
+#!/bin/bash
+
+OUTF="./pbrane/evaluate_gen.cpp"
+:> "$OUTF"
+
+ops="+ - *"
+echo "$ops" | tr ' ' '\n' | while read -r op; do
+	echo "Constructing $op  ..."
+	sed "s:OP:$op:g" templates/op.template >> "$OUTF"
+done
+
+sops="/ %"
+echo "$sops" | tr ' ' '\n' | while read -r sop; do
+	echo "Constructing $sop  ..."
+	sed "s:SOP:$sop:g" templates/sop.template >> "$OUTF"
+done
+
+cops="+= -= *= /= %= ^= ~="
+echo "$cops" | tr ' ' '\n' | while read -r cop; do
+	echo "Constructing $cop  ..."
+	op="$(echo "$cop" | tr -d '=')"
+	sed -e "s:COP:$cop:g" -e "s:OP:$op:g" templates/cop.template >> "$OUTF"
+done
+
+lops="> >= < <= == !="
+echo "$lops" | tr ' ' '\n' | while read -r lop; do
+	echo "Constructing $lop  ..."
+	sed "s:LOP:$lop:g" templates/lop.template >> "$OUTF"
+done
+

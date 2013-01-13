@@ -57,8 +57,13 @@ ${BDIR}/cycle_brain: ${ODIR}/cycle_brain.o ${OBJS}
 	${CXX} -o $@ $^ ${LDFLAGS}
 
 ${LDIR}/modules_gen.cpp: ${MDIR}/*.hpp
-	${BDIR}/makemods
+	${BDIR}/mkops
 ${ODIR}/modules.o: ${LDIR}/modules.cpp ${LDIR}/modules_gen.cpp
+	${CXX} -c -o $@ $< ${CXXFLAGS}
+
+${LDIR}/evaluate_gen.cpp: template/*.template
+	${BDIR}/makeops
+${ODIR}/expressiontree.o: ${PDIR}/expressiontree.cpp ${PDIR}/evaluate_gen.cpp
 	${CXX} -c -o $@ $< ${CXXFLAGS}
 
 ${ODIR}/%.o: ${SDIR}/%.cpp
@@ -71,6 +76,6 @@ ${ODIR}/%.o: ${MDIR}/%.cpp
 	${CXX} -c -o $@ $^ ${CXXFLAGS}
 
 clean:
-	rm -rf ${ODIR}/*.o ${LDIR}/modules_gen.cpp ${BINS}
+	rm -rf ${ODIR}/*.o ${LDIR}/modules_gen.cpp ${PDIR}/evaluate_gen.cpp ${BINS}
 
 

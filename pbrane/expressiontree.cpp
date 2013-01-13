@@ -946,76 +946,20 @@ string ExpressionTree::evaluate(string nick, bool all) {
 	}
 	if(this->isSpecial("$")) {
 		string var = this->rchild->fragment.text;
+		if(global::vars.find(var) == global::vars.end()) {
+			global::vars[var] = "0";
+			global::vars_perms[var] = Permissions(nick);
+		}
 		ensurePermission(Permission::Read, nick, var);
 		return global::vars[var];
 	}
 	// TODO: de-int this. double? Only when "appropriate"?
-	// standard form: + - * / % ^ {{{
-	if(this->fragment.isSpecial("+")) {
-		return asString(fromString<long>(this->child->evaluate(nick)) +
-				fromString<long>(this->rchild->evaluate(nick)));
-	}
-	if(this->fragment.isSpecial("-")) {
-		return asString(fromString<long>(this->child->evaluate(nick)) -
-				fromString<long>(this->rchild->evaluate(nick)));
-	}
-	if(this->fragment.isSpecial("*")) {
-		return asString(fromString<long>(this->child->evaluate(nick)) *
-				fromString<long>(this->rchild->evaluate(nick)));
-	}
-	if(this->fragment.isSpecial("/")) {
-		long rhs = fromString<long>(this->rchild->evaluate(nick));
-		if(rhs == 0)
-			throw (string)"attempted to divide by 0";
-		return asString(fromString<long>(this->child->evaluate(nick)) / rhs);
-	}
-	if(this->fragment.isSpecial("%")) {
-		long rhs = fromString<long>(this->rchild->evaluate(nick));
-		if(rhs == 0)
-			throw (string)"attempted to mod by 0";
-		return asString(fromString<long>(this->child->evaluate(nick)) % rhs);
-	}
 	if(this->fragment.isSpecial("^")) {
 		return asString(pow(fromString<long>(this->child->evaluate(nick)),
 				fromString<long>(this->rchild->evaluate(nick))));
 	}
 
 	// TODO: un-double this? Also, unstring for == and ~=
-	// conditionals: > < >= <= == ~= {{{
-	if(this->fragment.isSpecial(">")) {
-		if(fromString<double>(this->child->evaluate(nick)) >
-				fromString<double>(this->rchild->evaluate(nick)))
-			return "true";
-		return "false";
-	}
-	if(this->fragment.isSpecial(">")) {
-		if(fromString<double>(this->child->evaluate(nick)) >=
-				fromString<double>(this->rchild->evaluate(nick)))
-			return "true";
-		return "false";
-	}
-	if(this->fragment.isSpecial("<")) {
-		if(fromString<double>(this->child->evaluate(nick)) <
-				fromString<double>(this->rchild->evaluate(nick)))
-			return "true";
-		return "false";
-	}
-	if(this->fragment.isSpecial("<")) {
-		if(fromString<double>(this->child->evaluate(nick)) <=
-				fromString<double>(this->rchild->evaluate(nick)))
-			return "true";
-		return "false";
-	}
-	if(this->fragment.isSpecial("==")) {
-		if(this->child->evaluate(nick) == this->rchild->evaluate(nick))
-			return "true";
-		return "false";
-	}
-	if(this->fragment.isSpecial("!=")) {
-		if(this->child->evaluate(nick) != this->rchild->evaluate(nick))
-			return "true";
-		return "false";
-	}
 	if(this->fragment.isSpecial("&&")) {
 		if(isTrue(this->child->evaluate(nick)) &&
 			isTrue(this->rchild->evaluate(nick)))
@@ -1028,6 +972,8 @@ string ExpressionTree::evaluate(string nick, bool all) {
 			return "true";
 		return "false";
 	}
+
+#include "evaluate_gen.cpp"
 
 	throw (string)"unkown node { \"" + this->fragment.text + "\", " +
 		(this->fragment.special ? "" : "not") + " special }, bug " +
