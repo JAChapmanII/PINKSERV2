@@ -1,5 +1,5 @@
 fish => !or "<><" "><>"
-fishes => !for $i 0 {!rand 2 7}: (!echo (!fish) " ")
+fishes => !do {!rand 2 7} "!fish"
 
 !fish
 !fishes

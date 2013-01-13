@@ -745,36 +745,6 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
 			argTrees.push_back(arg);
 
-		// TODO: this should be elsewhere?
-		if(func == "for") {
-			if(argTrees.size() != 3)
-				throw (string)"for takes three parameters and a body";
-			if(!argTrees[0]->validAssignmentOperand())
-				throw (string)"first parameter to for must be assignable";
-			string loopVar = argTrees[0]->rchild->fragment.text;
-			ensurePermission(Permission::Write, nick, loopVar);
-			if(!argTrees[2]->isSpecial(":"))
-				throw (string)"for syntax is: !for $var low high: body";
-			// TODO: support for over characters?
-			long low = fromString<long>(argTrees[1]->evaluate(nick, false)),
-				high = fromString<long>(argTrees[2]->child->evaluate(nick, false));
-			// TODO: uh?
-			if(low > high)
-				return "";
-			if(high - low > fromString<long>(global::vars["bot.maxIterations"]))
-				throw (string)"for cannot exceed " +
-					global::vars["bot.maxIterations"] + " iterations";
-
-			// actually execute the thing
-			ExpressionTree *body = argTrees[2]->rchild;
-			string ret;
-			for(long i = low; i < high; ++i) {
-				global::vars[loopVar] = asString(i);
-				ret += body->evaluate(nick);
-			}
-			return ret;
-		}
-
 		global::vars["0"] = func;
 		global::vars_perms["0"] = Permissions(nick);
 		// figure out the result of the arguments

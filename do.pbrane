@@ -1,0 +1,2 @@
+do => ($1 > 0)? { ($1 > $bot.maxDo)? "cannot exceed max iterations" : { $local.ret += !eval $2; !do ($1 - 1) $2 } }
+
