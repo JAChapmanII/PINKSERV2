@@ -336,7 +336,7 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 
 	// TODO: if previous before parenthesis is a function call, use this as
 	// arguments? If no args currently?
-	// if we've got a parenthized or braced subexpression, simply ditch the {{{
+	// if we've got a parenthized or braced subexpression, simply ditch the
 	// surroundings and hook the contents up directly
 	if((begin->isSpecial("(") && end->isSpecial(")")) ||
 			(begin->isSpecial("{") && end->isSpecial("}"))) {
@@ -383,7 +383,7 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 			if(here->folded)
 				continue;
 
-			// if we have a function call, parse and bind arguments {{{
+			// if we have a function call, parse and bind arguments
 			if(here->isSpecial("!")) {
 				// make sure there is a valid function name next
 				if(!here->next)
