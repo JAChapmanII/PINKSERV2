@@ -30,28 +30,9 @@ using util::join;
 #include "global.hpp"
 #include "modules.hpp"
 
-
-// TODO: remove after debug?
 #include <iostream>
 using std::cerr;
 using std::endl;
-static void printexprends(pair<unsigned, unsigned> sexpr, vector<TokenFragment> frags);
-
-void printexprends(pair<unsigned, unsigned> sexpr, vector<TokenFragment> frags) {
-	vector<unsigned> fstarts;
-	string expr;
-	for(auto frag : frags) {
-		fstarts.push_back(expr.length());
-		expr += frag.text + " ";
-	}
-
-	int first = fstarts[sexpr.first], second = fstarts[sexpr.second];
-	//cout << first << ", " << second << endl;
-	cerr << expr << endl;
-	cerr << string(first, ' ') + '^' +
-		string(second - first - 1, '~') + '^' << endl;
-}
-
 
 ExpressionTree::ExpressionTree(TokenFragment ifrag, unsigned ieid) :
 		folded(false), eid(ieid), fragment(ifrag),
@@ -228,11 +209,8 @@ ExpressionTree *ExpressionTree::parse(string statement) {
 
 	ExpressionTree *last = NULL;
 	// convert all subexpressions into a tree
-	for(unsigned i = 0; i < exprEnds.size(); ++i) {
-		//printexprends(sexprlist[i], frags);
+	for(unsigned i = 0; i < exprEnds.size(); ++i)
 		last = treeify(exprEnds[i].first, exprEnds[i].second);
-		//last->print();
-	}
 
 	// find the real starts and ends of the overall expression
 	ExpressionTree *start = last, *end = NULL;
@@ -249,7 +227,6 @@ ExpressionTree *ExpressionTree::parse(string statement) {
 
 // TODO: remove after debug?
 void ExpressionTree::print(int level, bool sprint) {
-	//cerr << "(l:" << level << ") ";
 	if(level == 0)
 		cerr << this->fragment.text << endl;
 	else if(sprint)
@@ -396,10 +373,9 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 	for(auto level : precedenceMap) {
 		// loop over the expression
 		for(ExpressionTree *here = begin->next; here != end; here = here->next) {
-			if(!here) {
-				cerr << "oops: ExpressionTree::treeify got NULL here? (never hit end)" << endl;
-				break;
-			}
+			if(!here)
+				throw (string)"ExpressionTree::treeify got NULL here? (never hit end)";
+
 			// if it's not a special token, skip it
 			if(!here->fragment.special)
 				continue;
@@ -586,9 +562,8 @@ ExpressionTree *ExpressionTree::dropSemicolons(
 			if(here == end)
 				break;
 			if(here == begin)
-				cerr << "ExpressionTree::dropSemicolons: begin is NULL? wat" << endl;
-			cerr << "ExpressionTree::dropSemicolons: ERRORRRRR" << endl;
-			break;
+				throw (string)"ExpressionTree::dropSemicolons: begin is NULL";
+			throw (string)"ExpressionTree::dropSemicolons: here is NULL";
 		}
 		// if it's not a special token, skip it
 		if(!here->fragment.special) {
@@ -792,7 +767,6 @@ string ExpressionTree::evaluate(string nick, bool all) {
 
 			// actually execute the thing
 			ExpressionTree *body = argTrees[2]->rchild;
-			//cerr << "body: " << body->toString() << endl;
 			string ret;
 			for(long i = low; i < high; ++i) {
 				global::vars[loopVar] = asString(i);
@@ -913,7 +887,6 @@ string ExpressionTree::evaluate(string nick, bool all) {
 					else if(replacement[rend] == sep)
 						break;
 				}
-				cerr << "found flags? rend: " << rend << endl;
 				if(rend != replacement.length()) {
 					flags = replacement.substr(rend + 1);
 					replacement = replacement.substr(0, rend);
