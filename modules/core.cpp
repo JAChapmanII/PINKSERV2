@@ -73,15 +73,16 @@ Variable drand(vector<Variable> arguments) {
 Variable type(vector<Variable> arguments) {
 	string res;
 	for(auto arg : arguments) {
-		Variable v = global::vars[arg.toString()];
-		switch(v.type) {
+		switch(arg.type) {
 			case Type::Integer: res += arg.toString() + ":Integer"; break;
 			case Type::Double: res += arg.toString() + ":Double"; break;
 			case Type::Boolean: res += arg.toString() + ":Boolean"; break;
 			case Type::String: res += arg.toString() + ":String"; break;
-			default: res += "(error)"; break;
+			default: res += "(" + arg.toString() + ":error)"; break;
 		}
+		res += " ";
 	}
+	res.pop_back();
 	return Variable(res, Permissions());
 }
 
