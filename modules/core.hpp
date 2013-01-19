@@ -2,32 +2,35 @@
 #define MODULES_CORE_HPP
 
 #include <vector>
-#include <string>
+#include "variable.hpp"
 
 // #m: core: core functions: none: none
 
 // #f: irc: issues an IRC command
-std::string irc(std::vector<std::string> arguments);
+Variable irc(std::vector<Variable> arguments);
 
 // #f: echo: displays it's arguments
-std::string echo(std::vector<std::string> arguments);
+Variable echo(std::vector<Variable> arguments);
 
 // #f: core_or = or: returns a random argument
-std::string core_or(std::vector<std::string> arguments);
+Variable core_or(std::vector<Variable> arguments);
 
 // #f: rand: returns a random integer in a given range
-std::string rand(std::vector<std::string> arguments);
+Variable rand(std::vector<Variable> arguments);
 
 // #f: drand: return a random double in a given range
-std::string drand(std::vector<std::string> arguments);
+Variable drand(std::vector<Variable> arguments);
+
+// #f: type: return a string representation of the variable(s) type(s)
+Variable type(std::vector<Variable> arguments);
 
 // #f: rm: wipe a variable form existence
-std::string rm(std::vector<std::string> arguments);
+Variable rm(std::vector<Variable> arguments);
 
 // #f: reload: reload bot code
-std::string reload(std::vector<std::string> arguments);
+Variable reload(std::vector<Variable> arguments);
 
 // #f: sleep: stop being awake
-std::string sleep(std::vector<std::string> arguments);
+Variable sleep(std::vector<Variable> arguments);
 
 #endif // MODULES_CORE_HPP

@@ -5,9 +5,10 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include "variable.hpp"
 
 namespace modules {
-	typedef std::string (*Function)(std::vector<std::string>);
+	typedef Variable (*Function)(std::vector<Variable>);
 	typedef void (*LoadFunction)(std::istream &);
 	typedef void (*SaveFunction)(std::ostream &);
 	struct Module {

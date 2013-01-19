@@ -2,7 +2,7 @@
 		ExpressionTree op({ "OP", true }, 0);
 		op.child = this->child;
 		op.rchild = this->rchild;
-		string res;
+		Variable res;
 		try {
 			res = op.evaluate(nick);
 		} catch(string &s) {
@@ -11,7 +11,7 @@
 		}
 		op.child = op.rchild = NULL;
 
-		ExpressionTree assign({ "=", true }, 0), rhs({ res }, 0);
+		ExpressionTree assign({ "=", true }, 0), rhs({ res.toString() }, 0);
 		assign.child = this->child;
 		assign.rchild = &rhs;
 		try {

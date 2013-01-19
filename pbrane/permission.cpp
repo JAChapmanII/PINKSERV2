@@ -171,10 +171,10 @@ bool Permissions::allowed(Permission::Permission p, string nick, int level) {
 
 bool Permission::hasPermission(Permission p, string nick, string variable) {
 	// the bot owner can do whatever they want
-	if(global::vars["bot.owner"] == nick)
+	if(global::vars["bot.owner"].toString() == nick)
 		return true;
 
-	Permissions perms = global::vars_perms[variable];
+	Permissions perms = global::vars[variable].permissions;
 	return perms.allowed(p, nick);
 }
 void Permission::ensurePermission(Permission p, std::string nick, std::string variable) {

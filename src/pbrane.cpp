@@ -32,8 +32,8 @@ int main(int argc, char **argv) {
 		cerr << "pbrane: global::init failed" << endl;
 		return -1;
 	}
-	global::log << "----- " << global::vars["bot.nick"] << " started -----" << endl;
-	cerr << "----- " << global::vars["bot.nick"] << " started -----" << endl;
+	global::log << "----- " << global::vars["bot.nick"].toString() << " started -----" << endl;
+	cerr << "----- " << global::vars["bot.nick"].toString() << " started -----" << endl;
 
 	modules::init(config::brainFileName);
 	global::secondaryInit();

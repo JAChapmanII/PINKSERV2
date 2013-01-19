@@ -269,20 +269,20 @@ void observe(std::string text) {
 	insert(text);
 }
 
-string markov(vector<string> arguments) {
+Variable markov(vector<Variable> arguments) {
 	string seed = join(arguments, " "), r = recover(seed);
 	if(r == seed)
-		return "Sorry, I don't know anything about that";
-	return r;
+		return Variable("Sorry, I don't know anything about that", Permissions());
+	return Variable(r, Permissions());
 }
-string correct(vector<string> arguments) {
+Variable correct(vector<Variable> arguments) {
 	string line = join(arguments, " ");
 
 	vector<string> words = split(line);
 	words.erase(remove_if(words.begin(), words.end(),
 				[](const string &s){ return !s.empty(); }), words.end());
 	if(words.size() < markovOrder + 1)
-		return "";
+		return Variable("", Permissions());
 
 	// TODO: this needs some cleanup
 	global::log << "----- attempting to correct: " << line << endl;
@@ -312,28 +312,28 @@ string correct(vector<string> arguments) {
 			res += recover(join(currentPhrase, joinSeparator));
 			if(((string)".?;,:").find(res[res.length() - 1]) == string::npos)
 				res += "?";
-			return res;
+			return Variable(res, Permissions());
 		}
 	}
-	return "";
+	return Variable("", Permissions());
 }
 
-string ccount(vector<string> arguments) {
-	return count(join(arguments, " "));
+Variable ccount(vector<Variable> arguments) {
+	return Variable(count(join(arguments, " ")), Permissions());
 }
-string dsize(vector<string> arguments) {
-	return asString(dictionary.size());
+Variable dsize(vector<Variable> arguments) {
+	return Variable((long)dictionary.size(), Permissions());
 }
-string rword(vector<string> arguments) {
+Variable rword(vector<Variable> arguments) {
 	// TODO: proper bail under new system?
 	if(arguments.size() > 2)
 		throw (string)"rword may only take two numeric endpoints";
 
 	string mins, maxs;
 	if(arguments.size() > 0)
-		mins = arguments[0];
+		mins = arguments[0].toString();
 	if(arguments.size() > 1)
-		maxs = arguments[1];
+		maxs = arguments[1].toString();
 
 	// TODO: type check arguments? Let caller handle it?
 
@@ -363,8 +363,8 @@ string rword(vector<string> arguments) {
 		r -= i->second;
 	if(i == model0.end()) {
 		global::err << "markov::fetch: oh shit ran off the end of ends!" << endl;
-		return "";
+		throw (string)"markov::fetch: oh shit ran off the end of ends!";
 	}
-	return dictionary[i->first];
+	return Variable(dictionary[i->first], Permissions());
 }
 

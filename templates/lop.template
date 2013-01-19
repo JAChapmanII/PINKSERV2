@@ -1,5 +1,0 @@
-	if(this->fragment.isSpecial("LOP")) {
-		if(this->child->evaluate(nick) LOP this->rchild->evaluate(nick))
-			return "true";
-		return "false";
-	}

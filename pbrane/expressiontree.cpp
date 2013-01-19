@@ -669,9 +669,9 @@ bool isTrue(string str) {
 
 // TODO: better timing control
 // TODO: max recursion depth? Just run in thread and abort after x time?
-string ExpressionTree::evaluate(string nick, bool all) {
+Variable ExpressionTree::evaluate(string nick, bool all) {
 	if(this->next && all) {
-		vector<string> results;
+		vector<Variable> results;
 		for(ExpressionTree *expr = this; expr; expr = expr->next)
 			results.push_back(expr->evaluate(nick, false));
 		return results.back();
@@ -679,34 +679,32 @@ string ExpressionTree::evaluate(string nick, bool all) {
 
 	// might have side effects
 	// TODO: permissions on creation with = and => (mostly execute and owner)
-	if(this->fragment.isSpecial("()")) {
-		string sexprres = this->child->evaluate(nick);
-		return sexprres;
-	}
+	if(this->fragment.isSpecial("()"))
+		return this->child->evaluate(nick);
+
 	if(this->fragment.isSpecial("?")) {
 		ExpressionTree *trueTree = this->rchild, *falseTree = NULL;
 		if(this->rchild->isSpecial(":")) {
 			trueTree = this->rchild->child;
 			falseTree = this->rchild->rchild;
 		}
-		string condition = this->child->evaluate(nick);
+		Variable condition = this->child->evaluate(nick);
 		ExpressionTree *target = trueTree;
-		if(isTrue(condition))
+		if(condition.isTrue())
 			target = falseTree;
 		if(target == NULL) {
-			return "";
+			return Variable("", Permissions());
 		}
 
-		string ret = target->evaluate(nick);
-		return ret;
+		return target->evaluate(nick);
 	}
 	if(this->fragment.isSpecial("=")) {
 		// left child is $, with right child varname
 		string var = this->child->rchild->fragment.text;
-		string reval = this->rchild->evaluate(nick);
+		Variable reval = this->rchild->evaluate(nick);
 		if(global::vars.find(var) == global::vars.end()) {
+			reval.permissions = Permissions(nick);
 			global::vars[var] = reval;
-			global::vars_perms[var] = Permissions(nick);
 			// TODO: conditonally return old message?
 			return reval;//(string)"created " + var + " as " + reval;
 		}
@@ -722,9 +720,8 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		string rtext = this->rchild->toString();
 
 		if(global::vars.find(func) == global::vars.end()) {
-			global::vars[func] = rtext;
-			global::vars_perms[func] = Permissions(nick);
-			return (string)"created " + func + " as " + rtext;
+			global::vars[func] = Variable(rtext, Permissions(nick));
+			return Variable((string)"created " + func + " as " + rtext, Permissions(nick));
 		}
 
 		ensurePermission(Permission::Write, nick, func);
@@ -734,7 +731,8 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		else
 			global::vars[func] = rtext;
 		// TODO: return just bound function body?
-		return (string)"bound " + func + " as: " + global::vars[func];
+		return Variable("bound " + func + " as: " + global::vars[func].toString(),
+				Permissions(nick));
 	}
 	if(this->fragment.isSpecial("!")) {
 		string func = this->child->fragment.text;
@@ -745,20 +743,18 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
 			argTrees.push_back(arg);
 
-		global::vars["0"] = func;
-		global::vars_perms["0"] = Permissions(nick);
+		global::vars["0"] = Variable(func, Permissions(nick));
 		// figure out the result of the arguments
-		vector<string> args;
+		vector<Variable> args;
 		for(unsigned i = 0; i < argTrees.size(); ++i) {
-			string arg = argTrees[i]->evaluate(nick, false);
+			Variable arg = argTrees[i]->evaluate(nick, false);
 			global::vars[asString(i + 1)] = arg;
-			global::vars_perms[asString(i + 1)] = Permissions(nick);
 			args.push_back(arg);
 		}
 
 		string argsstr;
-		for(string arg : args)
-			argsstr += " " + arg;
+		for(auto arg : args)
+			argsstr += " " + arg.toString();
 
 		// a module function
 		if(contains(modules::hfmap, func)) {
@@ -770,9 +766,9 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		if(global::vars.find(func) == global::vars.end())
 			throw func + " is undefined";
 		ExpressionTree *etree = NULL;
-		string res;
+		Variable res;
 		try {
-			etree = ExpressionTree::parse(global::vars[func]);
+			etree = ExpressionTree::parse(global::vars[func].toString());
 			res = etree->evaluate(nick);
 		} catch(string &s) {
 			delete etree;
@@ -795,37 +791,38 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		// creating it
 		if(global::vars.find(vname) == global::vars.end()) {
 			if(this->isSpecial("++"))
-				global::vars[vname] = "1";
+				global::vars[vname] = Variable("1", Permissions(nick));
 			else
-				global::vars[vname] = "-1";
-			global::vars_perms[vname] = Permissions(nick);
+				global::vars[vname] = Variable("-1", Permissions(nick));
 			if(pre) {
 				if(this->isSpecial("++"))
-					return "1";
+					return Variable("1", Permissions());
 				else
-					return "-1";
+					return Variable("-1", Permissions());
 			} else
-				return "0";
+				return Variable("0", Permissions());
 		}
 
 		ensurePermission(Permission::Write, nick, vname);
 
-		long ival = fromString<long>(global::vars[vname]);
-		long res = ival;
+		Variable var = global::vars[vname];
+		if((var.type != Type::Double) && (var.type != Type::Integer))
+			var = var.asInteger();
+		Variable ival = var;
 		if(this->isSpecial("++"))
-			res++;
+			var.value.l++;
 		else
-			res--;
-		global::vars[vname] = asString(res);
+			var.value.l--;
+		global::vars[vname] = var;
 		if(pre)
-			return asString(res);
+			return var;
 		else
-			return asString(ival);
+			return ival;
 	}
 
 	if(this->fragment.isSpecial("=~") || this->fragment.isSpecial("~")) {
-		string text = this->child->evaluate(nick),
-				rstring = this->rchild->evaluate(nick);
+		string text = this->child->evaluate(nick).toString(),
+				rstring = this->rchild->evaluate(nick).toString();
 
 		size_t rend = 0;
 		char sep = rstring.front();
@@ -871,55 +868,62 @@ string ExpressionTree::evaluate(string nick, bool all) {
 		boost::regex rregex(rstring, regex::perl);
 		string str = regex_replace(text, rregex, replacement,
 				boost::match_default | boost::format_all);
+		Variable r_ = Variable(str, Permissions(Permission::Read));
 		if(str != text) {
-			global::vars["r_"] = str;
-			global::vars_perms["r_"] = Permissions(Permission::Execute);
+			global::vars["r_"] = r_;
 			if(this->fragment.isSpecial("~"))
-				return str;
-			return "true";
+				return r_;
+			return Variable(true, Permissions());
 		}
 
 		if(this->fragment.isSpecial("~"))
-			return str;
-		return "false";
+			return r_;
+		return Variable(false, Permissions());
 	}
 
 	if(!this->fragment.special) {
-		return this->fragment.text;
+		return Variable::parse(this->fragment.text);
 	}
 	if(this->isSpecial("$")) {
 		string var = this->rchild->fragment.text;
 		if(global::vars.find(var) == global::vars.end()) {
-			global::vars[var] = "0";
-			global::vars_perms[var] = Permissions(nick);
+			global::vars[var] = Variable(0L, Permissions(nick));
 		}
 		ensurePermission(Permission::Read, nick, var);
 		return global::vars[var];
 	}
 	// TODO: de-int this. double? Only when "appropriate"?
+	/*
 	if(this->fragment.isSpecial("^")) {
 		return asString(pow(fromString<long>(this->child->evaluate(nick)),
 				fromString<long>(this->rchild->evaluate(nick))));
 	}
+	*/
+
+	if(this->isSpecial("+"))
+		return this->child->evaluate(nick) + this->rchild->evaluate(nick);
+	if(this->isSpecial("-"))
+		return this->child->evaluate(nick) - this->rchild->evaluate(nick);
+	if(this->isSpecial("*"))
+		return this->child->evaluate(nick) * this->rchild->evaluate(nick);
+	if(this->isSpecial("/"))
+		return this->child->evaluate(nick) / this->rchild->evaluate(nick);
+
+	vector<string> comparisons = { "==", "!=", "<=", ">=", "<", ">" };
+	for(auto c : comparisons)
+		if(this->fragment.isSpecial(c))
+			return this->child->evaluate(nick).compare(this->rchild->evaluate(nick), c);
 
 	// TODO: un-double this? Also, unstring for == and ~=
-	if(this->fragment.isSpecial("&&")) {
-		if(isTrue(this->child->evaluate(nick)) &&
-			isTrue(this->rchild->evaluate(nick)))
-			return "true";
-		return "false";
-	}
-	if(this->fragment.isSpecial("||")) {
-		if(isTrue(this->child->evaluate(nick)) ||
-			isTrue(this->rchild->evaluate(nick)))
-			return "true";
-		return "false";
-	}
+	if(this->fragment.isSpecial("&&"))
+		return this->child->evaluate(nick) && this->rchild->evaluate(nick);
+	if(this->fragment.isSpecial("||"))
+		return this->child->evaluate(nick) || this->rchild->evaluate(nick);
 
 #include "evaluate_gen.cpp"
 
 	throw (string)"unkown node { \"" + this->fragment.text + "\", " +
 		(this->fragment.special ? "" : "not") + " special }, bug " +
-		global::vars["bot.owner"] + " to fix";
+		global::vars["bot.owner"].toString() + " to fix";
 }
 

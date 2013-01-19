@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <vector>
-#include <string>
+#include "variable.hpp"
 
 // #m: markov: markov data: markovLoad: markovSave
 void markovLoad(std::istream &in);
@@ -13,18 +13,18 @@ void markovSave(std::ostream &out);
 void observe(std::string text);
 
 // #f: markov: returns a markov chain given a seed string
-std::string markov(std::vector<std::string> arguments);
+Variable markov(std::vector<Variable> arguments);
 
 // #f: ccount: return number of markov chains
-std::string ccount(std::vector<std::string> arguments);
+Variable ccount(std::vector<Variable> arguments);
 
 // #f: correct: magically corrects you
-std::string correct(std::vector<std::string> arguments);
+Variable correct(std::vector<Variable> arguments);
 
 // #f: dsize: return number of unique 1-grams
-std::string dsize(std::vector<std::string> arguments);
+Variable dsize(std::vector<Variable> arguments);
 
 // #f: rword: returns a random word (can be restricted to frequency range)
-std::string rword(std::vector<std::string> arguments);
+Variable rword(std::vector<Variable> arguments);
 
 #endif // MODULES_MARKOV_HPP

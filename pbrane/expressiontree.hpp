@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include "tokenfragment.hpp"
+#include "variable.hpp"
 
 // TODO: struct -> class?
 struct ExpressionTree {
@@ -39,7 +40,7 @@ struct ExpressionTree {
 	// TODO: ability to tag ExpressionTree as various types. string, int,
 	// TODO: double, variable, function?
 
-	std::string evaluate(std::string nick, bool all = true);
+	Variable evaluate(std::string nick, bool all = true);
 
 	protected:
 		ExpressionTree(const ExpressionTree &rhs);

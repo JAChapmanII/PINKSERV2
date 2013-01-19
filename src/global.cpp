@@ -32,9 +32,8 @@ ofstream global::err;
 mt19937_64 global::rengine;
 Dictionary<string, unsigned> global::dictionary;
 
-map<string, string> global::vars;
-map<string, map<string, string>> global::lvars;
-map<string, Permissions> global::vars_perms;
+map<string, Variable> global::vars;
+map<string, map<string, Variable>> global::lvars;
 
 static ofstream chatFile;
 static unsigned int global_seed = 0;
@@ -94,7 +93,7 @@ bool global::deinit() {
 void global::send(string target, string line, bool send) {
 	log << " -> " << target << " :" << line << endl;
 	unsigned maxLineLength =
-		fromString<unsigned>(global::vars["bot.maxLineLength"]);
+		fromString<unsigned>(global::vars["bot.maxLineLength"].toString());
 	if(line.length() > maxLineLength) {
 		line = line.substr(0, maxLineLength);
 		log << "\t(line had to be shortened)" << endl;;
@@ -106,9 +105,9 @@ void global::send(string target, string line, bool send) {
 }
 
 bool global::isOwner(std::string nick) {
-	return (nick == global::vars["bot.owner"]);
+	return (nick == global::vars["bot.owner"].toString());
 }
 bool global::isAdmin(std::string nick) {
-	return contains(global::vars["bot.admins"], " " + nick + " ");
+	return contains(global::vars["bot.admins"].toString(), " " + nick + " ");
 }
 

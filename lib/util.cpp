@@ -28,6 +28,14 @@ string util::join(vector<string> strs, string with) {
 		res += str + with;
 	return res.substr(0, res.length() - with.length());
 }
+string util::join(vector<Variable> strs, string with) {
+	if(strs.empty())
+		return "";
+	string res;
+	for(auto str : strs)
+		res += str.toString() + with;
+	return res.substr(0, res.length() - with.length());
+}
 
 string util::trim(string str, string what) {
 	size_t firstNotOf = str.find_first_not_of(what);

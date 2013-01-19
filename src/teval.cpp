@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 				etree->print();
 				cout << "stringify: " << etree->toString() << endl;
 
-				cout << "result: " << etree->evaluate("jac") << endl;
+				cout << "result: " << etree->evaluate("jac").toString() << endl;
 			} catch(string &s) {
 				cout << "\t: " << s << endl;
 			}
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 				etree->print();
 				cerr << "stringify: " << etree->toString() << endl;
 
-				string res = etree->evaluate(nick);
+				string res = etree->evaluate(nick).toString();
 				cerr << "result: " << res << endl;
 				cout << nick + ": " << res << endl;
 			} catch(string &s) {

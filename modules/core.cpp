@@ -14,16 +14,20 @@ using std::endl;
 #include "util.hpp"
 using util::fromString;
 using util::asString;
-using util::join;
 
-string irc(vector<string> arguments) {
-	cout << join(arguments, " ") << endl;
-	return "";
+Variable irc(vector<Variable> arguments) {
+	string out;
+	for(auto arg : arguments)
+		out += arg.toString() + " ";
+	out.pop_back();
+	cout << out << endl;
+	return Variable("", Permissions());
 }
 
-string echo(vector<string> arguments) {
+Variable echo(vector<Variable> arguments) {
 	string res;
-	for(string arg : arguments) {
+	for(auto a : arguments) {
+		string arg = a.toString();
 		// TODO: old semantics of echo?
 		if(!res.empty() && (!isspace(res.back()) && !isspace(arg[0])))
 			res += " ";
@@ -33,54 +37,69 @@ string echo(vector<string> arguments) {
 	// TODO: this is broken now >_>
 	//if(this->next && all)
 		//return argsstr + this->next->evaluate(nick);
-	return res;
+	return Variable(res, Permissions());
 }
 
-string core_or(vector<string> arguments) {
+Variable core_or(vector<Variable> arguments) {
 	uniform_int_distribution<> uid(0, arguments.size() - 1);
 	unsigned target = uid(global::rengine);
 	return arguments[target];
 }
 
-string rand(vector<string> arguments) {
+Variable rand(vector<Variable> arguments) {
 	if(arguments.size() != 2)
 		throw (string)"rand takes two parameters; the bounds";
-	long low = fromString<long>(arguments[0]),
-		high = fromString<long>(arguments[1]);
+	long low = fromString<long>(arguments[0].toString()),
+		high = fromString<long>(arguments[1].toString());
 	if(low > high)
 		throw (string)"rand's second parameter must be larger";
 	if(low == high)
-		return asString(low);
+		return Variable(low, Permissions());
 	uniform_int_distribution<long> lrng(low, high);
-	return asString(lrng(global::rengine));
+	return Variable(lrng(global::rengine), Permissions());
 }
 
-string drand(vector<string> arguments) {
+Variable drand(vector<Variable> arguments) {
 	if(arguments.size() != 2)
 		throw (string)"drand takes two parameters; the bounds";
-	double low = fromString<double>(arguments[0]),
-			high = fromString<double>(arguments[1]);
+	double low = fromString<double>(arguments[0].toString()),
+			high = fromString<double>(arguments[1].toString());
 	if(low > high)
 		throw (string)"drand's second parameter must be larger";
 	uniform_real_distribution<double> lrng(low, high);
-	return asString(lrng(global::rengine));
+	return Variable(lrng(global::rengine), Permissions());
+}
+
+Variable type(vector<Variable> arguments) {
+	string res;
+	for(auto arg : arguments) {
+		Variable v = global::vars[arg.toString()];
+		switch(v.type) {
+			case Type::Integer: res += arg.toString() + ":Integer"; break;
+			case Type::Double: res += arg.toString() + ":Double"; break;
+			case Type::Boolean: res += arg.toString() + ":Boolean"; break;
+			case Type::String: res += arg.toString() + ":String"; break;
+			default: res += "(error)"; break;
+		}
+	}
+	return Variable(res, Permissions());
 }
 
 // TODO: how to do this partly? Gah... :(
-string rm(vector<string> arguments) {
+Variable rm(vector<Variable> arguments) {
 	// TODO: we need to know the caller for this to work...
 	//for(auto var : arguments) {
 	//}
-	return "(not-implemented, bug " + global::vars["bot.owner"] + ")";
+	throw (string)"(not-implemented, bug " + global::vars["bot.owner"].toString() + ")";
 }
 
-string reload(vector<string> arguments) {
+Variable reload(vector<Variable> arguments) {
 	// TODO: can we just exit(0)?
-	return "(uh-oh, bug " + global::vars["bot.owner"] + ")";
+	throw (string)"(uh-oh, bug " + global::vars["bot.owner"].toString() + ")";
 }
 
-string sleep(vector<string> arguments) {
+Variable sleep(vector<Variable> arguments) {
 	// TODO: can we just exit(non-0)?
-	return "(uh-oh, bug " + global::vars["bot.owner"] + ")";
+	throw (string)"(uh-oh, bug " + global::vars["bot.owner"].toString() + ")";
 }
 
