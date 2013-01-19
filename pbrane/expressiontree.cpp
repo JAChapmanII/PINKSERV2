@@ -690,7 +690,7 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 		}
 		Variable condition = this->child->evaluate(nick);
 		ExpressionTree *target = trueTree;
-		if(condition.isTrue())
+		if(condition.isFalse())
 			target = falseTree;
 		if(target == NULL) {
 			return Variable("", Permissions());
