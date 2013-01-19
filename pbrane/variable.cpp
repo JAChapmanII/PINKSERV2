@@ -292,7 +292,7 @@ Variable Variable::parse(const string &rhs) {
 	if(rhs == "true")
 		return Variable(true, Permissions());
 	if(rhs == "false")
-		return Variable(true, Permissions());
+		return Variable(false, Permissions());
 	bool notInteger = false;
 	for(char c : rhs)
 		if(c < '0' || c > '9')
