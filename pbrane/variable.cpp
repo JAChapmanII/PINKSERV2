@@ -319,6 +319,8 @@ Variable &Variable::operator+=(const string &rhs) {
 }
 
 Variable Variable::parse(const string &rhs) {
+	if(rhs.empty())
+		return Variable(rhs, Permissions());
 	if(rhs == "true")
 		return Variable(true, Permissions());
 	if(rhs == "false")
