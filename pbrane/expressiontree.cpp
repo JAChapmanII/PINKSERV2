@@ -63,14 +63,24 @@ vector<pair<unsigned, unsigned>> ExpressionTree::delimitExpressions(
 	// squash strings
 	vector<TokenFragment> fragments_squashed;
 	for(unsigned i = 0; i < fragments.size(); ++i) {
-		bool isDelimiter = false;
+		bool isString = false;
 		for(auto delimiter : stringDelimiters) {
 			if(fragments[i].isSpecial(delimiter)) {
-				isDelimiter = true;
-				break;
+				isString = true;
+				if(fragments[i + 2].isSpecial(delimiter)) {
+					++i; // advance onto body
+					// record string properties
+					fragments[i].isString = true;
+					fragments[i].sdelim = delimiter;
+					fragments_squashed.push_back(fragments[i]);
+					++i; // advance onto end delimiter
+					// continue on past the delimiter
+					break;
+				}
+				throw (string)"strangely delimited string";
 			}
 		}
-		if(isDelimiter)
+		if(isString)
 			continue;
 		fragments_squashed.push_back(fragments[i]);
 	}
@@ -633,7 +643,9 @@ string ExpressionTree::toString(bool all) {
 	}
 	if(!this->fragment.special) {
 		// TODO: use type tags to not do this?
-		return "\"" + escape(this->fragment.text) + "\"";
+		if(this->fragment.isString)
+			return this->fragment.sdelim + this->fragment.text + this->fragment.sdelim;
+		return this->fragment.text;
 	}
 
 	if(this->isSpecial("()"))
