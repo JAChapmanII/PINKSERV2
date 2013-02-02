@@ -5,11 +5,13 @@ using std::map;
 
 #include <algorithm>
 using std::transform;
+using std::max;
 
 #include "util.hpp"
 using util::split;
 using util::trimWhitespace;
 using util::fromString;
+using util::endsWith;
 
 Variable coerce(const Variable &v, Type t);
 Variable coerce(const Variable &v, Type t) {
@@ -179,8 +181,32 @@ Variable Variable::operator*(const Variable &rhs) const {
 	throw (string)"* not implemented on these types";
 }
 Variable Variable::operator-(const Variable &rhs) const {
-	if(eitherIs(*this, rhs, Type::String))
-		throw (string)"cannot subtract strings";
+	if(this->type == rhs.type) {
+		switch(this->type) {
+			// this is equivalent to (a and (not b))
+			case Type::Boolean: return Variable(
+					rhs.asBoolean().value.b ? false : this->asBoolean().value.b, this->permissions);
+			case Type::Integer: return Variable(this->value.l - rhs.value.l, this->permissions);
+			case Type::Double: return Variable(this->value.d - rhs.value.d, this->permissions);
+			case Type::String: {
+				string here = this->toString(), there = rhs.toString();
+				if(endsWith(here, there))
+					return Variable(here.substr(0, here.length() - there.length()), this->permissions);
+				else
+					return Variable(here, this->permissions);
+					// TODO: throw instead?
+					//throw (string)"-: this does not end with rhs";
+			}
+		}
+	}
+	if(areOf(*this, rhs, Type::Double, Type::Integer))
+		return this->asDouble() - rhs.asDouble();
+	if(this->type == Type::String && rhs.type == Type::Integer)
+		return Variable(this->toString().substr(0, max(0L, rhs.value.l)), this->permissions);
+	if(this->type == Type::Boolean)
+		return coerce(*this, rhs.type) - rhs;
+	if(rhs.type == Type::Boolean)
+		return coerce(rhs, this->type) - *this;
 	throw (string)"- not implemented on these types";
 }
 Variable Variable::operator/(const Variable &rhs) const {
