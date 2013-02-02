@@ -5,5 +5,4 @@ bin/cycle_brain
 *.o
 
 lib/modules_gen.cpp
-pbrane/evaluate_gen.cpp
 

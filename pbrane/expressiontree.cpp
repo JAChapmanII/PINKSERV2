@@ -932,7 +932,34 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 	if(this->fragment.isSpecial("||"))
 		return this->child->evaluate(nick) || this->rchild->evaluate(nick);
 
-#include "evaluate_gen.cpp"
+	vector<string> compoundOpAssigns = { "+", "-", "*", "/", "%", "^", "~" };
+	for(auto op : compoundOpAssigns) {
+		if(this->fragment.isSpecial(op + "=")) {
+			ExpressionTree opET({ op, true }, 0);
+			opET.child = this->child;
+			opET.rchild = this->rchild;
+			Variable res;
+			try {
+				res = opET.evaluate(nick);
+			} catch(string &s) {
+				opET.child = opET.rchild = NULL;
+				throw s;
+			}
+			opET.child = opET.rchild = NULL;
+
+			ExpressionTree assign({ "=", true }, 0), rhs({ res.toString() }, 0);
+			assign.child = this->child;
+			assign.rchild = &rhs;
+			try {
+				assign.evaluate(nick);
+			} catch(string &s) {
+				assign.child = assign.rchild = NULL;
+				throw s;
+			}
+			assign.child = assign.rchild = NULL;
+			return this->child->evaluate(nick);
+		}
+	}
 
 	throw (string)"unkown node { \"" + this->fragment.text + "\", " +
 		(this->fragment.special ? "" : "not") + " special }, bug " +
