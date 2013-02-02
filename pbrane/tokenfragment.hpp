@@ -5,8 +5,9 @@
 #include <vector>
 
 struct TokenFragment {
-	bool special;
+	bool special, isString;
 	std::string text;
+	std::string sdelim;
 
 	static std::vector<TokenFragment> fragment(std::string statement);
 	static bool validIdentifier(std::string str);

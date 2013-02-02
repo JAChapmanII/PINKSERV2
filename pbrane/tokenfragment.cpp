@@ -129,10 +129,10 @@ bool TokenFragment::validIdentifier(string str) {
 	return true;
 }
 
-TokenFragment::TokenFragment() : special(false), text() {
+TokenFragment::TokenFragment() : special(false), isString(false), text(), sdelim() {
 }
 TokenFragment::TokenFragment(string itext, bool ispecial) :
-		special(ispecial), text(itext) {
+		special(ispecial), isString(false), text(itext), sdelim() {
 }
 
 
