@@ -22,6 +22,7 @@ namespace util {
 	std::string trimWhitespace(std::string str);
 
 	bool startsWith(std::string str, std::string prefix);
+	bool endsWith(std::string str, std::string suffix);
 
 	template<typename T> T fromString(std::string str);
 	template<typename T> std::string asString(T val);

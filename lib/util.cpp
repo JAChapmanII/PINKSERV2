@@ -60,6 +60,11 @@ bool util::startsWith(string str, string prefix) {
 		return false;
 	return str.substr(0, prefix.length()) == prefix;
 }
+bool util::endsWith(string str, string suffix) {
+	if(suffix.length() > str.length())
+		return false;
+	return str.substr(str.length() - suffix.length()) == suffix;
+}
 
 bool util::contains(std::string str, char c) {
 	return (str.find(c) != string::npos);
