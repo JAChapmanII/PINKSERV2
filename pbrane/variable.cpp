@@ -201,8 +201,12 @@ Variable Variable::operator-(const Variable &rhs) const {
 	}
 	if(areOf(*this, rhs, Type::Double, Type::Integer))
 		return this->asDouble() - rhs.asDouble();
-	if(this->type == Type::String && rhs.type == Type::Integer)
-		return Variable(this->toString().substr(0, max(0L, rhs.value.l)), this->permissions);
+	if(this->type == Type::String && rhs.type == Type::Integer) {
+		string here = this->toString();
+		if(rhs.value.l >= here.length())
+			return Variable((string)"", this->permissions).asString();
+		return Variable(here.substr(0, here.length() - rhs.value.l), this->permissions);
+	}
 	if(this->type == Type::Boolean)
 		return coerce(*this, rhs.type) - rhs;
 	if(rhs.type == Type::Boolean)
