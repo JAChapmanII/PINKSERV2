@@ -77,6 +77,15 @@ vector<pair<unsigned, unsigned>> ExpressionTree::delimitExpressions(
 					// continue on past the delimiter
 					break;
 				}
+				if(fragments[i + 1].isSpecial(delimiter)) {
+					TokenFragment emptyString;
+					emptyString.isString = true;
+					emptyString.sdelim = delimiter;
+					fragments_squashed.push_back(emptyString);
+					++i; // advance onto end delimiter
+					// continue on past the delimiter
+					break;
+				}
 				throw (string)"strangely delimited string";
 			}
 		}
