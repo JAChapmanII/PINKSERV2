@@ -678,11 +678,6 @@ string ExpressionTree::toString(bool all) {
 	return here;
 }
 
-bool isTrue(string str);
-bool isTrue(string str) {
-	return (str == "true");
-}
-
 // TODO: ability to tag ExpressionTree as various types. string, int,
 // TODO: double, variable, function?
 
