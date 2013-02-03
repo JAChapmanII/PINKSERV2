@@ -18,6 +18,7 @@ using global::isOwner;
 using util::contains;
 using util::fromString;
 #include "markov.hpp"
+#include "eventsystem.hpp"
 
 int main(int argc, char **argv) {
 	unsigned int seed = 0;
@@ -37,6 +38,8 @@ int main(int argc, char **argv) {
 
 	modules::init(config::brainFileName);
 	global::secondaryInit();
+
+	EventSystem eventSystem;
 
 	// while there is more input coming
 	int done = 0;

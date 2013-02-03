@@ -21,7 +21,7 @@ MOBJS+=${ODIR}/markov.o ${ODIR}/core.o
 OBJS=
 OBJS+=${MOBJS} ${ODIR}/util.o ${ODIR}/global.o ${ODIR}/config.o
 OBJS+=${ODIR}/tokenfragment.o ${ODIR}/expressiontree.o
-OBJS+=${ODIR}/permission.o ${ODIR}/variable.o
+OBJS+=${ODIR}/permission.o ${ODIR}/variable.o ${ODIR}/eventsystem.o
 
 CXXFLAGS=-std=c++0x -I${SDIR} -I${LDIR} -I${PDIR} -I${MDIR}
 LDFLAGS=-lboost_regex
