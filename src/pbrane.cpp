@@ -53,9 +53,6 @@ int main(int argc, char **argv) {
 			// TODO: must do restart and sleep here?
 			// TODO: set global::done to 78 on reload, 77 on sleep?
 
-			// TODO: make this simpler
-			observe(line);
-
 			if(message.empty()) {
 				global::err << "main: message empty" << endl;
 			} else {

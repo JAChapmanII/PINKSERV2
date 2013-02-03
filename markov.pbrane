@@ -1,11 +1,5 @@
-Custom-function
-	!rword
-	!dsize
-	!ccount
-	!correct
-	!markov
-
 Default triggers;
+	!on text !observe $text
 	!on text ({!drand 0 1} > $markovChance)? !correct
 	!on text ({!drand 0 1} > $correctChance)? !correct
 
