@@ -265,8 +265,9 @@ void markovSave(ostream &out) {
 	markovModel.write(out);
 }
 
-void observe(std::string text) {
-	insert(text);
+Variable observe(vector<Variable> arguments) {
+	insert(join(arguments, " "));
+	return Variable(true, Permissions());
 }
 
 Variable markov(vector<Variable> arguments) {
