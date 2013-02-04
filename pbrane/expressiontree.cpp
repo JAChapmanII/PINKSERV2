@@ -898,6 +898,8 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 	}
 
 	if(!this->fragment.special) {
+		if(this->fragment.isString)
+			return Variable(this->fragment.text, Permissions());
 		return Variable::parse(this->fragment.text);
 	}
 	if(this->isSpecial("$")) {
