@@ -174,7 +174,7 @@ Variable Variable::operator*(const Variable &rhs) const {
 		// TODO:
 		long times = (rhs.value.l > 512) ? 512 : rhs.value.l;
 		ret.reserve(times * this->value.s.length());
-		for(long i = 0; i < rhs.value.l; ++i)
+		for(long i = 0; i < times; ++i)
 			ret += this->value.s;
 		return Variable(ret, this->permissions);
 	}
