@@ -58,5 +58,5 @@ echo "}" | tee -a mods mfuncs >/dev/null
 	cat mfuncs
 } > $OUTF
 
-rm mods mfuncs
+rm mincs mods mfuncs
 
