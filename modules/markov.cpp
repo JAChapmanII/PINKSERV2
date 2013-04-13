@@ -108,48 +108,6 @@ string fetch(vector<string> seed) {
 	for(auto i : seed)
 		seedl.push_back(dictionary[i]);
 	return dictionary[fetch(seedl)];
-
-	/*
-	map<unsigned, double> smoothModel;
-	double smoothModelTotal = 0;
-	double weight = 0;
-	while(!chain.empty()) {
-		map<unsigned, unsigned> cmodel = markovModel.endpoint(chain);
-		for(auto i : cmodel) {
-			weight = coefficientTable[chain.size()] * i.second / cmodel.size();
-			// TODO: see how the division here works out
-			smoothModel[i.first] += weight;
-			smoothModelTotal += weight;
-		}
-		chain.pop();
-	}
-
-	// if we have nothing about that seed, return nothing
-	if(smoothModel.empty())
-		return "";
-
-	// add 0th order model
-	map<unsigned, unsigned> model0 = markovModel.endpoint(chain);
-	for(auto i : model0) {
-		weight = coefficientTable[0] * i.second / model0.size();
-		smoothModel[i.first] += weight;
-		smoothModelTotal += weight;
-	}
-
-	// pick a random number in [0, total)
-	uniform_real_distribution<> urd(0, smoothModelTotal);
-	double r = urd(global::rengine);
-
-	// find the end point corresponding to that
-	auto i = smoothModel.begin();
-	for(; (i != smoothModel.end()) && (r >= i->second); ++i)
-		r -= i->second;
-	if(i == smoothModel.end()) {
-		global::err << "markov::fetch: oh shit ran off the end of ends!" << endl;
-		return "";
-	}
-	return dictionary[i->first];
-	*/
 }
 string recover(string initial) {
 	vector<string> ivec = split(initial);
@@ -232,47 +190,8 @@ Variable markov(vector<Variable> arguments) {
 	return Variable(r, Permissions());
 }
 Variable correct(vector<Variable> arguments) {
+	// TODO: implement
 	throw (string)"error: correct unimplemented";
-	/*
-	string line = join(arguments, " ");
-
-	vector<string> words = split(line);
-	words.erase(remove_if(words.begin(), words.end(),
-				[](const string &s){ return !s.empty(); }), words.end());
-
-	// TODO: this needs some cleanup
-	global::log << "----- attempting to correct: " << line << endl;
-	string prefix = "";
-	unsigned last = words.size() - (markovOrder + 1);
-	for(unsigned i = 0; i < last; prefix += words[i] + " ", ++i) {
-		vector<string> currentPhrase = subvector(words, i, markovOrder);
-		string seed = join(currentPhrase, joinSeparator),
-				target = words[i + markovOrder];
-
-		unsigned ocount = occurrences(split(seed));
-		if(ocount == 0)
-			continue;
-
-		double ap = 1.0/ocount, p = 0;
-		// TODO: oh god, p is broken
-		//value(markovModel[seed], target) / (double)ocount;
-
-		global::log << "seed: \"" << seed << "\","
-			<< " target: \"" << target << "\", "
-			<< "p, ap: " << p << ", " << ap << endl;
-
-		if((ap > 0) && (p < ap * .60)) {
-			string res = trim(prefix);
-			if(!prefix.empty())
-				res += " ";
-			res += recover(join(currentPhrase, joinSeparator));
-			if(((string)".?;,:").find(res[res.length() - 1]) == string::npos)
-				res += "?";
-			return Variable(res, Permissions());
-		}
-	}
-	return Variable("", Permissions());
-	*/
 }
 
 Variable ccount(vector<Variable> arguments) {
@@ -296,38 +215,5 @@ Variable rword(vector<Variable> arguments) {
 	return Variable(dictionary[markovModel.random(chain)], Permissions());
 
 	// TODO: reimplement
-	/*
-	// TODO: type check arguments? Let caller handle it?
-
-	list<unsigned> chain;
-	// get 0th order model
-	map<unsigned, unsigned> model0 = markovModel.endpoint(chain);
-	// TODO: already defined maybe?
-	double totalWeight = 0;
-	for(auto i : model0)
-		totalWeight += i.second;
-
-	double min = 0, max = 1;
-	if(!mins.empty())
-		min = fromString<double>(mins);
-	if(!maxs.empty())
-		max = fromString<double>(maxs);
-
-	// pick a random number in [0, total)
-	uniform_real_distribution<> urd(min, max * totalWeight);
-	double r = urd(global::rengine);
-
-	// TODO: must sort the model for the range restriction to work properly
-
-	// find the end point corresponding to that
-	auto i = model0.begin();
-	for(; (i != model0.end()) && (r >= i->second); ++i)
-		r -= i->second;
-	if(i == model0.end()) {
-		global::err << "markov::fetch: oh shit ran off the end of ends!" << endl;
-		throw (string)"markov::fetch: oh shit ran off the end of ends!";
-	}
-	return Variable(dictionary[i->first], Permissions());
-	*/
 }
 
