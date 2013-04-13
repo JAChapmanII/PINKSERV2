@@ -10,9 +10,9 @@ template<typename K, typename V> V Dictionary<K, V>::get(K key) {
 		V value = this->m_fmap.size() + 1;
 		this->m_fmap[key] = value;
 		this->m_rmap[value] = key;
-		return value + AnchorCount;
+		return value + anchorCount;
 	}
-	return it->second + AnchorCount;
+	return it->second + anchorCount;
 }
 template<typename K, typename V> V Dictionary<K, V>::operator[](K key) {
 	return this->get(key);
@@ -22,7 +22,7 @@ template<typename K, typename V> K Dictionary<K, V>::get(V value) {
 	switch(value) {
 		case Start: return "{^}";
 		case End:   return "{$}";
-		default: return this->m_rmap[value - AnchorCount];
+		default: return this->m_rmap[value - anchorCount];
 	}
 }
 template<typename K, typename V> K Dictionary<K, V>::operator[](V value) {

@@ -4,9 +4,10 @@
 #include <map>
 #include <iostream>
 
+static unsigned anchorCount = 2;
 template<typename K, typename V> class Dictionary {
 	public:
-		enum Anchor { Start, End, AnchorCount };
+		enum Anchor { Start = 1, End, Invalid };
 		Dictionary();
 
 		V get(K key);
