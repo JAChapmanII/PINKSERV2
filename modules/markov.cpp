@@ -22,8 +22,8 @@ using std::stringstream;
 #include <iostream>
 using std::endl;
 
-#include <queue>
-using std::queue;
+#include <list>
+using std::list;
 
 #include <algorithm>
 using std::remove_if;
@@ -45,18 +45,12 @@ using global::dictionary;
 
 #include "markovmodel.hpp"
 
-static const unsigned markovOrder = 2;
-static MarkovModel<markovOrder> markovModel;
+// TODO: turn into pbrane variable
+static const unsigned maxMarkovOrder = 3;
+static MarkovModel markovModel;
 
 // TODO: uhm, hmm?
 static string joinSeparator = " ";
-// TODO: best values for these?
-// TODO: adjustable? that would be cool :D same with order?
-static vector<double> coefficientTable = { 1.0/128.0, 1.0/8.0, 1.0 };
-
-// TODO: move these into util?
-template<typename T> T sum(vector<pair<string, T>> &l);
-template<typename T> T value(vector<pair<string, T>> &l, string str);
 
 // insert each possible map for a set of words using a specific order
 void insert(string text);
@@ -64,70 +58,58 @@ void insert(string text);
 void push(vector<string> words, unsigned order);
 
 // return a random endpoint given a seed
+unsigned fetch(list<unsigned> words);
 string fetch(vector<string> words);
 // Handles returning markov chains by calling fetch repeatedly
 string recover(string initial);
 
 // list chain count
 string count(string initial);
-// count the occurrences of a seed
-unsigned occurrences(vector<string> seed);
-
-
-template<typename T>
-		T sum(vector<pair<string, T>> &l) {
-	T s = 0;
-	for(auto i : l)
-		s += i.second;
-	return s;
-}
-template<typename T>
-		T value(vector<pair<string, T>> &l, string str) {
-	for(auto i : l)
-		if(i.first == str)
-			return i.second;
-	return 0;
-}
 
 void push(vector<string> words, unsigned order) {
 	if(words.size() <= order)
 		return;
 	// special case the 0th order chain
 	if(order == 0) {
-		queue<string> empty;
-		for(auto w : words)
-			markovModel.increment(empty, w);
+		for(auto w : words) {
+			list<unsigned> solo;
+			solo.push_back(dictionary[w]);
+			markovModel.increment(solo);
+		}
 		return;
 	}
 
 	// insert first chain (build word queue first)
-	queue<string> chain;
-	for(unsigned i = 0; i < order; ++i)
-		chain.push(words[i]);
-	markovModel.increment(chain, words[order]);
+	list<unsigned> chain;
+	for(unsigned i = 0; i <= order; ++i)
+		chain.push_back(dictionary[words[i]]);
+	markovModel.increment(chain);
 
 	// insert the remaining chains
 	for(unsigned e = order + 1; e < words.size(); ++e) {
-		chain.pop();
-		chain.push(words[e - 1]);
-		markovModel.increment(chain, words[e]);
+		chain.pop_front();
+		chain.push_back(dictionary[words[e]]);
+		markovModel.increment(chain);
 	}
 }
 void insert(string text) {
 	vector<string> words = split(text);
 	if(words.empty())
 		return;
-	for(unsigned o = 0; o <= markovOrder; ++o)
+	for(unsigned o = 0; o <= maxMarkovOrder; ++o)
 		push(words, o);
 }
 
+unsigned fetch(list<unsigned> words) {
+	return markovModel.random(words);
+}
 string fetch(vector<string> seed) {
-	queue<string> chain;
+	list<unsigned> seedl;
 	for(auto i : seed)
-		chain.push(i);
-	while(chain.size() > markovOrder)
-		chain.pop();
+		seedl.push_back(dictionary[i]);
+	return dictionary[fetch(seedl)];
 
+	/*
 	map<unsigned, double> smoothModel;
 	double smoothModelTotal = 0;
 	double weight = 0;
@@ -167,48 +149,35 @@ string fetch(vector<string> seed) {
 		return "";
 	}
 	return dictionary[i->first];
+	*/
 }
 string recover(string initial) {
-	vector<string> chain = split(initial);
-	unsigned initialSize = chain.size();
+	vector<string> ivec = split(initial);
+	list<unsigned> chain;
+	for(auto i : ivec)
+		chain.push_back(dictionary[i]);
 
 	bool done = false;
 	while(!done) {
-		vector<string> seed;
-		// create the current seed
-		if(chain.size() < markovOrder)
-			seed = chain;
-		else
-			seed = last(chain, markovOrder);
-
 		// find a random endpoint
-		string next = fetch(seed);
+		unsigned next = fetch(chain);
+		string nexts = dictionary[next];
 
 		// if it is empty, it's because we don't know anything about that
-		if(next.empty())
+		if(next == 0)
 			break;
 
 		// add next to the string
 		chain.push_back(next);
 
 		// check to see if we should try to pick another one or just be done
-		// the goal here is to make it more likely to fetch again when the
-		// string is small
-		double prob = 5.0 / (chain.size() - initialSize);
-
-		// if we haven't even reach chain length yet, make it twice as
-		// unlikely that we don't continue
-		if(chain.size() <= initialSize * 1.5)
+		double prob = 0.9;
+		if(chain.size() <= maxMarkovOrder * 2.5)
 			prob += (1 - prob) / 2.0;
-
-		// cap the probability at something somewhat sensible
-		// 	aim for 50% chance to get to 12 words if it was capped each time
-		if(prob > .945)
-			prob = .945;
 
 		// if we're currently ending with a punctuation, greatly increase the
 		// chance of ending and sounding somewhat coherent
-		if(((string)".?!;").find(next[next.length() - 1]) != string::npos)
+		if(((string)".?!;").find(nexts.back()) != string::npos)
 			prob /= 1.85;
 
 		// if a random num in [0, 1] is above our probability of ending, end
@@ -217,45 +186,31 @@ string recover(string initial) {
 	}
 
 	// return the generated string
-	return join(chain, " ");
+	string result;
+	for(auto i : chain)
+		result += dictionary[i] + " ";
+	result.pop_back();
+	return result;
 }
 
 string count(string initial) {
-	vector<string> chain = split(initial);
+	vector<string> seedv = split(initial);
+	list<unsigned> seed;
+	for(auto i : seedv)
+		seed.push_back(dictionary[i]);
 
-	string seed;
-	if(chain.size() < markovOrder)
-		seed = join(chain, joinSeparator);
-	else
-		seed = join(last(chain, markovOrder), joinSeparator);
-
-	vector<string> vseed = split(seed);
 	// count occurences of the seed string
-	unsigned total = occurrences(vseed);
-
-	// count total endpoints for all seeds
-	unsigned long totalEnds = 0;
-	//for(auto i : markovModel)
-		//totalEnds += i.second.size();
+	unsigned total = markovModel.count(seed);
 
 	stringstream ss;
-	ss << "Chains starting with: " << seed << ": ("
+	ss << "Chains starting with: " << initial << ": ("
 		// total unique endpoints for this seed, total occurences of this seed
-		<< markovModel[seed].size() << ", " << total << ") ["
+		<< markovModel[seed]->size() << ", " << total << ") ["
 		// along with the total start points in the markov model
-		<< markovModel.size() << ", "
-		// finishing with total endpoints for all seeds
-		<< totalEnds << "]";
+		<< markovModel.size() << "]";
 
 	return ss.str();
 }
-unsigned occurrences(vector<string> seed) {
-	queue<string> chain;
-	for(auto i : seed)
-		chain.push(i);
-	return markovModel.total(chain);
-}
-
 
 // TODO: we're ignoring the return here...
 void markovLoad(istream &in) {
@@ -277,13 +232,13 @@ Variable markov(vector<Variable> arguments) {
 	return Variable(r, Permissions());
 }
 Variable correct(vector<Variable> arguments) {
+	throw (string)"error: correct unimplemented";
+	/*
 	string line = join(arguments, " ");
 
 	vector<string> words = split(line);
 	words.erase(remove_if(words.begin(), words.end(),
 				[](const string &s){ return !s.empty(); }), words.end());
-	if(words.size() < markovOrder + 1)
-		return Variable("", Permissions());
 
 	// TODO: this needs some cleanup
 	global::log << "----- attempting to correct: " << line << endl;
@@ -317,6 +272,7 @@ Variable correct(vector<Variable> arguments) {
 		}
 	}
 	return Variable("", Permissions());
+	*/
 }
 
 Variable ccount(vector<Variable> arguments) {
@@ -336,9 +292,14 @@ Variable rword(vector<Variable> arguments) {
 	if(arguments.size() > 1)
 		maxs = arguments[1].toString();
 
+	list<unsigned> chain;
+	return Variable(dictionary[markovModel.random(chain)], Permissions());
+
+	// TODO: reimplement
+	/*
 	// TODO: type check arguments? Let caller handle it?
 
-	queue<string> chain;
+	list<unsigned> chain;
 	// get 0th order model
 	map<unsigned, unsigned> model0 = markovModel.endpoint(chain);
 	// TODO: already defined maybe?
@@ -367,5 +328,6 @@ Variable rword(vector<Variable> arguments) {
 		throw (string)"markov::fetch: oh shit ran off the end of ends!";
 	}
 	return Variable(dictionary[i->first], Permissions());
+	*/
 }
 

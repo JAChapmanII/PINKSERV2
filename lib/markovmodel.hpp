@@ -1,68 +1,65 @@
 #ifndef MARKOVMODEL_HPP
 #define MARKOVMODEL_HPP
 
-#include <queue>
-#include <string>
+#include <list>
 #include <map>
 #include <iostream>
 
-template<int O> class MarkovModel {
+/* MarkovModel:
+ * 	handles markov model related functionality
+ * 	holds all needed data to generate corpus-like chains
+ *
+ * terminology:
+ * 	seed: the context to generate from
+ * 	order: the length of the seed
+ * 	endpoint: the result of generation
+ * 	chain: the context plus the endpoint
+ */
+// TODO: template key/value?
+class MarkovModel {
 	public:
-		MarkovModel() : m_order(O), m_model() { }
-		void increment(std::queue<unsigned> chain, unsigned target,
-				unsigned count = 1, bool atStart = false);
-		void increment(std::queue<std::string> chain, std::string target,
-				unsigned count = 1, bool atStart = false);
-		std::string random(std::queue<std::string> chain);
+		MarkovModel();
+		~MarkovModel();
 
-		bool contains(std::queue<std::string> chain);
-		unsigned operator[](std::queue<std::string> chain);
-		MarkovModel<O - 1> operator[](std::string word);
-		MarkovModel<O - 1> operator[](unsigned word);
-		typename std::map<unsigned, MarkovModel<O - 1>>::iterator begin();
-		typename std::map<unsigned, MarkovModel<O - 1>>::iterator end();
+		// TODO: sane default other than 1?
+		// add some number of copies of chain
+		void increment(std::list<unsigned> chain, unsigned amount = 1);
+
+		// return count of chain
+		unsigned count(std::list<unsigned> chain);
+
+		// pick a random endpoint given a seed
+		unsigned random(std::list<unsigned> seed);
+
+		// calculate the probability of a chain occuring
+		double probability(std::list<unsigned> chain);
+
+		// return a smooth model for a seed
+		std::map<unsigned, double> smooth(std::list<unsigned> seed);
+
+		//bool contains(std::list<std::string> chain);
+
+		// returns a partially resloved seed
+		MarkovModel *operator[](std::list<unsigned> seed);
+		MarkovModel *operator[](unsigned key);
+
+		//typename std::map<unsigned, MarkovModel<O - 1>>::iterator begin();
+		//typename std::map<unsigned, MarkovModel<O - 1>>::iterator end();
+
+		// returns the number of endpoints at this level
 		unsigned size() const;
 
+		// save model to a file
 		std::ostream &write(std::ostream &out);
+		// read model from a file
 		std::istream &read(std::istream &in);
 
-		std::map<unsigned, unsigned> endpoint(std::queue<std::string> chain);
-		std::map<unsigned, unsigned> endpoint(std::queue<unsigned> chain);
-		unsigned total(std::queue<std::string> chain);
-
 	protected:
-		unsigned m_order;
-		std::map<unsigned, MarkovModel<O - 1>> m_model;
+		// ensure a submodel exists
+		void ensure(unsigned key);
+
+		unsigned m_count; // occurrences of this endpoint
+		std::map<unsigned, MarkovModel *> m_model; // further endpoints
 };
-
-template<> class MarkovModel<0> {
-	public:
-		MarkovModel() : m_model(), m_total(0) { }
-
-		void increment(std::queue<unsigned> chain, unsigned target,
-				unsigned count = 1);
-		void increment(std::queue<std::string> chain, std::string target,
-				unsigned count = 1);
-		std::string random(std::queue<std::string> chain);
-
-		bool contains(std::queue<std::string> chain);
-		unsigned operator[](std::queue<std::string> chain);
-		std::map<unsigned, unsigned>::iterator begin();
-		std::map<unsigned, unsigned>::iterator end();
-		unsigned size() const;
-
-		std::ostream &write(std::ostream &out);
-		std::istream &read(std::istream &in);
-
-		std::map<unsigned, unsigned> endpoint(std::queue<std::string> chain);
-		std::map<unsigned, unsigned> endpoint(std::queue<unsigned> chain);
-		unsigned total(std::queue<std::string> chain);
-
-	protected:
-		std::map<unsigned, unsigned> m_model;
-		unsigned m_total;
-};
-
-#include "markovmodel.imp"
 
 #endif // MARKOVMODEL_HPP
