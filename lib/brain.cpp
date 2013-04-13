@@ -5,7 +5,7 @@ using std::string;
 
 #include <arpa/inet.h>
 
-ostream &brain::write(ostream &out, unsigned &variable) {
+ostream &brain::write(ostream &out, unsigned variable) {
 	uint32_t no = htonl(variable);
 	unsigned char *noc = (unsigned char *)&no;
 	for(int i = 0; i < 4; ++i)

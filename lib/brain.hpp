@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace brain {
-	std::ostream &write(std::ostream &out, unsigned &variable);
+	std::ostream &write(std::ostream &out, unsigned variable);
 	std::istream &read(std::istream &in, unsigned &variable);
 
 	std::ostream &write(std::ostream &out, const std::string &variable);
