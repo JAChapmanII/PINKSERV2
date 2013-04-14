@@ -13,8 +13,8 @@ void EventSystem::push(EventType etype, Event e) {
 	this->m_events[etype].push_back(e);
 }
 
-queue<Variable> EventSystem::process() {
-	queue<Variable> output;
+vector<Variable> EventSystem::process() {
+	vector<Variable> output;
 	return output;
 }
 vector<Variable> EventSystem::process(EventType etype, string what) {

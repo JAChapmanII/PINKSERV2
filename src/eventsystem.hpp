@@ -11,13 +11,17 @@
 enum class EventType { Text, Join, Leave, Nick };
 
 struct Event {
-	std::string context;
-	Variable event;
+	std::string body;
+	Event(std::string ibody) : body(ibody) { }
 };
 
 struct TimedEvent {
 	uint64_t time;
-	Variable event;
+	std::string body;
+	TimedEvent(uint64_t itime, std::string ibody) : time(itime), body(ibody) { }
+	bool operator<(const TimedEvent &rhs) const {
+		return time < rhs.time;
+	}
 };
 
 class EventSystem {
@@ -27,11 +31,11 @@ class EventSystem {
 		void push(TimedEvent e);
 		void push(EventType etype, Event e);
 
-		std::queue<Variable> process();
+		std::vector<Variable> process();
 		std::vector<Variable> process(EventType etype, std::string what);
 
 	protected:
-		std::queue<TimedEvent> m_queue;
+		std::priority_queue<TimedEvent> m_queue;
 		std::map<EventType, std::vector<Event>> m_events;
 };
 
