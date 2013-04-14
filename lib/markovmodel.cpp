@@ -124,6 +124,13 @@ MarkovModel *MarkovModel::operator[](unsigned key) {
 	return (*this)[seed];
 }
 
+map<unsigned, MarkovModel *>::iterator MarkovModel::begin() {
+	return this->m_model.begin();
+}
+map<unsigned, MarkovModel *>::iterator MarkovModel::end() {
+	return this->m_model.end();
+}
+
 unsigned MarkovModel::size() const {
 	return this->m_model.size();
 }

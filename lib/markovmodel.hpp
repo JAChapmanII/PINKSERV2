@@ -43,8 +43,9 @@ class MarkovModel {
 		MarkovModel *operator[](std::list<unsigned> seed);
 		MarkovModel *operator[](unsigned key);
 
-		//typename std::map<unsigned, MarkovModel<O - 1>>::iterator begin();
-		//typename std::map<unsigned, MarkovModel<O - 1>>::iterator end();
+		// returns iterators through this model
+		std::map<unsigned, MarkovModel *>::iterator begin();
+		std::map<unsigned, MarkovModel *>::iterator end();
 
 		// returns the number of endpoints at this level
 		unsigned size() const;
