@@ -43,8 +43,6 @@ using util::fromString;
 #include "global.hpp"
 using global::dictionary;
 
-#include "markovmodel.hpp"
-
 // TODO: turn into pbrane variable
 static const unsigned maxMarkovOrder = 3;
 static MarkovModel markovModel;
@@ -65,6 +63,20 @@ string recover(string initial);
 
 // list chain count
 string count(string initial);
+
+ostream &dumpMarkov(ostream &out, MarkovModel *model, string prefix);
+ostream &dumpMarkov(ostream &out) {
+	list<unsigned> blank;
+	return dumpMarkov(out, markovModel[blank], "");
+}
+ostream &dumpMarkov(ostream &out, MarkovModel *model, string prefix) {
+	list<unsigned> blank;
+	for(auto it : *model) {
+		out << prefix << dictionary[it.first] << "  "
+			<< it.second->count(blank) << endl;
+		dumpMarkov(out, it.second, prefix + dictionary[it.first] + " ");
+	}
+}
 
 void push(vector<string> words, unsigned order) {
 	if(words.size() <= order)

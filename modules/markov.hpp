@@ -4,10 +4,14 @@
 #include <iostream>
 #include <vector>
 #include "variable.hpp"
+#include "markovmodel.hpp"
 
 // #m: markov: markov data: markovLoad: markovSave
 void markovLoad(std::istream &in);
 void markovSave(std::ostream &out);
+
+// print the markov model in plain text
+std::ostream &dumpMarkov(std::ostream &out);
 
 // #f: observe: observes a line and adds it into the markov model
 Variable observe(std::vector<Variable> arguments);
