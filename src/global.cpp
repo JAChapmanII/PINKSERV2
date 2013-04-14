@@ -31,6 +31,7 @@ ofstream global::log;
 ofstream global::err;
 mt19937_64 global::rengine;
 Dictionary<string, unsigned> global::dictionary;
+EventSystem global::eventSystem;
 
 map<string, Variable> global::vars;
 map<string, map<string, Variable>> global::lvars;
@@ -109,5 +110,10 @@ bool global::isOwner(std::string nick) {
 }
 bool global::isAdmin(std::string nick) {
 	return contains(global::vars["bot.admins"].toString(), " " + nick + " ");
+}
+
+uint64_t global::now() {
+	// TODO: fix
+	return time(NULL);
 }
 

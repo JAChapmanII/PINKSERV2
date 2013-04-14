@@ -8,12 +8,14 @@
 #include <random>
 #include "dictionary.hpp"
 #include "variable.hpp"
+#include "eventsystem.hpp"
 
 namespace global {
 	extern std::ofstream log;
 	extern std::ofstream err;
 	extern std::mt19937_64 rengine;
 	extern Dictionary<std::string, unsigned> dictionary;
+	extern EventSystem eventSystem;
 
 	// variable, function map
 	extern std::map<std::string, Variable> vars;
@@ -32,6 +34,9 @@ namespace global {
 
 	bool isOwner(std::string nick);
 	bool isAdmin(std::string nick);
+
+	// get current time
+	uint64_t now();
 }
 
 #endif // GLOBAL_HPP
