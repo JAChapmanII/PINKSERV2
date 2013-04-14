@@ -15,7 +15,7 @@ MOBJS+=${ODIR}/brain.o ${ODIR}/modules.o ${ODIR}/util.o ${ODIR}/dictionary.o
 MOBJS+=${ODIR}/markovmodel.o
 # module object files from modules/
 # TODO: have this auto-generated?
-MOBJS+=${ODIR}/markov.o ${ODIR}/core.o
+MOBJS+=${ODIR}/markov.o ${ODIR}/core.o ${ODIR}/events.o
 
 # object files required for main binary
 OBJS=
