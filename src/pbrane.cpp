@@ -23,11 +23,23 @@ using global::send;
 using util::contains;
 using util::fromString;
 using util::split;
+using util::startsWith;
 #include "markov.hpp"
 #include "eventsystem.hpp"
 #include "expressiontree.hpp"
 
+void process(string script, string nick, string target);
 string evaluate(string script, string nick);
+
+
+typedef bool (*hook)(string message, string nick, string target);
+
+bool powerHook(string message, string nick, string target);
+bool onHook(string message, string nick, string target);
+bool inHook(string message, string nick, string target);
+bool regexHook(string message, string nick, string target);
+
+vector<hook> hooks = { &powerHook, &onHook, &inHook, &regexHook };
 
 
 int main(int argc, char **argv) {
@@ -83,19 +95,15 @@ int main(int argc, char **argv) {
 			if(fields[2] == global::vars["bot.nick"].toString())
 				target = nick;
 
-			// if we recieve the restart command, restart
-			if(message == (string)":!restart" && isOwner(nick))
-				return 0;
-
 			// if the line is a ! command, run it
 			if(message[0] == '!')
-				send(target, evaluate(message, nick), true);
-
+				process(message, nick, target);
 			// if the line is a : invocation, evaluate it
-			if(message[0] == ':')
-				send(target, evaluate(message.substr(1), nick), true);
-
+			else if(message[0] == ':')
+				process(message.substr(1), nick, target);
 			// otherwise, run on text triggers
+			else
+				;//
 		}
 		if(fields[1] == (string)"JOIN") {
 			;// run join triggers
@@ -117,6 +125,20 @@ int main(int argc, char **argv) {
 	return done - 1;
 }
 
+void process(string script, string nick, string target) {
+	// run special hooks first
+	bool processed = false;
+	for(auto h : hooks)
+		if((*h)(script, nick, target)) {
+			processed = true;
+			break;
+		}
+	if(processed)
+		return;
+
+	// assume we can run the script
+	send(target, evaluate(script, nick), true);
+}
 string evaluate(string script, string nick) {
 	string result;
 	try {
@@ -133,4 +155,22 @@ string evaluate(string script, string nick) {
 	return result;
 }
 
+
+bool powerHook(string message, string nick, string target) {
+	if(message == (string)"!restart" && isOwner(nick))
+		exit(0);
+	return false;
+}
+bool onHook(string message, string nick, string target) {
+	if(startsWith(message, "!on")) {
+		return true;
+	}
+	return false;
+}
+bool inHook(string message, string nick, string target) {
+	return false;
+}
+bool regexHook(string message, string nick, string target) {
+	return false;
+}
 
