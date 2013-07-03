@@ -24,7 +24,7 @@ namespace global {
 	extern std::map<std::string, std::map<std::string, Variable>> lvars;
 
 	bool init(unsigned int seed);
-	void secondaryInit();
+	bool secondaryInit();
 	bool deinit();
 
 	extern std::vector<std::string> ignoreList;

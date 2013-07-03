@@ -66,7 +66,7 @@ bool global::init(unsigned int seed) {
 	return true;
 }
 
-void global::secondaryInit() {
+bool global::secondaryInit() {
 	ifstream startup(config::startupFile);
 	if(startup.good()) {
 		log << "reading startup file: " << config::startupFile << endl;
@@ -82,7 +82,9 @@ void global::secondaryInit() {
 			log << "\t" << line << endl;
 			//parse(cl);
 		}
+		return true;
 	}
+	return false;
 }
 
 bool global::deinit() {
