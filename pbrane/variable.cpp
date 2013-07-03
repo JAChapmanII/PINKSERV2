@@ -145,6 +145,8 @@ Variable Variable::operator+(const Variable &rhs) const {
 			case Type::Integer: return Variable(this->value.l + rhs.value.l, this->permissions);
 			case Type::Double: return Variable(this->value.d + rhs.value.d, this->permissions);
 			case Type::String: return Variable(this->value.s + rhs.value.s, this->permissions);
+			default:
+				throw (string)"+ with same types, but unknown types?";
 		}
 	}
 	if(areOf(*this, rhs, Type::Double, Type::Integer))
@@ -158,13 +160,14 @@ Variable Variable::operator+(const Variable &rhs) const {
 	throw (string)"+ not implemented on these types";
 }
 Variable Variable::operator*(const Variable &rhs) const {
-	if(bothAre(*this, rhs, Type::String))
-		throw (string)"cannot multiply strings";
 	if(this->type == rhs.type) {
 		switch(this->type) {
 			case Type::Boolean: return (this->asInteger() * rhs.asInteger()).asBoolean();
 			case Type::Integer: return Variable(this->value.l * rhs.value.l, this->permissions);
 			case Type::Double: return Variable(this->value.d * rhs.value.d, this->permissions);
+			case Type::String:
+					throw (string)"cannot multiply strings";
+			default: break;
 		}
 	}
 	if(areOf(*this, rhs, Type::Double, Type::Integer))
@@ -197,13 +200,17 @@ Variable Variable::operator-(const Variable &rhs) const {
 					// TODO: throw instead?
 					//throw (string)"-: this does not end with rhs";
 			}
+			default:
+				throw (string)"- with same types, but unknown types?";
 		}
 	}
 	if(areOf(*this, rhs, Type::Double, Type::Integer))
 		return this->asDouble() - rhs.asDouble();
 	if(this->type == Type::String && rhs.type == Type::Integer) {
 		string here = this->toString();
-		if(rhs.value.l >= here.length())
+		if(rhs.value.l < 0)
+			throw (string)"cannot subtract negative length from string";
+		if((size_t)rhs.value.l >= here.length())
 			return Variable((string)"", this->permissions).asString();
 		return Variable(here.substr(0, here.length() - rhs.value.l), this->permissions);
 	}
@@ -242,6 +249,8 @@ bool Variable::operator<(const Variable &rhs) const {
 			case Type::Integer: return (this->value.l < rhs.value.l);
 			case Type::Double: return (this->value.d < rhs.value.d);
 			case Type::String: return (this->value.s < rhs.value.s);
+			default:
+				throw (string)"< with same types, but unknown types?";
 		}
 	}
 	if(areOf(*this, rhs, Type::Double, Type::Integer))
@@ -259,6 +268,8 @@ bool Variable::operator>(const Variable &rhs) const {
 			case Type::Integer: return (this->value.l > rhs.value.l);
 			case Type::Double: return (this->value.d > rhs.value.d);
 			case Type::String: return (this->value.s > rhs.value.s);
+			default:
+				throw (string)"> with same types, but unknown types?";
 		}
 	}
 	if(areOf(*this, rhs, Type::Double, Type::Integer))
@@ -276,8 +287,9 @@ bool Variable::operator==(const Variable &rhs) const {
 		case Type::Integer: return this->value.l == rhs.value.l;
 		case Type::Double: return this->value.d == rhs.value.d;
 		case Type::String: return this->value.s == rhs.value.s;
+		default:
+			throw (string)"== messed up badly?";
 	}
-	throw (string)"== messed up badly?";
 }
 
 bool Variable::operator!=(const Variable &rhs) const {
