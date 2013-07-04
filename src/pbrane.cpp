@@ -22,11 +22,13 @@ using global::send;
 #include "util.hpp"
 using util::contains;
 using util::fromString;
+using util::asString;
 using util::split;
 using util::startsWith;
 #include "markov.hpp"
 #include "eventsystem.hpp"
 #include "expressiontree.hpp"
+#include "events.hpp"
 
 void process(string script, string nick, string target);
 string evaluate(string script, string nick);
@@ -73,8 +75,6 @@ int main(int argc, char **argv) {
 	modules::init(config::brainFileName);
 	global::secondaryInit();
 
-	EventSystem eventSystem;
-
 	// while there is more input coming
 	int done = 0;
 	while(!cin.eof() && !done) {
@@ -102,8 +102,14 @@ int main(int argc, char **argv) {
 			else if(message[0] == ':')
 				process(message.substr(1), nick, target);
 			// otherwise, run on text triggers
-			else
-				;//
+			else {
+				cerr << "processing as text trigger: " << message << endl;
+				vector<Variable> results = global::eventSystem.process(EventType::Text, message);
+				if(results.size() > 1)
+					send(target, asString(results.size()) + " responses", true);
+				else if(results.size() == 1)
+					send(target, results.front().toString(), true);
+			}
 		}
 		if(fields[1] == (string)"JOIN") {
 			;// run join triggers
@@ -163,6 +169,25 @@ bool powerHook(string message, string nick, string target) {
 }
 bool onHook(string message, string nick, string target) {
 	if(startsWith(message, "!on")) {
+		vector<string> fs = split(message);
+		if(fs.size() < 2) {
+			send(target, nick + ": error: !on requires more arguments");
+			return true;
+		}
+		vector<Variable> args;
+		args.push_back(Variable(fs[1], Permissions(nick)));
+		string script;
+		for(unsigned i = 2; i < fs.size(); ++i)
+			script += fs[i] + " ";
+		args.push_back(Variable(script, Permissions(nick)));
+		string result;
+		try {
+			Variable res = on(args);
+			result = res.toString();
+		} catch(string &s) {
+			result = nick + ": error: " + s;
+		}
+		send(target, result, true);
 		return true;
 	}
 	return false;
