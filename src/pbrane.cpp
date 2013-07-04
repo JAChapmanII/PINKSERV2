@@ -103,7 +103,10 @@ int main(int argc, char **argv) {
 				process(message.substr(1), nick, target);
 			// otherwise, run on text triggers
 			else {
-				cerr << "processing as text trigger: " << message << endl;
+				// TODO: proper environment for triggers
+				global::vars["nick"] = nick;
+				global::vars["text"] = message;
+
 				vector<Variable> results = global::eventSystem.process(EventType::Text, message);
 				if(results.size() > 1)
 					send(target, asString(results.size()) + " responses", true);
