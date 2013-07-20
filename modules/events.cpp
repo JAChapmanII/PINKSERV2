@@ -1,4 +1,6 @@
 #include "events.hpp"
+using std::istream;
+using std::ostream;
 using std::vector;
 
 #include <string>
@@ -12,6 +14,13 @@ using global::eventSystem;
 using global::now;
 #include "permission.hpp"
 #include "eventsystem.hpp"
+
+void eventsLoad(istream &in) {
+	eventSystem.read(in);
+}
+void eventsSave(ostream &out) {
+	eventSystem.write(out);
+}
 
 Variable on(vector<Variable> arguments) {
 	if(arguments.size() != 2)
