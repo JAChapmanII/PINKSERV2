@@ -926,6 +926,8 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 		return this->child->evaluate(nick) * this->rchild->evaluate(nick);
 	if(this->isSpecial("/"))
 		return this->child->evaluate(nick) / this->rchild->evaluate(nick);
+	if(this->isSpecial("%"))
+		return this->child->evaluate(nick) % this->rchild->evaluate(nick);
 
 	vector<string> comparisons = { "==", "!=", "<=", ">=", "<", ">" };
 	for(auto c : comparisons)
