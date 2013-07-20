@@ -25,7 +25,7 @@ vector<Variable> EventSystem::process() {
 	vector<Variable> output;
 	return output;
 }
-vector<Variable> EventSystem::process(EventType etype, string what) {
+vector<Variable> EventSystem::process(EventType etype) {
 	vector<Variable> output;
 	for(auto e : this->m_events[etype]) {
 		Variable result;

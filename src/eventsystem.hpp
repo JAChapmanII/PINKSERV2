@@ -34,7 +34,7 @@ class EventSystem {
 		void push(EventType etype, Event e);
 
 		std::vector<Variable> process();
-		std::vector<Variable> process(EventType etype, std::string what);
+		std::vector<Variable> process(EventType etype);
 
 		std::istream &read(std::istream &in);
 		std::ostream &write(std::ostream &out);

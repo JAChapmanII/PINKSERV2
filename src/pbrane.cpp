@@ -107,15 +107,23 @@ int main(int argc, char **argv) {
 				global::vars["nick"] = nick;
 				global::vars["text"] = message;
 
-				vector<Variable> results = global::eventSystem.process(EventType::Text, message);
-				if(results.size() > 1)
-					send(target, asString(results.size()) + " responses", true);
-				else if(results.size() == 1)
+				vector<Variable> results = global::eventSystem.process(EventType::Text);
+				if(results.size() == 1)
 					send(target, results.front().toString(), true);
 			}
 		}
 		if(fields[1] == (string)"JOIN") {
-			;// run join triggers
+			string nick = fields[0].substr(1, fields[0].find("!") - 1);
+			size_t wstart = line.find(":", 1);
+			string where = line.substr(wstart + 1);
+
+			// TODO: proper environment for triggers
+			global::vars["nick"] = nick;
+			global::vars["where"] = where;
+
+			vector<Variable> results = global::eventSystem.process(EventType::Join);
+			if(results.size() == 1)
+				send(where, results.front().toString(), true);
 		}
 		if(fields[1] == (string)"NICK") {
 			;// run nick triggers
