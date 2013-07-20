@@ -718,26 +718,28 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 		// left child is $, with right child varname
 		string var = this->child->rchild->fragment.text;
 		Variable reval = this->rchild->evaluate(nick);
+		if(var == (string)"null")
+			return reval;
 		if(global::vars.find(var) == global::vars.end()) {
 			reval.permissions = Permissions(nick);
 			global::vars[var] = reval;
-			// TODO: conditonally return old message?
-			return reval;//(string)"created " + var + " as " + reval;
+			return reval;
 		}
 
 		ensurePermission(Permission::Write, nick, var);
 
 		global::vars[var] = reval;
-		// TODO: conditionally return message?
-		return reval;//(string)"wrote " + reval + " to $" + var;
+		return reval;
 	}
 	if(this->fragment.isSpecial("=>") || this->fragment.isSpecial("+=>")) {
 		string func = this->child->fragment.text;
 		string rtext = this->rchild->toString();
+		if(func == (string)"null")
+			return Variable(rtext, Permissions(nick));
 
 		if(global::vars.find(func) == global::vars.end()) {
 			global::vars[func] = Variable(rtext, Permissions(nick));
-			return Variable((string)"created " + func + " as " + rtext, Permissions(nick));
+			return Variable(rtext, Permissions(nick));
 		}
 
 		ensurePermission(Permission::Write, nick, func);
@@ -746,9 +748,7 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 			global::vars[func] += "; " + rtext;
 		else
 			global::vars[func] = rtext;
-		// TODO: return just bound function body?
-		return Variable("bound " + func + " as: " + global::vars[func].toString(),
-				Permissions(nick));
+		return Variable(global::vars[func].toString(), Permissions(nick));
 	}
 	if(this->fragment.isSpecial("!")) {
 		string func = this->child->fragment.text;
