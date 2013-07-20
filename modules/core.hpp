@@ -1,10 +1,13 @@
 #ifndef MODULES_CORE_HPP
 #define MODULES_CORE_HPP
 
+#include <iostream>
 #include <vector>
 #include "variable.hpp"
 
-// #m: core: core functions: none: none
+// #m: core: core functions: coreLoad: coreSave
+void coreLoad(std::istream &in);
+void coreSave(std::ostream &out);
 
 // #f: irc: issues an IRC command
 Variable irc(std::vector<Variable> arguments);

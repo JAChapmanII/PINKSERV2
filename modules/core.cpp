@@ -1,4 +1,6 @@
 #include "core.hpp"
+using std::ostream;
+using std::istream;
 using std::vector;
 using std::string;
 
@@ -11,9 +13,17 @@ using std::cout;
 using std::endl;
 
 #include "global.hpp"
+#include "brain.hpp"
 #include "util.hpp"
 using util::fromString;
 using util::asString;
+
+void coreLoad(std::istream &in) {
+	brain::read(in, global::vars);
+}
+void coreSave(std::ostream &out) {
+	brain::write(out, global::vars);
+}
 
 Variable irc(vector<Variable> arguments) {
 	string out;
