@@ -11,6 +11,7 @@
 #include "eventsystem.hpp"
 
 namespace global {
+	extern bool done;
 	extern std::ofstream log;
 	extern std::ofstream err;
 	extern std::mt19937_64 rengine;

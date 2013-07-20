@@ -76,8 +76,8 @@ int main(int argc, char **argv) {
 	global::secondaryInit();
 
 	// while there is more input coming
-	int done = 0;
-	while(!cin.eof() && !done) {
+	global::done = false;
+	while(!cin.eof() && !global::done) {
 		// read the current line of input
 		string line;
 		getline(cin, line);
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
 	// deinit global
 	global::deinit();
 
-	return done - 1;
+	return 0;
 }
 
 void process(string script, string nick, string target) {
@@ -167,7 +167,7 @@ string evaluate(string script, string nick) {
 
 bool powerHook(string message, string nick, string target) {
 	if(message == (string)"!restart" && isOwner(nick))
-		exit(0);
+		return global::done = true;
 	return false;
 }
 bool onHook(string message, string nick, string target) {

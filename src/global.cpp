@@ -27,6 +27,7 @@ using util::contains;
 using util::split;
 using util::fromString;
 
+bool global::done;
 ofstream global::log;
 ofstream global::err;
 mt19937_64 global::rengine;
