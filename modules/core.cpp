@@ -86,6 +86,14 @@ Variable type(vector<Variable> arguments) {
 	return Variable(res, Permissions());
 }
 
+Variable undefined(std::vector<Variable> arguments) {
+	if(arguments.size() != 1)
+		throw (string)"error: undefined takes one argument";
+	if(global::vars.find(arguments.front().toString()) == global::vars.end())
+		return Variable(true, Permissions());
+	return Variable(false, Permissions());
+}
+
 // TODO: how to do this partly? Gah... :(
 Variable rm(vector<Variable> arguments) {
 	// TODO: we need to know the caller for this to work...

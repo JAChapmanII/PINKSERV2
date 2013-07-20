@@ -24,6 +24,9 @@ Variable drand(std::vector<Variable> arguments);
 // #f: type: return a string representation of the variable(s) type(s)
 Variable type(std::vector<Variable> arguments);
 
+// #f: undefined: returns true if a variable is unbound
+Variable undefined(std::vector<Variable> arguments);
+
 // #f: rm: wipe a variable form existence
 Variable rm(std::vector<Variable> arguments);
 
