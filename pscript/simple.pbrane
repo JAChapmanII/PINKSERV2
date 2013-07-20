@@ -1,3 +1,6 @@
-match => $1 =~ "/" + $2 + "/"
+:match => $1 =~ "/" + $2 + "/"
 !on text (!match $text $bot.nick)? !echo "yes"
 
+test
+test pbrane_future test
+pbrane_future

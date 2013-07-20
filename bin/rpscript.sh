@@ -5,13 +5,5 @@ script="$1"
 
 nick="${2-jac}"
 
-if [[ ! -f ./bin/teval ]]; then
-	echo "./bin/teval does not exist, make sure you make'd!"
-	exit 1
-fi
-
-cat "pscript/$script" | grep -vE '^\s*$' | while read -r line; do
-	echo "$nick"
-	echo "$line"
-done | ./bin/teval
+cat "pscript/$script" | ./bin/rpbrane.sh
 

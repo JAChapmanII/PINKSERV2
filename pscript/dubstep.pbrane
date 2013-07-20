@@ -1,6 +1,5 @@
-dubstep => "WUB WUB WUB"
+:dubstep => "WUB WUB WUB"
 
-on => "dummy function TODO: fix"; ""
 !on text ($text =~ "/(?i)(wub|dubstep)/")? !dubstep
 
 !dubstep
