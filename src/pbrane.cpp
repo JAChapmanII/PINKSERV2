@@ -37,11 +37,9 @@ string evaluate(string script, string nick);
 typedef bool (*hook)(string message, string nick, string target);
 
 bool powerHook(string message, string nick, string target);
-bool onHook(string message, string nick, string target);
-bool inHook(string message, string nick, string target);
 bool regexHook(string message, string nick, string target);
 
-vector<hook> hooks = { &powerHook, &onHook, &inHook, &regexHook };
+vector<hook> hooks = { &powerHook, &regexHook };
 
 
 int main(int argc, char **argv) {
@@ -168,34 +166,6 @@ string evaluate(string script, string nick) {
 bool powerHook(string message, string nick, string target) {
 	if(message == (string)"!restart" && isOwner(nick))
 		return global::done = true;
-	return false;
-}
-bool onHook(string message, string nick, string target) {
-	if(startsWith(message, "!on")) {
-		vector<string> fs = split(message);
-		if(fs.size() < 2) {
-			send(target, nick + ": error: !on requires more arguments");
-			return true;
-		}
-		vector<Variable> args;
-		args.push_back(Variable(fs[1], Permissions(nick)));
-		string script;
-		for(unsigned i = 2; i < fs.size(); ++i)
-			script += fs[i] + " ";
-		args.push_back(Variable(script, Permissions(nick)));
-		string result;
-		try {
-			Variable res = on(args);
-			result = res.toString();
-		} catch(string &s) {
-			result = nick + ": error: " + s;
-		}
-		send(target, result, true);
-		return true;
-	}
-	return false;
-}
-bool inHook(string message, string nick, string target) {
 	return false;
 }
 bool regexHook(string message, string nick, string target) {
