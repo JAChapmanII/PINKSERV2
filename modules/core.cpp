@@ -112,9 +112,10 @@ Variable rm(vector<Variable> arguments) {
 	throw (string)"(not-implemented, bug " + global::vars["bot.owner"].toString() + ")";
 }
 
-Variable reload(vector<Variable> arguments) {
-	// TODO: can we just exit(0)?
-	throw (string)"(uh-oh, bug " + global::vars["bot.owner"].toString() + ")";
+Variable die(vector<Variable> arguments) {
+	exit(0);
+	throw (string)"uh-oh, we were supposed to die; " + 
+		"bug " + global::vars["bot.owner"].toString();
 }
 
 Variable sleep(vector<Variable> arguments) {

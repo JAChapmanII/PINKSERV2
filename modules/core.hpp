@@ -33,8 +33,8 @@ Variable undefined(std::vector<Variable> arguments);
 // #f: rm: wipe a variable form existence
 Variable rm(std::vector<Variable> arguments);
 
-// #f: reload: reload bot code
-Variable reload(std::vector<Variable> arguments);
+// #f: die: reload bot code without saving brain
+Variable die(std::vector<Variable> arguments);
 
 // #f: sleep: stop being awake
 Variable sleep(std::vector<Variable> arguments);
