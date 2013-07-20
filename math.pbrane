@@ -1,5 +1,0 @@
-# math
-math.pow %d %d
-math.pow %f %f
-math.sqrt %f
-
