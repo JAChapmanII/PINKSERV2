@@ -653,7 +653,10 @@ string ExpressionTree::toString(bool all) {
 	if(!this->fragment.special) {
 		// TODO: use type tags to not do this?
 		if(this->fragment.isString)
-			return this->fragment.sdelim + this->fragment.text + this->fragment.sdelim;
+			return this->fragment.sdelim +
+				((this->fragment.sdelim == "'") ?
+				 this->fragment.text : escape(this->fragment.text)) +
+				this->fragment.sdelim;
 		return this->fragment.text;
 	}
 
@@ -836,6 +839,8 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 			return ival;
 	}
 
+	// TODO: regex is reinterpreting the argument escapes?
+	// TODO: $text =~ ':o/|\o:' behaves like ':o/|o:'
 	if(this->fragment.isSpecial("=~") || this->fragment.isSpecial("~")) {
 		string text = this->child->evaluate(nick).toString(),
 				rstring = this->rchild->evaluate(nick).toString();
