@@ -58,4 +58,25 @@ template<typename T> std::istream &brain::read(std::istream &in, T &variable) {
 	return in;
 }
 
+template<typename T> std::ostream &brain::write(std::ostream &out,
+		std::vector<T> &variable) {
+	unsigned size = variable.size();
+	write(out, size);
+	for(auto i : variable)
+		write(out, i);
+	return out;
+}
+template<typename T> std::istream &brain::read(std::istream &in,
+		std::vector<T> &variable) {
+	unsigned size = 0;
+	read(in, size);
+	variable.reserve(size);
+	for(unsigned i = 0; i < size; ++i) {
+		T value;
+		read(in, value);
+		variable.push_back(value);
+	}
+	return in;
+}
+
 // vim: ft=cpp:
