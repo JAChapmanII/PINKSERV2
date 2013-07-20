@@ -49,11 +49,13 @@ template<typename K, typename V> std::istream &brain::read(
 	return in;
 }
 
-/*
-template<typename T> std::ostream &brain::write(std::ostream &out, T &variable) {
+template<typename T> std::ostream &brain::write(std::ostream &out, T variable) {
+	write(out, (uint8_t *)&variable, sizeof(variable));
+	return out;
 }
 template<typename T> std::istream &brain::read(std::istream &in, T &variable) {
+	read(in, (uint8_t *)&variable, sizeof(variable));
+	return in;
 }
-*/
 
 // vim: ft=cpp:
