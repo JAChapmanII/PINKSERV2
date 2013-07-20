@@ -5,6 +5,7 @@
 #include <vector>
 #include <queue>
 #include <map>
+#include <iostream>
 #include "variable.hpp"
 
 
@@ -12,6 +13,7 @@ enum class EventType { Text, Join, Leave, Nick };
 
 struct Event {
 	std::string body;
+	Event() : body() { }
 	Event(std::string ibody) : body(ibody) { }
 };
 
@@ -33,6 +35,9 @@ class EventSystem {
 
 		std::vector<Variable> process();
 		std::vector<Variable> process(EventType etype, std::string what);
+
+		std::istream &read(std::istream &in);
+		std::ostream &write(std::ostream &out);
 
 	protected:
 		std::priority_queue<TimedEvent> m_queue;

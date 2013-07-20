@@ -2,8 +2,11 @@
 using std::queue;
 using std::vector;
 using std::string;
+using std::istream;
+using std::ostream;
 
 #include "expressiontree.hpp"
+#include "brain.hpp"
 
 EventSystem::EventSystem() : m_queue(), m_events() {
 }
@@ -42,5 +45,28 @@ vector<Variable> EventSystem::process(EventType etype, string what) {
 		}
 	}
 	return output;
+}
+
+istream &EventSystem::read(istream &in) {
+	size_t size = 0;
+	brain::read(in, size);
+	for(unsigned i = 0; i < size; ++i) {
+		int key = 0;
+		brain::read(in, key);
+		vector<Event> value;
+		brain::read(in, value);
+
+		this->m_events[(EventType)key] = value;
+	}
+
+	return in;
+}
+ostream &EventSystem::write(ostream &out) {
+	brain::write(out, (size_t)this->m_events.size());
+	for(auto it : this->m_events) {
+		brain::write(out, (int)it.first);
+		brain::write(out, it.second);
+	}
+	return out;
 }
 
