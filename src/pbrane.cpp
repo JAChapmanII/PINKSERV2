@@ -80,6 +80,8 @@ int main(int argc, char **argv) {
 		string line;
 		getline(cin, line);
 
+		if(line.empty())
+			continue;
 		// TODO: logging
 
 		vector<string> fields = split(line);
