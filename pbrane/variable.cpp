@@ -223,6 +223,19 @@ Variable Variable::operator-(const Variable &rhs) const {
 Variable Variable::operator/(const Variable &rhs) const {
 	if(eitherIs(*this, rhs, Type::String))
 		throw (string)"cannot divide strings";
+	if(this->type == rhs.type) {
+		switch(this->type) {
+			case Type::Boolean: return Variable(
+					!rhs.asBoolean().value.b || this->asBoolean().value.b, this->permissions);
+			case Type::Integer: return Variable(this->value.l / rhs.value.l, this->permissions);
+			case Type::Double: return Variable(this->value.d / rhs.value.d, this->permissions);
+			default:
+				throw (string)"- with same types, but unknown types?";
+		}
+	}
+	if(areOf(*this, rhs, Type::Double, Type::Integer))
+		return this->asDouble() / rhs.asDouble();
+
 	throw (string)"/ not implemented on these types";
 }
 Variable Variable::operator%(const Variable &rhs) const {
