@@ -1,5 +1,5 @@
 :match => $1 =~ "/" + $2 + "/"
-!on text (!match $text $bot.nick)? !echo "yes"
+!on text (null => (!match $text $bot.nick)? !echo "yes")
 
 test
 test pbrane_future test

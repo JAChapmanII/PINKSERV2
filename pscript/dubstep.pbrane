@@ -1,6 +1,8 @@
 :dubstep => "WUB WUB WUB"
 
-!on text ($text =~ "/(?i)(wub|dubstep)/")? !dubstep
+:matchi => $1 =~ "/(?i)" + $2 + "/"
+
+!on text (null => (!matchi $text "(wub|dubstep)")? !dubstep)
 
 !dubstep
 dubstep
