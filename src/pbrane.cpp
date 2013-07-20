@@ -159,7 +159,7 @@ string evaluate(string script, string nick) {
 		}
 		delete etree;
 	} catch(string &s) {
-		result = nick + ": severe error: " + s;
+		result = nick + ": syntax error: " + s;
 	}
 	return result;
 }
