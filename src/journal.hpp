@@ -12,25 +12,28 @@ namespace journal {
 		unsigned long timestamp;
 		std::string contents;
 
+		Entry() : timestamp(0), contents() {}
+		Entry(std::string icontents);
+		// parse a line of IRC to cerate a LogItem
+		static Entry parse(std::string line);
+
 		EntryType type() const;
 		std::string who() const;
 		std::string where() const;
 		std::string message() const;
 
-		// parse a line of IRC to cerate a LogItem
-		static Entry parse(std::string line);
-
 		// determines if this is a message addressed to us
 		bool toUs();
 		// formats this object as a printable string
-		std::string toString();
+		std::string toString() const;
+		// formats this object for writing to a file
+		std::string format() const;
 	};
-
-	extern std::vector<Entry> entries;
 
 	bool init();
 	bool deinit();
 
+	void push(Entry nentry);
 	std::vector<Entry> search(std::string regex);
 }
 
