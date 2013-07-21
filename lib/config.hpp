@@ -11,6 +11,7 @@ namespace config {
 	extern std::string chatFileName;
 	extern std::string todoFileName;
 	extern std::string brainFileName;
+	extern std::string journalFileName;
 
 	namespace regex {
 		extern std::string toUs;

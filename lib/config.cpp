@@ -10,6 +10,7 @@ namespace config {
 	string chatFileName = nick + ".chat";
 	string todoFileName = nick + ".todo";
 	string brainFileName = nick + ".brain";
+	string journalFileName = nick + ".journal";
 
 	namespace regex {
 		// TODO: this is a mess
