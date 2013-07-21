@@ -74,33 +74,33 @@ unsigned MarkovModel::random(list<unsigned> seed) {
 
 double MarkovModel::probability(list<unsigned> chain) {
 	// remove the endpoint
-	unsigned end = chain.back(); chain.pop_back();
+	unsigned back = chain.back(); chain.pop_back();
 	// get smooth model for endpoint, lookup probability
-	return this->smooth(chain)[end];
+	return this->smooth(chain)[back];
 }
 
 map<unsigned, double> MarkovModel::smooth(list<unsigned> seed) {
-	map<unsigned, double> smooth;
+	map<unsigned, double> smoothModel;
 	// TODO: this is not how it should actually work.... PPM
 	double multiplier = 16.0, total = 0;
 	while(!seed.empty()) {
-		MarkovModel *end = (*this)[seed]; seed.pop_front();
+		MarkovModel *submodel = (*this)[seed]; seed.pop_front();
 		// couldn't find seed
-		if(end == NULL)
+		if(submodel == NULL)
 			continue;;
-		for(auto it : end->m_model) {
-			double v = end->m_model[it.first]->m_count * multiplier;
+		for(auto it : submodel->m_model) {
+			double v = submodel->m_model[it.first]->m_count * multiplier;
 			total += v;
-			smooth[it.first] += v;
+			smoothModel[it.first] += v;
 		}
 		multiplier /= 12.0;
 	}
-	if(smooth.size() == 0)
-		return smooth;
+	if(smoothModel.size() == 0)
+		return smoothModel;
 
 	// normalize values so they sum to 1
 	map<unsigned, double> normalized;
-	for(auto it : smooth)
+	for(auto it : smoothModel)
 		normalized[it.first] = it.second / total;
 	return normalized;
 }
@@ -146,9 +146,9 @@ ostream &MarkovModel::write(ostream &out) {
 }
 istream &MarkovModel::read(istream &in) {
 	brain::read(in, this->m_count);
-	unsigned size = 0;
-	brain::read(in, size);
-	for(unsigned i = 0; i < size; ++i) {
+	unsigned modelSize = 0;
+	brain::read(in, modelSize);
+	for(unsigned i = 0; i < modelSize; ++i) {
 		unsigned key = 0;
 		brain::read(in, key);
 		this->ensure(key);

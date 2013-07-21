@@ -33,11 +33,6 @@ using util::fromString;
 #include "modules.hpp"
 #include "config.hpp"
 
-void execute(string statement) {
-	// tmp variable map
-	map<string, string> tvars;
-}
-
 int main(int argc, char **argv) {
 	global::vars["bot.owner"] = "jac";
 	global::vars["bot.admins"] = "Jext, RGCockatrices, bonzairob, quairlzr, Nybbles, ajanata";

@@ -221,14 +221,14 @@ Variable Variable::operator-(const Variable &rhs) const {
 	throw (string)"- not implemented on these types";
 }
 Variable Variable::operator/(const Variable &rhs) const {
-	if(eitherIs(*this, rhs, Type::String))
-		throw (string)"cannot divide strings";
 	if(this->type == rhs.type) {
 		switch(this->type) {
 			case Type::Boolean: return Variable(
 					!rhs.asBoolean().value.b || this->asBoolean().value.b, this->permissions);
 			case Type::Integer: return Variable(this->value.l / rhs.value.l, this->permissions);
 			case Type::Double: return Variable(this->value.d / rhs.value.d, this->permissions);
+			case Type::String:
+				throw (string)"cannot divide strings";
 			default:
 				throw (string)"- with same types, but unknown types?";
 		}
@@ -244,11 +244,11 @@ Variable Variable::operator%(const Variable &rhs) const {
 	return Variable(this->value.l % rhs.value.l, this->permissions);
 }
 
-Variable Variable::operator&&(const Variable &rhs) const {
+Variable Variable::operator&(const Variable &rhs) const {
 	return Variable(this->asBoolean().value.b && rhs.asBoolean().value.b,
 			this->permissions);
 }
-Variable Variable::operator||(const Variable &rhs) const {
+Variable Variable::operator|(const Variable &rhs) const {
 	return Variable(this->asBoolean().value.b || rhs.asBoolean().value.b,
 			this->permissions);
 }

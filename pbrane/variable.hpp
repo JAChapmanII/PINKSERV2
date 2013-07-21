@@ -41,8 +41,8 @@ class Variable {
 		Variable operator/(const Variable &rhs) const;
 		Variable operator%(const Variable &rhs) const;
 
-		Variable operator&&(const Variable &rhs) const;
-		Variable operator||(const Variable &rhs) const;
+		Variable operator&(const Variable &rhs) const;
+		Variable operator|(const Variable &rhs) const;
 
 		bool operator<(const Variable &rhs) const;
 		bool operator>(const Variable &rhs) const;

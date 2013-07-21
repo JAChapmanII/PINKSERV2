@@ -76,6 +76,7 @@ ostream &dumpMarkov(ostream &out, MarkovModel *model, string prefix) {
 			<< it.second->count(blank) << endl;
 		dumpMarkov(out, it.second, prefix + dictionary[it.first] + " ");
 	}
+	return out;
 }
 
 void push(vector<string> words, unsigned order) {

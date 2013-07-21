@@ -33,11 +33,15 @@ using util::startsWith;
 void process(string script, string nick, string target);
 string evaluate(string script, string nick);
 
+struct PrivateMessage {
+	string message;
+	string nick;
+	string target;
+};
+typedef bool (*hook)(PrivateMessage pmsg);
 
-typedef bool (*hook)(string message, string nick, string target);
-
-bool powerHook(string message, string nick, string target);
-bool regexHook(string message, string nick, string target);
+bool powerHook(PrivateMessage pmsg);
+bool regexHook(PrivateMessage pmsg);
 
 vector<hook> hooks = { &powerHook, &regexHook };
 
@@ -146,7 +150,7 @@ void process(string script, string nick, string target) {
 	// run special hooks first
 	bool processed = false;
 	for(auto h : hooks)
-		if((*h)(script, nick, target)) {
+		if((*h)({ script, nick, target })) {
 			processed = true;
 			break;
 		}
@@ -173,12 +177,14 @@ string evaluate(string script, string nick) {
 }
 
 
-bool powerHook(string message, string nick, string target) {
-	if(message == (string)"!restart" && isOwner(nick))
+bool powerHook(PrivateMessage pmsg) {
+	if(pmsg.message == (string)"!restart" && isOwner(pmsg.nick))
 		return global::done = true;
 	return false;
 }
-bool regexHook(string message, string nick, string target) {
+bool regexHook(PrivateMessage pmsg) {
+	if(pmsg.message[0] != 's')
+		return false;
 	return false;
 }
 

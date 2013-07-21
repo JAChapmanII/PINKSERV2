@@ -30,8 +30,8 @@ void setupFunctions();
 
 void none(istream &brain);
 void none(ostream &brain);
-void none(istream &brain) { }
-void none(ostream &brain) { }
+void none(istream &brain) { if(brain.bad()) return; }
+void none(ostream &brain) { if(brain.bad()) return; }
 
 Module findModule(std::string mname) {
 	for(auto mod : modules::modules)

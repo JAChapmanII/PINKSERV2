@@ -562,6 +562,9 @@ ExpressionTree *ExpressionTree::treeify(ExpressionTree *begin, ExpressionTree *e
 						here->folded = true;
 
 						break;
+					default:
+						// TODO: include useful information here?
+						throw (string)"unkown operator type";
 				}
 			}
 		}
@@ -941,9 +944,9 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 
 	// TODO: un-double this? Also, unstring for == and ~=
 	if(this->fragment.isSpecial("&&"))
-		return this->child->evaluate(nick) && this->rchild->evaluate(nick);
+		return this->child->evaluate(nick) & this->rchild->evaluate(nick);
 	if(this->fragment.isSpecial("||"))
-		return this->child->evaluate(nick) || this->rchild->evaluate(nick);
+		return this->child->evaluate(nick) | this->rchild->evaluate(nick);
 
 	vector<string> compoundOpAssigns = { "+", "-", "*", "/", "%", "^", "~" };
 	for(auto op : compoundOpAssigns) {
