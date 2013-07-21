@@ -18,8 +18,8 @@ MOBJS+=${ODIR}/markovmodel.o
 MOBJS+=${ODIR}/markov.o ${ODIR}/core.o ${ODIR}/events.o ${ODIR}/math.o
 
 # object files required for main binary
-OBJS=
-OBJS+=${MOBJS} ${ODIR}/util.o ${ODIR}/global.o ${ODIR}/config.o
+OBJS=${MOBJS}
+OBJS+=${ODIR}/util.o ${ODIR}/global.o ${ODIR}/journal.o ${ODIR}/config.o
 OBJS+=${ODIR}/tokenfragment.o ${ODIR}/expressiontree.o
 OBJS+=${ODIR}/permission.o ${ODIR}/variable.o ${ODIR}/eventsystem.o
 
