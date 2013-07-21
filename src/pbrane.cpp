@@ -118,8 +118,9 @@ int main(int argc, char **argv) {
 		}
 		if(fields[1] == (string)"JOIN") {
 			string nick = fields[0].substr(1, fields[0].find("!") - 1);
-			size_t wstart = line.find(":", 1);
-			string where = line.substr(wstart + 1);
+			string where = fields[2];
+			if(where[0] == ':')
+				where = where.substr(1);
 
 			// TODO: proper environment for triggers
 			global::vars["nick"] = nick;
