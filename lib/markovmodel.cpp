@@ -95,6 +95,17 @@ map<unsigned, double> MarkovModel::smooth(list<unsigned> seed) {
 		}
 		multiplier /= 12.0;
 	}
+	multiplier /= 256.0;
+	// 0 order model
+	MarkovModel *submodel = (*this)[seed];
+	// couldn't find seed
+	if(submodel != NULL)
+		for(auto it : submodel->m_model) {
+			double v = submodel->m_model[it.first]->m_count * multiplier;
+			total += v;
+			smoothModel[it.first] += v;
+		}
+
 	if(smoothModel.size() == 0)
 		return smoothModel;
 
