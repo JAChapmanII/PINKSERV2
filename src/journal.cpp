@@ -9,6 +9,8 @@ using journal::EntryType;
 using std::ofstream;
 using std::ifstream;
 using std::endl;
+#include <iostream>
+using std::cerr;
 
 #include <boost/regex.hpp>
 #include "util.hpp"
@@ -37,6 +39,8 @@ bool journal::init() {
 	}
 	
 	journal_file.open(config::journalFileName, std::ios_base::app);
+	cerr << "opened journal file: " << config::journalFileName << endl;
+
 	return true;
 }
 

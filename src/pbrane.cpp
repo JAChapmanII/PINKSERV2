@@ -18,6 +18,7 @@ using std::random_device;
 using global::isOwner;
 using global::send;
 #include "config.hpp"
+#include "journal.hpp"
 #include "modules.hpp"
 #include "util.hpp"
 using util::contains;
@@ -75,7 +76,8 @@ int main(int argc, char **argv) {
 	cerr << "----- " << global::vars["bot.nick"].toString() << " started -----" << endl;
 
 	modules::init(config::brainFileName);
-	global::secondaryInit();
+	global::secondaryInit(); // TODO: we do this twice?
+	journal::init();
 
 	// while there is more input coming
 	global::done = false;
@@ -86,6 +88,7 @@ int main(int argc, char **argv) {
 
 		if(line.empty())
 			continue;
+		journal::push(journal::Entry(line));
 		// TODO: logging
 
 		vector<string> fields = split(line);
@@ -137,6 +140,8 @@ int main(int argc, char **argv) {
 			;// run leave triggers
 		}
 	}
+
+	journal::deinit();
 
 	// free memory associated with modules
 	modules::deinit(config::brainFileName);
