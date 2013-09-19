@@ -10,6 +10,7 @@
 namespace util {
 	template<typename T> T split(std::string str, std::string on = " \t\r\n");
 	std::vector<std::string> split(std::string str, std::string on = " \t\r\n");
+	template<typename T> std::string join(T strsB, T strsE, std::string with = ", ");
 	template<typename T> std::string join(T strs, std::string with = ", ");
 	std::string join(std::vector<std::string> strs, std::string with = ", ");
 	std::string join(std::vector<Variable> strs, std::string with = ", ");

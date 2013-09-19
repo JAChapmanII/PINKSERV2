@@ -16,15 +16,17 @@ template<typename T> T util::split(std::string str, std::string on) {
 		fields.push(str);
 	return fields;
 }
-template<typename T> std::string util::join(T strs, std::string with) {
-	if(strs.empty())
+template<typename T> std::string util::join(T strsB, T strsE, std::string with) {
+	if(strsE - strsB < 1)
 		return "";
 	std::string res;
-	while(!strs.empty()) {
-		res += strs.front() + with;
-		strs.pop();
-	}
+	for(auto i = strsB; i != strsE; ++i)
+		res += (*i) + with;
 	return res.substr(0, res.length() - with.length());
+}
+
+template<typename T> std::string util::join(T strs, std::string with) {
+	return util::join(begin(strs), end(strs), with);
 }
 
 template<typename T> std::vector<T> util::subvector(std::vector<T> vec,
