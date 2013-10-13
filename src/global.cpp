@@ -94,7 +94,35 @@ bool global::deinit() {
 	return true;
 }
 
+string escapeForPMSG(string str);
+string escapeForPMSG(string str) {
+	string res;
+	for(unsigned i = 0; i < str.length(); ++i)
+		switch(str[i]) {
+			case '\n':
+				if(res.length() > 0 && res.back() == ' ')
+					continue;
+				res += ' ';
+				break;
+			default:
+				res += str[i];
+				continue;
+				break;
+		}
+	return util::trim(res);
+}
+bool allSpaces(string str);
+bool allSpaces(string str) {
+	for(auto c : str)
+		if(!isspace(c))
+			return false;
+	return true;
+}
+
 void global::send(string target, string line, bool send) {
+	line = escapeForPMSG(line); // TODO
+	if(allSpaces(line))
+		return;
 	log << " -> " << target << " :" << line << endl;
 	unsigned maxLineLength =
 		fromString<unsigned>(global::vars["bot.maxLineLength"].toString());
@@ -115,7 +143,7 @@ bool global::isAdmin(std::string nick) {
 	return contains(global::vars["bot.admins"].toString(), " " + nick + " ");
 }
 
-uint64_t global::now() {
+long long global::now() {
 	// TODO: fix
 	return time(NULL);
 }

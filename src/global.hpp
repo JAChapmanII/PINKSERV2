@@ -37,7 +37,7 @@ namespace global {
 	bool isAdmin(std::string nick);
 
 	// get current time
-	uint64_t now();
+	long long now();
 }
 
 #endif // GLOBAL_HPP
