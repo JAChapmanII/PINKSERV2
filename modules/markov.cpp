@@ -79,6 +79,27 @@ ostream &dumpMarkov(ostream &out, MarkovModel *model, string prefix) {
 	return out;
 }
 
+istream &readMarkov(istream &in) {
+	long count = 0;
+	in >> count;
+	string line;
+	getline(in, line);
+	for(long i = 0; i < count; ++i) {
+		getline(in, line);
+
+		vector<string> words = split(line);
+		int j = fromString<int>(words.back()) + 1;
+		words.pop_back();
+
+		list<unsigned> ws;
+		for(auto w : words)
+			ws.push_back(global::dictionary[w]);
+
+		markovModel.increment(ws, j);
+	}
+	return in;
+}
+
 void push(vector<string> words, unsigned order) {
 	words.push_back("\n"); // TODO: allow chaining on newlines.
 	if(words.size() <= order)

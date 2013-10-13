@@ -12,6 +12,8 @@ void markovSave(std::ostream &out);
 
 // print the markov model in plain text
 std::ostream &dumpMarkov(std::ostream &out);
+// load the markov model in plain text (append to current model)
+std::istream &readMarkov(std::istream &in);
 
 // #f: observe: observes a line and adds it into the markov model
 Variable observe(std::vector<Variable> arguments);
