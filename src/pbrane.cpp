@@ -26,6 +26,7 @@ using util::fromString;
 using util::asString;
 using util::split;
 using util::startsWith;
+using util::trim;
 #include "markov.hpp"
 #include "eventsystem.hpp"
 #include "expressiontree.hpp"
@@ -46,6 +47,27 @@ bool regexHook(PrivateMessage pmsg);
 
 vector<hook> hooks = { &powerHook, &regexHook };
 
+vector<string> noInterpret = { ":p", ":P", ":)", ":(", ":|", ":]", ":[" };
+bool notBlacklisted(string s);
+bool notBlacklisted(string s) {
+	for(auto b : noInterpret)
+		if(s == b)
+			return false;
+	return true;
+}
+
+bool canEvaluate(string message);
+bool canEvaluate(string message) {
+	if(!notBlacklisted(message))
+		return false;
+	if(message.front() == ':') {
+		if(message.back() == ';')
+			return true;
+		if(message.find("!") != string::npos)
+			return true;
+	}
+	return false;
+}
 
 int main(int argc, char **argv) {
 	unsigned int seed = 0;
@@ -88,8 +110,9 @@ int main(int argc, char **argv) {
 
 		if(line.empty())
 			continue;
-		journal::push(journal::Entry(line));
-		// TODO: logging
+		journal::Entry entry(line);
+		journal::push(entry);
+		global::log << entry.format() << endl;
 
 		vector<string> fields = split(line);
 		if(fields[1] == (string)"PRIVMSG") {
@@ -103,10 +126,10 @@ int main(int argc, char **argv) {
 				target = nick;
 
 			// if the line is a ! command, run it
-			if(message[0] == '!')
-				process(message, nick, target);
+			//if(message[0] == '!')
+				//process(message, nick, target);
 			// if the line is a : invocation, evaluate it
-			else if(message[0] == ':')
+			else if(canEvaluate(message))
 				process(message.substr(1), nick, target);
 			// otherwise, run on text triggers
 			else {
@@ -161,6 +184,10 @@ void process(string script, string nick, string target) {
 			break;
 		}
 	if(processed)
+		return;
+
+	script = trim(script);
+	if(script.empty())
 		return;
 
 	// assume we can run the script
