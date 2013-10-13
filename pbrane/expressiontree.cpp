@@ -701,8 +701,12 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 
 	// might have side effects
 	// TODO: permissions on creation with = and => (mostly execute and owner)
-	if(this->fragment.isSpecial("()"))
+	if(this->fragment.isSpecial("()")) {
+		// TODO
+		if(this->child == NULL)
+			return Variable("", Permissions(nick));
 		return this->child->evaluate(nick);
+	}
 
 	if(this->fragment.isSpecial("?")) {
 		ExpressionTree *trueTree = this->rchild, *falseTree = NULL;
