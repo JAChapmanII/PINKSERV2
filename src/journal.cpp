@@ -25,6 +25,7 @@ vector<Entry> journal_entries;
 ofstream journal_file;
 bool journal_init = false;
 
+// TODO: if journal doesn't exist, doesn't open for append
 bool journal::init() {
 	if(journal_init)
 		return true;
@@ -48,6 +49,7 @@ bool journal::init() {
 }
 
 bool journal::deinit() {
+	journal_file.close();
 	return false;
 }
 
