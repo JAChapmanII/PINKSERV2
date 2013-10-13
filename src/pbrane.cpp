@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
 			//if(message[0] == '!')
 				//process(message, nick, target);
 			// if the line is a : invocation, evaluate it
-			else if(canEvaluate(message))
+			/*else*/ if(canEvaluate(message))
 				process(message.substr(1), nick, target);
 			// otherwise, run on text triggers
 			else {
