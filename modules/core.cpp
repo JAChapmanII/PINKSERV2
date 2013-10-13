@@ -17,6 +17,7 @@ using std::endl;
 #include "util.hpp"
 using util::fromString;
 using util::asString;
+#include "journal.hpp"
 
 void coreLoad(std::istream &in) {
 	brain::read(in, global::vars);
@@ -121,5 +122,21 @@ Variable die(vector<Variable> arguments) {
 Variable sleep(vector<Variable> arguments) {
 	// TODO: can we just exit(non-0)?
 	throw (string)"(uh-oh, bug " + global::vars["bot.owner"].toString() + ")";
+}
+
+Variable jsize(vector<Variable> arguments) {
+	return Variable((long)journal::size(), Permissions());
+}
+
+Variable rgrep(vector<Variable> arguments) {
+	string regex = arguments.front().toString();
+	vector<journal::Entry> lines = journal::search(regex);
+	if(lines.size() < 1)
+		throw (string)"no matches";
+
+	uniform_int_distribution<> uid(0, lines.size() - 1);
+	unsigned target = uid(global::rengine);
+
+	return Variable(lines[target].arguments, Permissions());
 }
 

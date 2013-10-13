@@ -39,4 +39,10 @@ Variable die(std::vector<Variable> arguments);
 // #f: sleep: stop being awake
 Variable sleep(std::vector<Variable> arguments);
 
+// #f: jsize: returns size of journal
+Variable jsize(std::vector<Variable> arguments);
+
+// #f: rgrep: returns a random line from the journal
+Variable rgrep(std::vector<Variable> arguments);
+
 #endif // MODULES_CORE_HPP
