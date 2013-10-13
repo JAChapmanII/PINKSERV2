@@ -19,6 +19,9 @@ Variable observe(std::vector<Variable> arguments);
 // #f: markov: returns a markov chain given a seed string
 Variable markov(std::vector<Variable> arguments);
 
+// #f: respond: responds with a markov chain given a seed string
+Variable respond(std::vector<Variable> arguments);
+
 // #f: ccount: return number of markov chains
 Variable ccount(std::vector<Variable> arguments);
 

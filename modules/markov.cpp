@@ -59,7 +59,7 @@ void push(vector<string> words, unsigned order);
 unsigned fetch(list<unsigned> words);
 string fetch(vector<string> words);
 // Handles returning markov chains by calling fetch repeatedly
-string recover(string initial);
+string recover(string initial, bool newline);
 
 // list chain count
 string count(string initial);
@@ -80,6 +80,7 @@ ostream &dumpMarkov(ostream &out, MarkovModel *model, string prefix) {
 }
 
 void push(vector<string> words, unsigned order) {
+	words.push_back("\n"); // TODO: allow chaining on newlines.
 	if(words.size() <= order)
 		return;
 	// special case the 0th order chain
@@ -122,12 +123,16 @@ string fetch(vector<string> seed) {
 		seedl.push_back(dictionary[i]);
 	return dictionary[fetch(seedl)];
 }
-string recover(string initial) {
+string recover(string initial, bool newline) {
 	vector<string> ivec = split(initial);
+	if(newline)
+		ivec.push_back("\n"); // TODO
+	unsigned initSize = ivec.size();
 	list<unsigned> chain;
 	for(auto i : ivec)
 		chain.push_back(dictionary[i]);
 
+	long newlineStreak = 0;
 	bool done = false;
 	while(!done) {
 		// find a random endpoint
@@ -138,13 +143,31 @@ string recover(string initial) {
 		if(next == 0)
 			break;
 
+		newlineStreak = (nexts == "\n") ? newlineStreak + 1 : 0;
+
+		// if we hit a newline and we're in continue mode, try to get something
+		// else, unless we've hit a big streak of newlines (probably nothing to
+		// generate)
+		if(!newline && nexts == "\n") {
+			if(newlineStreak > 16)
+				break;
+			else
+				continue;
+		}
+
 		// add next to the string
 		chain.push_back(next);
 
+		// break on newline generation
+		if(nexts == "\n" && chain.size() > initSize + 3)
+			break;
+
 		// check to see if we should try to pick another one or just be done
-		double prob = 0.9;
-		if(chain.size() <= maxMarkovOrder * 2.5)
-			prob += (1 - prob) / 2.0;
+		double prob = 0.999;
+		//if(chain.size() <= maxMarkovOrder * 2.5)
+			//prob += (1 - prob) / 2.0;
+		if(chain.size() >= 25)
+			prob /= 10;
 
 		// if we're currently ending with a punctuation, greatly increase the
 		// chance of ending and sounding somewhat coherent
@@ -155,6 +178,10 @@ string recover(string initial) {
 		if(generate_canonical<double, 16>(global::rengine) > prob)
 			done = true;
 	}
+
+	if(newline)
+		for(unsigned i = 0; i < initSize; ++i)
+			chain.erase(chain.begin());
 
 	// return the generated string
 	string result;
@@ -191,17 +218,27 @@ void markovSave(ostream &out) {
 	markovModel.write(out);
 }
 
+static string lastObserve = "";
 Variable observe(vector<Variable> arguments) {
-	insert(join(arguments, " "));
+	string now = join(arguments, " ");
+	insert(lastObserve + " " + now);
+	lastObserve = now;
 	return Variable(true, Permissions());
 }
 
 Variable markov(vector<Variable> arguments) {
-	string seed = join(arguments, " "), r = recover(seed);
+	string seed = join(arguments, " "), r = recover(seed, false);
 	if(r == seed)
 		return Variable("Sorry, I don't know anything about that", Permissions());
 	return Variable(r, Permissions());
 }
+Variable respond(vector<Variable> arguments) {
+	string seed = join(arguments, " "), r = recover(seed, true);
+	if(r == seed)
+		return Variable("Sorry, I don't know anything about that", Permissions());
+	return Variable(r, Permissions());
+}
+
 Variable correct(vector<Variable> arguments) {
 	// TODO: implement
 	throw (string)"error: correct unimplemented";
