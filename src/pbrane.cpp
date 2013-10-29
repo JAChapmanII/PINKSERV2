@@ -61,7 +61,7 @@ bool canEvaluate(string message) {
 	if(!notBlacklisted(message))
 		return false;
 	if(message.front() == ':') {
-		if(message.back() == ';')
+		if(message.find(';') != string::npos)
 			return true;
 		if(message.find("!") != string::npos)
 			return true;
