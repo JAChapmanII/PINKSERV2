@@ -769,18 +769,26 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 		for(ExpressionTree *arg = this->rchild; arg; arg = arg->next)
 			argTrees.push_back(arg);
 
-		global::vars["0"] = Variable(func, Permissions(nick));
 		// figure out the result of the arguments
 		vector<Variable> args;
 		for(unsigned i = 0; i < argTrees.size(); ++i) {
 			Variable arg = argTrees[i]->evaluate(nick, false);
-			global::vars[asString(i + 1)] = arg;
 			args.push_back(arg);
 		}
 
 		string argsstr;
 		for(auto arg : args)
 			argsstr += " " + arg.toString();
+
+		// clear out argument variables
+		for(int i = 0; i < 10; ++i)
+			global::vars[asString(i + 1)] = "";
+
+		// set the argument values
+		global::vars["args"] = argsstr;
+		global::vars["0"] = Variable(func, Permissions(nick));
+		for(unsigned i = 0; i < args.size(); ++i)
+			global::vars[asString(i + 1)] = args[i];
 
 		// a module function
 		if(contains(modules::hfmap, func)) {
@@ -791,6 +799,7 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 		// user defined function
 		if(global::vars.find(func) == global::vars.end())
 			throw func + " is undefined";
+
 		ExpressionTree *etree = NULL;
 		Variable res;
 		try {
@@ -801,7 +810,7 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 			throw s;
 		}
 		delete etree;
-		
+
 		return res;
 	}
 
