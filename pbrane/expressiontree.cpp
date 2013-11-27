@@ -97,15 +97,12 @@ vector<pair<unsigned, unsigned>> ExpressionTree::delimitExpressions(
 
 	squashStrings(fragments);
 
-
 	// make a pass to make sure there are no empty semicolons
-	vector<TokenFragment> fragments_noempty;
-	for(unsigned i = 0; i < fragments.size() - 1; ++i)
-		if(!(fragments[i].isSpecial(";") && fragments[i + 1].isSpecial(";")))
-			fragments_noempty.push_back(fragments[i]);
-	fragments.clear();
-	fragments.insert(fragments.begin(),
-			fragments_noempty.begin(), fragments_noempty.end());
+	auto nend = unique(fragments.begin(), fragments.end(),
+			[](const TokenFragment &lhs, const TokenFragment &rhs) {
+				return (lhs.isSpecial(";") && rhs.isSpecial(";"));
+			});
+	fragments.erase(nend);
 	fragments.push_back(TokenFragment(";", true));
 
 	// make a pass to ensure there aren't any strange mismatched sub
