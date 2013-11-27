@@ -43,6 +43,47 @@ ExpressionTree::~ExpressionTree() {
 		delete this->next;
 }
 
+// throw out string delimiters and set string properties
+void squashStrings(vector<TokenFragment> &fragments) {
+	static vector<string> stringDelimiters = { "'", "\"" };
+
+	// squash strings
+	vector<TokenFragment> fragments_squashed;
+	for(unsigned i = 0; i < fragments.size(); ++i) {
+		string delimiter;
+		for(auto del : stringDelimiters)
+			if(fragments[i].isSpecial(del))
+				delimiter = del;
+
+		if(delimiter.empty()) {
+			// we're not on a boundary and need to do nothing
+			fragments_squashed.push_back(fragments[i]);
+			continue;
+		}
+
+		// TODO: past bounds?
+		bool emptyString = fragments[i + 1].isSpecial(delimiter);
+		if(!emptyString && !(fragments[i + 2].isSpecial(delimiter)))
+			throw (string)"strangely delimited string";
+
+		TokenFragment stringPart;
+		if(!emptyString) {
+			++i; // advance onto body
+			stringPart = fragments[i];
+		}
+		// record string properties
+		stringPart.isString = true;
+		stringPart.sdelim = delimiter;
+		fragments_squashed.push_back(stringPart);
+
+		++i; // advance onto end delimiter
+		// continue on past the delimiter
+	}
+	fragments.clear();
+	fragments.insert(fragments.begin(),
+			fragments_squashed.begin(), fragments_squashed.end());
+}
+
 vector<pair<unsigned, unsigned>> ExpressionTree::delimitExpressions(
 		vector<TokenFragment> &fragments) {
 	static vector<string> startSubCharacters = { "(", "{", "[" },
@@ -54,44 +95,8 @@ vector<pair<unsigned, unsigned>> ExpressionTree::delimitExpressions(
 	fragments.insert(fragments.begin(), TokenFragment(";", true));
 	fragments.push_back(TokenFragment(";", true));
 
-	static vector<string> stringDelimiters = { "'", "\"" };
+	squashStrings(fragments);
 
-	// squash strings
-	vector<TokenFragment> fragments_squashed;
-	for(unsigned i = 0; i < fragments.size(); ++i) {
-		bool isString = false;
-		for(auto delimiter : stringDelimiters) {
-			if(fragments[i].isSpecial(delimiter)) {
-				isString = true;
-				if(fragments[i + 2].isSpecial(delimiter)) {
-					++i; // advance onto body
-					// record string properties
-					fragments[i].isString = true;
-					fragments[i].sdelim = delimiter;
-					fragments_squashed.push_back(fragments[i]);
-					++i; // advance onto end delimiter
-					// continue on past the delimiter
-					break;
-				}
-				if(fragments[i + 1].isSpecial(delimiter)) {
-					TokenFragment emptyString;
-					emptyString.isString = true;
-					emptyString.sdelim = delimiter;
-					fragments_squashed.push_back(emptyString);
-					++i; // advance onto end delimiter
-					// continue on past the delimiter
-					break;
-				}
-				throw (string)"strangely delimited string";
-			}
-		}
-		if(isString)
-			continue;
-		fragments_squashed.push_back(fragments[i]);
-	}
-	fragments.clear();
-	fragments.insert(fragments.begin(),
-			fragments_squashed.begin(), fragments_squashed.end());
 
 	// make a pass to make sure there are no empty semicolons
 	vector<TokenFragment> fragments_noempty;
