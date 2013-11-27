@@ -16,7 +16,7 @@ struct TokenFragment {
 	TokenFragment(std::string itext, bool ispecial = false);
 
 	void clear();
-	bool isSpecial(std::string token);
+	bool isSpecial(std::string token) const;
 	bool validIdentifier();
 };
 

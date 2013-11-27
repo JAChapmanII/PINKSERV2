@@ -141,7 +141,7 @@ void TokenFragment::clear() {
 	special = false;
 }
 
-bool TokenFragment::isSpecial(string token) {
+bool TokenFragment::isSpecial(string token) const {
 	if(!this->special)
 		return false;
 	return (text == token);
