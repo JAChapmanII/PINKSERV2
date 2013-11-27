@@ -757,7 +757,8 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 		return Variable(global::vars[func].toString(), Permissions(nick));
 	}
 	if(this->fragment.isSpecial("!")) {
-		string func = this->child->fragment.text;
+		string func = this->child->fragment.text,
+				funcBody = global::vars[func].toString();
 		// TODO: check for function existence
 		ensurePermission(Permission::Execute, nick, func);
 
@@ -799,7 +800,7 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 		ExpressionTree *etree = NULL;
 		Variable res;
 		try {
-			etree = ExpressionTree::parse(global::vars[func].toString());
+			etree = ExpressionTree::parse(funcBody);
 			res = etree->evaluate(nick);
 		} catch(string &s) {
 			delete etree;
