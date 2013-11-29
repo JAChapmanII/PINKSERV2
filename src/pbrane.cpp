@@ -31,6 +31,7 @@ using util::trim;
 #include "eventsystem.hpp"
 #include "expressiontree.hpp"
 #include "events.hpp"
+#include "regex.hpp"
 
 void process(string script, string nick, string target);
 string evaluate(string script, string nick);
@@ -226,6 +227,29 @@ bool powerHook(PrivateMessage pmsg) {
 bool regexHook(PrivateMessage pmsg) {
 	if(pmsg.message[0] != 's')
 		return false;
+
+	try {
+		Regex r(pmsg.message.substr(1));
+		auto entries = journal::search(r.match());
+		if(entries.empty())
+			return true;
+		for(auto it = entries.rbegin(); it != entries.rend(); ++it) {
+			// only replace on non-executed things
+			if(it->etype != journal::ExecuteType::None)
+				continue;
+			// if a nick was specified as a flag and it's not who said it, continue
+			if(!r.flags().empty() && r.flags() != it->who)
+				continue;
+			string result;
+			r.execute(it->arguments, result);
+			send(pmsg.target, result, true);
+			break;
+		}
+		return true;
+	} catch(string e) {
+		send(pmsg.target, e, true);
+	}
+
 	return false;
 }
 
