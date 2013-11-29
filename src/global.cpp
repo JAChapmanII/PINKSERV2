@@ -27,6 +27,7 @@ using util::contains;
 using util::split;
 using util::fromString;
 #include "journal.hpp"
+#include "expressiontree.hpp"
 
 bool global::done;
 ofstream global::log;
@@ -72,17 +73,27 @@ bool global::secondaryInit() {
 	ifstream startup(config::startupFile);
 	if(startup.good()) {
 		log << "reading startup file: " << config::startupFile << endl;
-		log << "\tTODO re-implement" << endl;
+		string line;
 		while(startup.good() && !startup.eof()) {
 			// TODO: make fake logitem?
-			string line;
 			getline(startup, line);
 			if(startup.eof())
 				break;
 			if(line.empty())
 				continue;
 			log << "\t" << line << endl;
-			//parse(cl);
+			try {
+				ExpressionTree *etree = ExpressionTree::parse(line);
+				try {
+					string result = etree->evaluate(
+							global::vars["bot.owner"].toString()).toString();
+				} catch(string &e) {
+					log << "startup error: " << e << endl;
+				}
+				delete etree;
+			} catch(string &e) {
+				log << "startup error: " << e << endl;
+			}
 		}
 		return true;
 	}

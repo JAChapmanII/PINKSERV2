@@ -83,11 +83,14 @@ int main(int argc, char **argv) {
 		cerr << "pbrane: global::init failed" << endl;
 		return -1;
 	}
+	modules::init(config::brainFileName);
 
-	// TODO: don't hard-code these. These should be set in the startup file
-	global::vars["bot.nick"] = "pbrane_future";
-	global::vars["bot.maxLineLength"] = "256";
-	global::vars["bot.owner"] = "jac";
+	// TODO: don't hard-code these. These should be set in the startup file?
+	evaluate("(!undefined bot.owner)? { $bot.owner = 'jac'; }", "jac");
+	evaluate("(!undefined bot.nick)? { $bot.nick = 'PINKSERV2'; }",
+			global::vars["bot.owner"].toString());
+	evaluate("(!undefined bot.maxLineLength)? { $bot.maxLineLength = 256; }",
+			global::vars["bot.owner"].toString());
 
 	if(!global::secondaryInit()) {
 		cerr << "pbrane: global::secondaryInit failed" << endl;
@@ -98,7 +101,6 @@ int main(int argc, char **argv) {
 	global::log << "----- " << global::vars["bot.nick"].toString() << " started -----" << endl;
 	cerr << "----- " << global::vars["bot.nick"].toString() << " started -----" << endl;
 
-	modules::init(config::brainFileName);
 	global::secondaryInit(); // TODO: we do this twice?
 	journal::init();
 
