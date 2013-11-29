@@ -9,9 +9,6 @@ using std::stack;
 #include <algorithm>
 using std::find;
 
-#include <boost/regex.hpp>
-using boost::regex;
-
 #include <cmath>
 
 #include "permission.hpp"
@@ -22,6 +19,8 @@ using util::contains;
 using util::asString;
 using util::fromString;
 using util::join;
+
+#include "regex.hpp"
 
 #include "global.hpp"
 #include "modules.hpp"
@@ -857,64 +856,21 @@ Variable ExpressionTree::evaluate(string nick, bool all) {
 	// TODO: regex is reinterpreting the argument escapes?
 	// TODO: $text =~ ':o/|\o:' behaves like ':o/|o:'
 	if(this->fragment.isSpecial("=~") || this->fragment.isSpecial("~")) {
-		string text = this->child->evaluate(nick).toString(),
-				rstring = this->rchild->evaluate(nick).toString();
+		string text = this->child->evaluate(nick).toString(), result;
+		Regex r(this->rchild->evaluate(nick).toString());
 
-		size_t rend = 0;
-		char sep = rstring.front();
-		rstring = rstring.substr(1);
+		// if match equals, just return if we match
+		if(this->fragment.isSpecial("=~"))
+			return Variable(r.matches(text), Permissions());
 
-		if(rstring.front() == sep)
-			throw (string)"empty regex not supported";
-		for(rend = 1; rend < rstring.length(); ++rend) {
-			if(rstring[rend] == '\\')
-				rend++;
-			else if(rstring[rend] == sep)
-				break;
-		}
-		if(rend == rstring.length())
-			throw (string)"unterminated regex";
-		string replacement = rstring.substr(rend + 1);
-		rstring = rstring.substr(0, rend);
+		// wanted a replacement, but that's not the type of regex we have
+		if(r.type() != RegexType::Replace)
+			throw (string)"error: cannot attempt regex replace without replacement text";
 
-		string flags;
-		// if we have a replacement, we may have flags
-		if(replacement.length() > 0) {
-			if(replacement.front() == sep) {
-				flags = replacement.substr(1);
-				replacement = "";
-			} else {
-				for(rend = 1; rend < replacement.length(); ++rend) {
-					if(replacement[rend] == '\\')
-						rend++;
-					else if(replacement[rend] == sep)
-						break;
-				}
-				if(rend != replacement.length()) {
-					flags = replacement.substr(rend + 1);
-					replacement = replacement.substr(0, rend);
-				}
-			}
-		}
-
-		// TODO: parse flags
 		// TODO: group variables, r0, r1, etc
-
-		// note: may throw
-		boost::regex rregex(rstring, regex::perl);
-		string str = regex_replace(text, rregex, replacement,
-				boost::match_default | boost::format_all);
-		Variable r_ = Variable(str, Permissions(Permission::Read));
-		if(str != text) {
-			global::vars["r_"] = r_;
-			if(this->fragment.isSpecial("~"))
-				return r_;
-			return Variable(true, Permissions());
-		}
-
-		if(this->fragment.isSpecial("~"))
-			return r_;
-		return Variable(false, Permissions());
+		bool matches = r.execute(text, result);
+		global::vars["r_"] = Variable(result, Permissions(Permission::Read));
+		return Variable(result, Permissions(Permission::Read));
 	}
 
 	if(!this->fragment.special) {
