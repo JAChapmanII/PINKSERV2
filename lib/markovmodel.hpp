@@ -37,6 +37,9 @@ class MarkovModel {
 		// return a smooth model for a seed
 		std::map<unsigned, double> smooth(std::list<unsigned> seed);
 
+		// return a rough model for a seed
+		std::map<unsigned, double> rough(std::list<unsigned> seed);
+
 		//bool contains(std::list<std::string> chain);
 
 		// returns a partially resloved seed
@@ -62,5 +65,8 @@ class MarkovModel {
 		unsigned m_count; // occurrences of this endpoint
 		std::map<unsigned, MarkovModel *> m_model; // further endpoints
 };
+
+// normalize a model (sum of all elements is 1)
+std::map<unsigned, double> normalize(std::map<unsigned, double> model);
 
 #endif // MARKOVMODEL_HPP

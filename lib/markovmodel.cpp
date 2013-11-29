@@ -82,7 +82,7 @@ double MarkovModel::probability(list<unsigned> chain) {
 map<unsigned, double> MarkovModel::smooth(list<unsigned> seed) {
 	map<unsigned, double> smoothModel;
 	// TODO: this is not how it should actually work.... PPM
-	double multiplier = 16.0, total = 0;
+	double multiplier = 16.0;
 	while(!seed.empty()) {
 		MarkovModel *submodel = (*this)[seed]; seed.pop_front();
 		// couldn't find seed
@@ -90,7 +90,6 @@ map<unsigned, double> MarkovModel::smooth(list<unsigned> seed) {
 			continue;;
 		for(auto it : submodel->m_model) {
 			double v = submodel->m_model[it.first]->m_count * multiplier;
-			total += v;
 			smoothModel[it.first] += v;
 		}
 		multiplier /= 12.0;
@@ -102,19 +101,33 @@ map<unsigned, double> MarkovModel::smooth(list<unsigned> seed) {
 	if(submodel != NULL)
 		for(auto it : submodel->m_model) {
 			double v = submodel->m_model[it.first]->m_count * multiplier;
-			total += v;
 			smoothModel[it.first] += v;
 		}
 
-	if(smoothModel.size() == 0)
-		return smoothModel;
-
-	// normalize values so they sum to 1
-	map<unsigned, double> normalized;
-	for(auto it : smoothModel)
-		normalized[it.first] = it.second / total;
-	return normalized;
+	return normalize(smoothModel);
 }
+
+map<unsigned, double> MarkovModel::rough(list<unsigned> seed) {
+	int initialSize = seed.size();
+	for(int i = 0; i <= initialSize; ++i) {
+		MarkovModel *submodel = (*this)[seed];
+		if(!seed.empty())
+			seed.pop_front();
+		// seed not found
+		if(submodel == NULL)
+			continue;
+
+		// translate model into result type
+		map<unsigned, double> roughModel;
+		for(auto it : submodel->m_model)
+			roughModel[it.first] = it.second->m_count;
+
+		return normalize(roughModel);
+	}
+
+	return map<unsigned, double>();
+}
+
 
 MarkovModel *MarkovModel::operator[](list<unsigned> seed) {
 	// we have no seed, return us
@@ -173,3 +186,13 @@ void MarkovModel::ensure(unsigned key) {
 		this->m_model[key] = new MarkovModel();
 }
 
+map<unsigned, double> normalize(map<unsigned, double> model) {
+	double total = 0.0;
+	for(auto i : model)
+		total += i.second;
+
+	map<unsigned, double> normal;
+	for(auto i : model)
+		normal[i.first] = i.second / total;
+	return normal;
+}
