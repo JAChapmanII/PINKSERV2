@@ -111,8 +111,6 @@ int main(int argc, char **argv) {
 		if(line.empty())
 			continue;
 		journal::Entry entry(line);
-		journal::push(entry);
-		global::log << entry.format() << endl;
 
 		vector<string> fields = split(line);
 		if(fields[1] == (string)"PRIVMSG") {
@@ -125,14 +123,29 @@ int main(int argc, char **argv) {
 			if(fields[2] == global::vars["bot.nick"].toString())
 				target = nick;
 
+			// check for a special hook
+			bool wasHook = false;
+			for(auto h : hooks)
+				if((*h)({ message, nick, target })) {
+					wasHook = true;
+					break;
+				}
+
+			if(wasHook)
+				entry.etype = journal::ExecuteType::Hook;
 			// if the line is a ! command, run it
-			//if(message[0] == '!')
-				//process(message, nick, target);
+			else if(message[0] == '!') {
+				process(message, nick, target);
+				entry.etype = journal::ExecuteType::Function;
+			}
 			// if the line is a : invocation, evaluate it
-			/*else*/ if(canEvaluate(message))
+			else if(canEvaluate(message)) {
 				process(message.substr(1), nick, target);
+				entry.etype = journal::ExecuteType::Function;
+			}
 			// otherwise, run on text triggers
 			else {
+				entry.etype = journal::ExecuteType::None;
 				// TODO: proper environment for triggers
 				global::vars["nick"] = nick;
 				global::vars["text"] = message;
@@ -162,6 +175,9 @@ int main(int argc, char **argv) {
 		if((fields[1] == (string)"PART") || (fields[1] == (string)"QUIT")) {
 			;// run leave triggers
 		}
+
+		journal::push(entry);
+		global::log << entry.format() << endl;
 	}
 
 	journal::deinit();
@@ -176,16 +192,6 @@ int main(int argc, char **argv) {
 }
 
 void process(string script, string nick, string target) {
-	// run special hooks first
-	bool processed = false;
-	for(auto h : hooks)
-		if((*h)({ script, nick, target })) {
-			processed = true;
-			break;
-		}
-	if(processed)
-		return;
-
 	script = trim(script);
 	if(script.empty())
 		return;
