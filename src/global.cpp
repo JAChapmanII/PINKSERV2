@@ -26,6 +26,7 @@ using boost::match_extra;
 using util::contains;
 using util::split;
 using util::fromString;
+#include "journal.hpp"
 
 bool global::done;
 ofstream global::log;
@@ -132,8 +133,13 @@ void global::send(string target, string line, bool send) {
 	}
 	if(!send)
 		log << "\t(didn't really send it, we're being quiet)" << endl;
-	else
+	else {
 		cout << "PRIVMSG " << target << " :" << line << endl;
+		// TODO: this looks like pbrane is predicting the result in the journal...
+		journal::push(journal::Entry(
+					global::vars["bot.nick"].toString() + "!~self@localhost " +
+					"PRIVMSG " + target + " :" + line));
+	}
 }
 
 bool global::isOwner(std::string nick) {
