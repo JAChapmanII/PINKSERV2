@@ -138,7 +138,11 @@ int main(int argc, char **argv) {
 				entry.etype = journal::ExecuteType::Hook;
 			// if the line is a ! command, run it
 			else if(message[0] == '!') {
-				process(message, nick, target);
+				// it might be a !: to force intepretation line
+				if(message.size() > 1 && message[1] == ':')
+					process(message.substr(2), nick, target);
+				else
+					process(message, nick, target);
 				entry.etype = journal::ExecuteType::Function;
 			}
 			// if the line is a : invocation, evaluate it
