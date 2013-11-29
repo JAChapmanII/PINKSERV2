@@ -89,9 +89,14 @@ Entry::Entry(long long itimestamp, string icontents) :
 		timestamp(itimestamp), contents(icontents) { this->parse(); }
 
 Entry Entry::fromLog(string line) {
-	auto timestamp = fromString<long long>(line.substr(0, line.find("|")));
-	auto contents = line.substr(line.find("|") + 1);
-	return { timestamp, contents };
+	size_t firstPipe = line.find("|"),
+			secondPipe = line.find("|", firstPipe + 1);
+	auto timestamp = fromString<long long>(line.substr(0, firstPipe));
+	auto contents = line.substr(secondPipe + 1);
+	Entry e{timestamp, contents};
+	e.etype = (ExecuteType)fromString<int>(
+			line.substr(firstPipe + 1, secondPipe));
+	return e;
 }
 
 void Entry::parse() {
@@ -109,6 +114,7 @@ void Entry::parse() {
 }
 
 string Entry::format() const {
-	return asString(this->timestamp) + "|" + this->contents;
+	return asString(this->timestamp) + "|" + asString((int)this->etype) + "|" +
+		this->contents;
 }
 

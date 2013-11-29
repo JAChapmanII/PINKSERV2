@@ -7,12 +7,14 @@
 
 namespace journal {
 	enum class EntryType { Text, Join, Quit, Part, Invalid };
+	enum class ExecuteType { None, Hook, Function, Unknown };
 
 	struct Entry {
 		long long timestamp{global::now()};
 		std::string contents{};
 		std::string who{}, where{}, command{}, arguments{};
 		EntryType type{EntryType::Invalid};
+		ExecuteType etype{ExecuteType::Unknown};
 
 		Entry() = default;
 		Entry(std::string icontents);
