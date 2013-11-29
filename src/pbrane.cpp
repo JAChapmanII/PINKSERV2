@@ -217,6 +217,8 @@ string evaluate(string script, string nick) {
 
 
 bool powerHook(PrivateMessage pmsg) {
+	if(pmsg.message[0] == ':') // ignore starting colon
+		pmsg.message = pmsg.message.substr(1);
 	if(pmsg.message == (string)"!restart" && isOwner(pmsg.nick))
 		return global::done = true;
 	return false;
