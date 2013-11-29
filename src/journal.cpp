@@ -25,14 +25,21 @@ vector<Entry> journal_entries;
 ofstream journal_file;
 bool journal_init = false;
 
+bool journal_tryCreate();
+bool journal_tryCreate() {
+	journal_file.open(config::journalFileName, std::ios_base::app);
+	return journal_file.good();
+}
+
 // TODO: if journal doesn't exist, doesn't open for append
 bool journal::init() {
 	if(journal_init)
 		return true;
 	
 	ifstream jin(config::journalFileName);
-	if(!jin.good())
-		return false;
+	if(!jin.good()) {
+		return journal_tryCreate();
+	}
 
 	string line;
 	while(!jin.eof() && jin.good()) {
