@@ -11,6 +11,8 @@ using std::ifstream;
 using std::endl;
 #include <iostream>
 using std::cerr;
+#include <exception>
+using std::exception;
 
 #include <boost/regex.hpp>
 #include "util.hpp"
@@ -72,8 +74,12 @@ std::vector<Entry> journal::search(string regex) {
 	for(auto i : journal_entries) {
 		if(i.type != EntryType::Text)
 			continue;
-		if(boost::regex_search(i.arguments, r, boost::match_default))
-			matches.push_back(i);
+		try {
+			if(boost::regex_search(i.arguments, r, boost::match_default))
+				matches.push_back(i);
+		} catch(exception &e) {
+			cerr << "journal::search: regex exception: " << e.what() << endl;
+		}
 	}
 	return matches;
 }
