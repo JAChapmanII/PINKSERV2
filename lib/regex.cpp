@@ -24,6 +24,7 @@ void Regex::parse(string str) {
 
 	if(str[0] == str[1]) // this implies //
 		throw (string)"Regex::parse: error: empty search is invalid";
+	string orig = str;
 
 	_delimiter = str.front();
 	str = str.substr(1); // strip off first delimiter
@@ -36,8 +37,9 @@ void Regex::parse(string str) {
 		else if(str[rend] == _delimiter)
 			break;
 	}
-	if(rend == str.length())
-		throw (string)"Regex::parse: unterminated regex";
+	// it could be past the end if the last char was a backslash
+	if(rend >= str.length())
+		throw (string)"Regex::parse: unterminated regex: " + orig;
 
 	_replace = str.substr(rend + 1);
 	_match = str.substr(0, rend);
