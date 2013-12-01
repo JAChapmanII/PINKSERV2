@@ -27,7 +27,8 @@ using util::contains;
 using util::split;
 using util::fromString;
 #include "journal.hpp"
-#include "expressiontree.hpp"
+#include "expression.hpp"
+#include "parser.hpp"
 
 bool global::done;
 ofstream global::log;
@@ -83,15 +84,18 @@ bool global::secondaryInit() {
 				continue;
 			log << "\t" << line << endl;
 			try {
-				ExpressionTree *etree = ExpressionTree::parse(line);
-				try {
-					string result = etree->evaluate(
-							global::vars["bot.owner"].toString()).toString();
-				} catch(string &e) {
-					log << "startup error: " << e << endl;
-				}
-				delete etree;
+				auto expr = Parser::parse(line);
+				string result = expr->evaluate(
+						global::vars["bot.owner"].toString()).toString();
+			// TODO: more exception types
+			} catch(ParseException e) {
+				cerr << "parse exception" << endl;
+				log << "startup error: " << e.pretty() << endl;
+			} catch(StackTrace e) {
+				cerr << "stack trace exception" << endl;
+				log << "startup error: " << e.toString() << endl;
 			} catch(string &e) {
+				cerr << "string exception" << endl;
 				log << "startup error: " << e << endl;
 			}
 		}

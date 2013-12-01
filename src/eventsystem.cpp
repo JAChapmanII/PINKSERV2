@@ -5,7 +5,8 @@ using std::string;
 using std::istream;
 using std::ostream;
 
-#include "expressiontree.hpp"
+#include "expression.hpp"
+#include "parser.hpp"
 #include "brain.hpp"
 
 EventSystem::EventSystem() : m_queue(), m_events() {
@@ -28,18 +29,17 @@ vector<Variable> EventSystem::process() {
 vector<Variable> EventSystem::process(EventType etype) {
 	vector<Variable> output;
 	for(auto e : this->m_events[etype]) {
-		Variable result;
 		try {
-			ExpressionTree *etree = ExpressionTree::parse(e.body);
-			try {
-				result = etree->evaluate("");
-				// TODO: hack
-				if(result.type == Type::String)
-					output.push_back(result);
-			} catch(string &s) {
-				cerr << "EventSystem::process: " << s << endl; // TODO
-			}
-			delete etree;
+			auto expr = Parser::parse(e.body);
+			Variable result = expr->evaluate("");
+			// TODO: hack
+			if(result.type == Type::String)
+				output.push_back(result);
+		} catch(ParseException e) {
+			// TODO: remove
+			cerr << "EventSystem::process: " << e.pretty() << endl;
+		} catch(StackTrace e) {
+			cerr << "EventSystem::process: " << e.toString() << endl;
 		} catch(string &s) {
 			cerr << "EventSystem::process: " << s << endl; // TODO
 		}

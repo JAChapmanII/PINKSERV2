@@ -7,7 +7,7 @@ ODIR=obj
 BDIR=bin
 
 # main project binaries
-BINS=${BDIR}/pbrane ${BDIR}/teval ${BDIR}/cycle_brain
+BINS=${BDIR}/pbrane ${BDIR}/teval ${BDIR}/cycle_brain ${BDIR}/pprint
 
 MOBJS=
 # module related objects from lib/
@@ -20,7 +20,7 @@ MOBJS+=${ODIR}/markov.o ${ODIR}/core.o ${ODIR}/events.o ${ODIR}/math.o
 # object files required for main binary
 OBJS=${MOBJS}
 OBJS+=${ODIR}/util.o ${ODIR}/global.o ${ODIR}/journal.o ${ODIR}/config.o
-OBJS+=${ODIR}/tokenfragment.o ${ODIR}/expressiontree.o
+OBJS+=${ODIR}/expression.o ${ODIR}/parser.o
 OBJS+=${ODIR}/permission.o ${ODIR}/variable.o ${ODIR}/eventsystem.o
 OBJS+=${ODIR}/regex.o
 
@@ -53,6 +53,8 @@ dir:
 ${BDIR}/pbrane: ${ODIR}/pbrane.o ${OBJS}
 	${CXX} -o $@ $^ ${LDFLAGS}
 ${BDIR}/teval: ${ODIR}/teval.o ${OBJS}
+	${CXX} -o $@ $^ ${LDFLAGS}
+${BDIR}/pprint: ${ODIR}/pprint.o ${OBJS}
 	${CXX} -o $@ $^ ${LDFLAGS}
 ${BDIR}/cycle_brain: ${ODIR}/cycle_brain.o ${OBJS}
 	${CXX} -o $@ $^ ${LDFLAGS}

@@ -29,7 +29,8 @@ using util::startsWith;
 using util::trim;
 #include "markov.hpp"
 #include "eventsystem.hpp"
-#include "expressiontree.hpp"
+#include "expression.hpp"
+#include "parser.hpp"
 #include "events.hpp"
 #include "regex.hpp"
 
@@ -86,10 +87,10 @@ int main(int argc, char **argv) {
 	modules::init(config::brainFileName);
 
 	// TODO: don't hard-code these. These should be set in the startup file?
-	evaluate("(!undefined bot.owner)? { $bot.owner = 'jac'; }", "jac");
-	evaluate("(!undefined bot.nick)? { $bot.nick = 'PINKSERV2'; }",
+	evaluate("${(!undefined 'bot.owner')? { $bot.owner = 'jac'; }}", "jac");
+	evaluate("${(!undefined 'bot.nick')? { $bot.nick = 'PINKSERV2'; }}",
 			global::vars["bot.owner"].toString());
-	evaluate("(!undefined bot.maxLineLength)? { $bot.maxLineLength = 256; }",
+	evaluate("${(!undefined 'bot.maxLineLength')? { $bot.maxLineLength = 256; }}",
 			global::vars["bot.owner"].toString());
 
 	if(!global::secondaryInit()) {
@@ -144,9 +145,11 @@ int main(int argc, char **argv) {
 				else
 					process(message, nick, target);
 				entry.etype = journal::ExecuteType::Function;
-			}
+			} else if(message.substr(0, 2) == (string)"${" && message.back() == '}') {
+				process(message, nick, target);
+				entry.etype = journal::ExecuteType::Function;
 			// if the line is a : invocation, evaluate it
-			else if(canEvaluate(message)) {
+			} else if(canEvaluate(message)) {
 				process(message.substr(1), nick, target);
 				entry.etype = journal::ExecuteType::Function;
 			}
@@ -207,19 +210,18 @@ void process(string script, string nick, string target) {
 	send(target, evaluate(script, nick), true);
 }
 string evaluate(string script, string nick) {
-	string result;
 	try {
-		ExpressionTree *etree = ExpressionTree::parse(script);
-		try {
-			result = etree->evaluate(nick).toString();
-		} catch(string &s) {
-			result = nick + ": error: " + s;
-		}
-		delete etree;
-	} catch(string &s) {
-		result = nick + ": syntax error: " + s;
+		auto expr = Parser::parse(script);
+		if(!expr)
+			cerr << "expr is null" << endl;
+		return expr->evaluate(nick).toString();
+	} catch(ParseException e) {
+		cerr << e.pretty() << endl;
+		return e.msg + " @" + asString(e.idx);
+	} catch(StackTrace e) {
+		cerr << e.toString() << endl;
+		return e.toString();
 	}
-	return result;
 }
 
 

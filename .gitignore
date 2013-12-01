@@ -1,6 +1,7 @@
 bin/pbrane
 bin/teval
 bin/cycle_brain
+bin/pprint
 
 *.o
 

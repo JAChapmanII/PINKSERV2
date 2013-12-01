@@ -29,7 +29,8 @@ using util::fromString;
 #include "permission.hpp"
 #include "variable.hpp"
 #include "global.hpp"
-#include "expressiontree.hpp"
+#include "expression.hpp"
+#include "parser.hpp"
 #include "modules.hpp"
 #include "config.hpp"
 
@@ -51,21 +52,24 @@ int main(int argc, char **argv) {
 				continue;
 			cout << i << ": " << argv[i] << endl;
 
-			ExpressionTree *etree = NULL;
 			try {
-				etree = ExpressionTree::parse(argv[i]);
+				auto expr = Parser::parse(argv[i]);
+				cout << "expr: " << (expr ? "true" : "false") << endl;
 
 				// print computed AST
 				cout << "final: " << endl;
-				etree->print();
-				cout << "stringify: " << etree->toString() << endl;
+				cout << expr->pretty() << endl;
+				cout << "stringify: " << expr->toString() << endl;
 
-				cout << "result: " << etree->evaluate("jac").toString() << endl;
+				cout << "result: " << expr->evaluate("jac").toString() << endl;
+				// TODO: other exception types...
+			} catch(ParseException e) {
+				cout << e.pretty() << endl;
+			} catch(StackTrace e) {
+				cout << e.toString() << endl;
 			} catch(string &s) {
 				cout << "\t: " << s << endl;
 			}
-
-			delete etree;
 		}
 	} else {
 		while(cin.good() && !cin.eof()) {
@@ -75,23 +79,27 @@ int main(int argc, char **argv) {
 			if(nick.empty() || line.empty())
 				break;
 
-			ExpressionTree *etree = NULL;
 			try {
-				etree = ExpressionTree::parse(line);
+				auto expr = Parser::parse(line);
 
 				cerr << "eval'ing: " << line << " as " << nick << endl;
 				cerr << "final AST: " << endl;
-				etree->print();
-				cerr << "stringify: " << etree->toString() << endl;
+				cerr << expr->pretty() << endl;
+				cerr << "stringify: " << expr->toString() << endl;
 
-				string res = etree->evaluate(nick).toString();
+				string res = expr->evaluate(nick).toString();
 				cerr << "result: " << res << endl;
 				cout << nick + ": " << res << endl;
+
+				// TODO: other exception types
+			} catch(ParseException e) {
+				cerr << e.pretty() << endl;
+			} catch(StackTrace e) {
+				cout << e.toString() << endl;
 			} catch(string &s) {
 				cerr << "\texception: " << s << endl;
 				cout << nick + ": error: " + s << endl;
 			}
-			delete etree;
 		}
 	}
 
