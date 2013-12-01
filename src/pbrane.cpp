@@ -233,6 +233,10 @@ bool powerHook(PrivateMessage pmsg) {
 bool regexHook(PrivateMessage pmsg) {
 	if(pmsg.message[0] != 's')
 		return false;
+	if(pmsg.message.size() < 2)
+		return false;
+	if(((string)":/|").find(pmsg.message[1]) == string::npos)
+		return false;
 
 	try {
 		Regex r(pmsg.message.substr(1));
