@@ -357,8 +357,10 @@ Variable Variable::parse(const string &rhs) {
 	if(!notInteger)
 		return Variable(fromString<long>(rhs), Permissions());
 	bool notDouble = false;
-	for(char c : rhs)
-		if(!(c == '.' || (c >= '0' && c <= '9')))
+	for(int i = 0; i < rhs.length(); ++i)
+		if(i == 0 && rhs[i] == '-')
+			continue;
+		else if(!(rhs[i] == '.' || (rhs[i] >= '0' && rhs[i] <= '9')))
 			notDouble = true;
 	if(!notDouble)
 		return Variable(fromString<double>(rhs), Permissions());
