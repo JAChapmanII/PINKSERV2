@@ -247,20 +247,24 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 	if(this->type == "=~" || this->type == "~") {
 		string text = this->args[0]->evaluate(who).toString(), result;
 		// TODO: may throw, wrap into StackTrace
-		Regex r(this->args[1]->evaluate(who).toString());
+		try {
+			Regex r(this->args[1]->evaluate(who).toString());
 
-		// if match equals, just return if we match
-		if(this->type == "=~")
-			return Variable(r.matches(text), Permissions());
+			// if match equals, just return if we match
+			if(this->type == "=~")
+				return Variable(r.matches(text), Permissions());
 
-		// wanted a replacement, but that's not the type of regex we have
-		if(r.type() != RegexType::Replace)
-			context.except("cannot attempt replace without result text");
+			// wanted a replacement, but that's not the type of regex we have
+			if(r.type() != RegexType::Replace)
+				context.except("cannot attempt replace without result text");
 
-		// TODO: group variables, r0, r1, etc
-		bool matches = r.execute(text, result);
-		return (global::vars["r_"] =
-				Variable(result, Permissions(Permission::Read)));
+			// TODO: group variables, r0, r1, etc
+			bool matches = r.execute(text, result);
+			return (global::vars["r_"] =
+					Variable(result, Permissions(Permission::Read)));
+		} catch(string &e) {
+			context.except(e);
+		}
 	}
 
 	// simple strings an numbers
