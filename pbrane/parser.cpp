@@ -258,15 +258,12 @@ unique_ptr<Expression> Parser::parseVariableAccess() {
 }
 unique_ptr<Expression> Parser::parseFunctionCall() {
 	expect("!");
-	if(isspace(_str[_idx]))
-		except("unexpected space following ! call");
 
 	vector<unique_ptr<Expression>> args;
-	// function name comes first, is simply default context value
-	args.push_back(parseDefaultContextValue());
+	args.push_back(parseVariableAccess());
 	// all args are expressions
 	// TODO: proper ending?
-	while(!atEnd() && !is("}") && !is(")") && !is(";"))
+	while(ignoreWhiteSpace(), !atEnd() && !is("}") && !is(")") && !is(";"))
 		args.push_back(parseExpression());
 
 	if(args.empty())

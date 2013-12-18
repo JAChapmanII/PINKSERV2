@@ -43,6 +43,8 @@ Expression::Expression(const Expression &rhs) : type(rhs.type), text(rhs.text) {
 }
 
 string Expression::toString() const {
+	if(this == nullptr)
+		return "[null]";
 	if(this->type == "str" || this->type == "num")
 		return this->text;
 	if(this->type == "\"" || this->type == "'") {
@@ -198,12 +200,14 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 
 	// function calls, special :D
 	if(this->type == "!") {
-		string func = this->args[0]->evaluate(who).toString();
+		if(this->args[0]->type != "var")
+			context.except("rhs of ! is not a variable");
+		string func = this->args[0]->args[0]->evaluate(who).toString();
 		if((global::vars.find(func) == global::vars.end()) &&
 				!(contains(modules::hfmap, func)))
 			context.except(func + " does not exist as a callable function");
 
-		string body = global::vars[func].toString();
+		string body = "${" + global::vars[func].toString() + "}";
 		ensurePermission(Permission::Execute, who, func);
 
 		// figure out the result of the arguments
@@ -221,9 +225,9 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 
 		// set the argument values
 		global::vars["args"] = argsstr;
-		global::vars["0"] = Variable(func, Permissions());
+		global::vars["$0"] = Variable(func, Permissions());
 		for(unsigned i = 0; i < args.size() - 1; ++i)
-			global::vars[asString(i + 1)] = argVars[i];
+			global::vars["$" + asString(i + 1)] = argVars[i];
 
 		// a module function
 		if(contains(modules::hfmap, func)) {
