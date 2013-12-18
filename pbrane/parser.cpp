@@ -29,7 +29,7 @@ using std::vector;
  * default context does not allow ; to separate commands.
  *
  * ${} context function binding will be changed to be lower precedence than
- * even ;, so that ${f => $v = 1; !echo $v; } will bind "$v = 1; !echo $v;" as
+ * even ;, so that ${f => v = 1; !echo v; } will bind "v = 1; !echo v;" as
  * the function body. If function binding should not consume entire line, then
  * it will need to be put in () or {}
  *
@@ -138,11 +138,6 @@ unique_ptr<Expression> Parser::parseVariableName() {
 				args.emplace_back(new Expression("str", str));
 			str.clear();
 			args.push_back(parseExpression());
-		} else if(is("$")) {
-			if(!str.empty())
-				args.emplace_back(new Expression("str", str));
-			str.clear();
-			args.push_back(parseVariableAccess());
 		} else {
 			if(_str[_idx] == '\\') // consume backslash and next char
 				str += _str[_idx++];
@@ -168,8 +163,6 @@ unique_ptr<Expression> Parser::parseDefaultContext() {
 			return parseDefaultContextFunction();
 			break;
 		case '$':
-			if(atEnd())
-				except("$ encountered at end of string");
 			if(!is("${"))
 				except("expected { after $");
 			return parseExpression();
@@ -178,6 +171,7 @@ unique_ptr<Expression> Parser::parseDefaultContext() {
 			break;
 	}
 	except("encountered unexpected '" + string(1, _str[_idx]) + "'");
+	return nullptr;
 }
 unique_ptr<Expression> Parser::parseDefaultContextFunction() {
 	expect("!");
@@ -210,8 +204,6 @@ unique_ptr<Expression> Parser::parseExpression(int cLevel) {
 		left.reset(new Expression("${}"));
 		left->args.push_back(parseExpression());
 		expect("}");
-	} else if(is("$")) {
-		left = parseVariableAccess();
 	} else if(is("!")) {
 		left = parseFunctionCall();
 	} else if(is("(") || is("{")) {
@@ -226,10 +218,10 @@ unique_ptr<Expression> Parser::parseExpression(int cLevel) {
 		left = parseNumber();
 	} else if(is("'") || is("\"")) {
 		left = parseString();
+	} else if(is("*")) {
+		left = parseVariableAccess();
 	} else {
-		//left.reset(parseExpression()); // wooho, recursion...
-		// TODO: what
-		except("unexpected '" + string(1, _str[_idx]) + "' in expression");
+		left = parseVariableAccess();
 	}
 
 	int nextPrec = nextPrecedence();
@@ -251,8 +243,15 @@ unique_ptr<Expression> Parser::parseExpression(int cLevel) {
 }
 unique_ptr<Expression> Parser::parseVariableAccess() {
 	ignoreWhiteSpace();
-	expect("$");
-	unique_ptr<Expression> va{new Expression("$")},
+	// there's a level of indirection
+	if(is("*")) {
+		expect("*");
+		unique_ptr<Expression> va{new Expression("var")},
+			vname = parseVariableAccess();
+		va->args.push_back(move(vname));
+		return va;
+	}
+	unique_ptr<Expression> va{new Expression("var")},
 		vname = parseVariableName();
 	va->args.push_back(move(vname));
 	return va;
@@ -307,11 +306,7 @@ unique_ptr<Expression> Parser::parseString() {
 
 	// an empty string
 	if(args.empty())
-		return unique_ptr<Expression>(new Expression("str", ""));
-
-	// either a simple string, or the contents of "${}"
-	if(args.size() == 1)
-		return move(args[0]);
+		return unique_ptr<Expression>(new Expression(delimiter, ""));
 
 	// a complex string
 	return unique_ptr<Expression>(new Expression(delimiter, args));

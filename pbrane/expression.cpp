@@ -45,22 +45,28 @@ Expression::Expression(const Expression &rhs) : type(rhs.type), text(rhs.text) {
 string Expression::toString() const {
 	if(this->type == "str" || this->type == "num")
 		return this->text;
-	if(this->type == "\"" || this->type == "'")
-		return this->type + this->text + this->type;
+	if(this->type == "\"" || this->type == "'") {
+		string res = this->type;
+		for(auto &arg : this->args)
+			res += arg->toString();
+		return res + this->type;
+	}
 	if(this->type == "!") {
 		string res = this->type + this->args[0]->toString();
 		for(int i = 1; i < this->args.size(); ++i)
 			res += " " + this->args[i]->toString();
 		return res;
 	}
-	if(this->type == "$")
-		return this->type + this->args[0]->toString();
+	if(this->type == "ind")
+		return "*" + this->args[0]->toString();
+	if(this->type == "var")
+		return this->args[0]->toString();
 	if(this->type == "${}")
 		return "${" + this->args[0]->toString() + "}";
 	if(this->type == "()")
 		return "(" + this->args[0]->toString() + ")";
 	if(this->type == "{}")
-		return ")" + this->args[0]->toString() + "}";
+		return "{" + this->args[0]->toString() + "}";
 	if(this->type == ";") {
 		string result;
 		for(int i = 0; i < this->args.size(); ++i) {
@@ -150,8 +156,8 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 	}
 
 	if(this->type == "=") {
-		if(this->args[0]->type != "$")
-			context.except("lhs of = is not a $var");
+		if(this->args[0]->type != "var")
+			context.except("lhs of = is not a variable");
 
 		// get var name and the contents
 		// note: we don't actually evaluate the $, but it's argument
@@ -174,8 +180,8 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 
 	// see = implementation above for comments
 	if(this->type == "=>") {
-		if(this->args[0]->type != "$")
-			context.except("lhs of => is not a $var");
+		if(this->args[0]->type != "var")
+			context.except("lhs of => is not a variable");
 
 		string func = this->args[0]->args[0]->evaluate(who).toString(),
 			body = this->args[1]->toString(); // TODO: requires Expression::toString
@@ -262,11 +268,10 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 		return Variable(this->text, Permissions());
 	if(this->type == "num")
 		return Variable::parse(this->text);
-	if(this->type == "'" || this->type == "\"")
-		return Variable(this->text, Permissions()); // TODO: descape
 
+	// TODO: descape
 	// strcat means to concatenate arguments and return a string
-	if(this->type == "strcat") {
+	if(this->type == "'" || this->type == "\"" || this->type == "strcat") {
 		string result;
 		for(auto &i : this->args)
 			result += i->evaluate(who).toString();
@@ -274,7 +279,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 	}
 
 	// variable access
-	if(this->type == "$") {
+	if(this->type == "var") {
 		string var = this->args[0]->evaluate(who).toString();
 		if(global::vars.find(var) == global::vars.end())
 			global::vars[var] = Variable(0L, Permissions(who));
