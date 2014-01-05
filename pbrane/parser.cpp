@@ -185,6 +185,10 @@ unique_ptr<Expression> Parser::parseDefaultContextFunction() {
 
 	if(args.empty())
 		except("expected function name after !");
+	// TODO: other context expects "var" not "str"
+	unique_ptr<Expression> fname = move(args[0]);
+	args[0] = unique_ptr<Expression>(new Expression("var"));
+	args[0]->args.push_back(move(fname));
 
 	return unique_ptr<Expression>(new Expression("!", args));
 }
