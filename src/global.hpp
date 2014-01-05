@@ -17,6 +17,7 @@ namespace global {
 	extern std::mt19937_64 rengine;
 	extern Dictionary<std::string, unsigned> dictionary;
 	extern EventSystem eventSystem;
+	extern std::vector<std::string> moduleFunctionList;
 
 	// variable, function map
 	extern std::map<std::string, Variable> vars;

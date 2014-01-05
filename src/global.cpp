@@ -36,6 +36,7 @@ ofstream global::err;
 mt19937_64 global::rengine;
 Dictionary<string, unsigned> global::dictionary;
 EventSystem global::eventSystem;
+vector<string> global::moduleFunctionList;
 
 map<string, Variable> global::vars;
 map<string, map<string, Variable>> global::lvars;

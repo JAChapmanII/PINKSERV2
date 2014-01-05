@@ -43,6 +43,7 @@ for f in modules/*.hpp; do
 		echo -e "\tmodules::hfmap[\"$pfname\"] = &$fname;" >> mfuncs
 		echo -e "\tglobal::vars[\"${pfname}\"] = \"{ hard coded }\";" >> mfuncs
 		echo -e "\tglobal::vars[\"${pfname}.help\"] = \"$fdesc\";" >> mfuncs
+		echo -e "\tglobal::moduleFunctionList.push_back(\"${pfname}\");" >> mfuncs
 		# TODO: setup permissions?
 	done
 	echo -e "\tcerr << endl;" >> mfuncs
