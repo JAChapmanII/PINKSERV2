@@ -17,6 +17,8 @@ using std::endl;
 #include "util.hpp"
 using util::fromString;
 using util::asString;
+using util::contains;
+using util::join;
 #include "journal.hpp"
 
 void coreLoad(std::istream &in) {
@@ -24,6 +26,19 @@ void coreLoad(std::istream &in) {
 }
 void coreSave(std::ostream &out) {
 	brain::write(out, global::vars);
+}
+
+Variable help(vector<Variable> arguments) {
+	if(arguments.size() > 1)
+		return Variable("error: help can only take a max of one function name",
+				Permissions());
+	if(arguments.size() == 1) {
+		string function = arguments.front().toString();
+		if(!contains(global::moduleFunctionList, function))
+			return Variable("error: requested function does not exist", Permissions());
+		return global::vars[function + ".help"];
+	}
+	return Variable(join(global::moduleFunctionList, ", "), Permissions());
 }
 
 Variable irc(vector<Variable> arguments) {
@@ -106,25 +121,25 @@ Variable undefined(std::vector<Variable> arguments) {
 }
 
 // TODO: how to do this partly? Gah... :(
-Variable rm(vector<Variable> arguments) {
+Variable rm(vector<Variable>) {
 	// TODO: we need to know the caller for this to work...
 	//for(auto var : arguments) {
 	//}
 	throw (string)"(not-implemented, bug " + global::vars["bot.owner"].toString() + ")";
 }
 
-Variable die(vector<Variable> arguments) {
+Variable die(vector<Variable>) {
 	exit(0);
 	throw (string)"uh-oh, we were supposed to die; " + 
 		"bug " + global::vars["bot.owner"].toString();
 }
 
-Variable sleep(vector<Variable> arguments) {
+Variable sleep(vector<Variable>) {
 	// TODO: can we just exit(non-0)?
 	throw (string)"(uh-oh, bug " + global::vars["bot.owner"].toString() + ")";
 }
 
-Variable jsize(vector<Variable> arguments) {
+Variable jsize(vector<Variable>) {
 	return Variable((long)journal::size(), Permissions());
 }
 

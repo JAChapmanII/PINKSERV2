@@ -9,6 +9,9 @@
 void coreLoad(std::istream &in);
 void coreSave(std::ostream &out);
 
+// #f: help: returns a list of builtin functions, or the help text
+Variable help(std::vector<Variable> arguments);
+
 // #f: irc: issues an IRC command
 Variable irc(std::vector<Variable> arguments);
 
