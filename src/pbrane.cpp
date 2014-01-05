@@ -87,10 +87,10 @@ int main(int argc, char **argv) {
 	modules::init(config::brainFileName);
 
 	// TODO: don't hard-code these. These should be set in the startup file?
-	evaluate("${(!undefined 'bot.owner')? { $bot.owner = 'jac'; }}", "jac");
-	evaluate("${(!undefined 'bot.nick')? { $bot.nick = 'PINKSERV2'; }}",
+	evaluate("${(!undefined 'bot.owner')? { bot.owner = 'jac'; }}", "jac");
+	evaluate("${(!undefined 'bot.nick')? { bot.nick = 'PINKSERV3'; }}",
 			global::vars["bot.owner"].toString());
-	evaluate("${(!undefined 'bot.maxLineLength')? { $bot.maxLineLength = 256; }}",
+	evaluate("${(!undefined 'bot.maxLineLength')? { bot.maxLineLength = 256; }}",
 			global::vars["bot.owner"].toString());
 
 	if(!global::secondaryInit()) {
@@ -221,6 +221,9 @@ string evaluate(string script, string nick) {
 	} catch(StackTrace e) {
 		cerr << e.toString() << endl;
 		return e.toString();
+	} catch(string &s) {
+		cerr << "string type error: " << s << endl;
+		return s;
 	}
 }
 
