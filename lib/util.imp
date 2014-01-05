@@ -1,4 +1,5 @@
 #include <sstream>
+#include <algorithm>
 
 template<typename T> T util::split(std::string str, std::string on) {
 	T fields;
@@ -59,7 +60,7 @@ template<typename T> std::string util::asString(T val) {
 
 template<typename T> bool
 		util::contains(std::vector<T> vec, T val) {
-	return (find(vec.begin(), vec.end(), val) != vec.end());
+	return (std::find(vec.begin(), vec.end(), val) != vec.end());
 }
 template<typename K, typename V> bool
 		util::contains(std::map<K, V> map, K key) {
