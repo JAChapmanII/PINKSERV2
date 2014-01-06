@@ -3,7 +3,7 @@ using std::string;
 using std::vector;
 
 namespace config {
-	string nick = "PINKSERV2";
+	string nick = "PINKSERV3";
 	string startupFile = nick + ".startup";
 	string logFileName = nick + ".log";
 	string errFileName = nick + ".err";
