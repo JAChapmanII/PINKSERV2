@@ -207,7 +207,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 				!(contains(modules::hfmap, func)))
 			context.except(func + " does not exist as a callable function");
 
-		string body = "${" + global::vars[func].toString() + "}";
+		string body = global::vars[func].toString();
 		ensurePermission(Permission::Execute, who, func);
 
 		// figure out the result of the arguments
@@ -236,7 +236,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 		}
 
 		try {
-			unique_ptr<Expression> expr = Parser::parse(body);
+			unique_ptr<Expression> expr = Parser::parseCanonical(body);
 			context.frames.push_back(func);
 			return expr->evaluate(who, context);
 		} catch(ParseException e) {
