@@ -80,12 +80,17 @@ bool modules::init(std::string brainFileName) {
 			mname += (string)"" + (char)c;
 		}
 
-		// TODO: error handling?
-		Module mod = findModule(mname);
-		cerr << "\t\tloading " << mod.name << " (" << mod.desc << ")" << endl;
-		mod.load(brain);
-		mod.loaded = true;
-		read++;
+		try {
+			// TODO: error handling?
+			Module mod = findModule(mname);
+			cerr << "\t\tloading " << mod.name << " (" << mod.desc << ")" << endl;
+			mod.load(brain);
+			mod.loaded = true;
+			read++;
+		} catch(string &s) {
+			cerr << "error: " << s << endl;
+			throw s;
+		}
 	}
 	cerr << "\t\t" << read << " modules read" << endl;
 	
@@ -101,7 +106,7 @@ bool modules::deinit(std::string brainFileName) {
 	// TODO: uhhh....
 	brain.put('y');
 	global::dictionary.write(brain);
-	cerr << "\twrote dictionary" << endl;
+	cerr << "\twrote dictionary, size is: " << global::dictionary.size() << endl;
 
 	cerr << "\twriting modules: " << endl;
 	unsigned wrote = 0;
