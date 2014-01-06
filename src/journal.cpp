@@ -107,6 +107,10 @@ Entry Entry::fromLog(string line) {
 
 void Entry::parse() {
 	auto parts = split(this->contents, " ");
+	if(parts.size() < 3) {
+		cerr << "Entry::parse: strange parts in \"" << this->contents << "\"" << endl;
+		return;
+	}
 	this->who = parts[0];
 	this->where = parts[2];
 
@@ -114,9 +118,11 @@ void Entry::parse() {
 	if(this->command == "PRIVMSG")
 		this->type = EntryType::Text;
 
-	this->arguments = join(parts.begin() + 3, parts.end(), " ");
-	if(this->arguments[0] == ':')
-		this->arguments = this->arguments.substr(1);
+	if(parts.size() > 3) {
+		this->arguments = join(parts.begin() + 3, parts.end(), " ");
+		if(this->arguments[0] == ':')
+			this->arguments = this->arguments.substr(1);
+	}
 }
 
 string Entry::format() const {
