@@ -79,6 +79,9 @@ ostream &dumpMarkov(ostream &out, MarkovModel *model, string prefix) {
 	return out;
 }
 
+#include <iostream>
+using std::endl;
+using std::cerr;
 istream &readMarkov(istream &in) {
 	long count = 0;
 	in >> count;
@@ -101,7 +104,6 @@ istream &readMarkov(istream &in) {
 }
 
 void push(vector<string> words, unsigned order) {
-	words.push_back("\n"); // TODO: allow chaining on newlines.
 	if(words.size() <= order)
 		return;
 	// special case the 0th order chain
@@ -128,7 +130,23 @@ void push(vector<string> words, unsigned order) {
 	}
 }
 void insert(string text) {
-	vector<string> words = split(text);
+	vector<string> words = split(text, " ");
+	for(auto i = words.begin(); i != words.end(); ++i) {
+		if(i->length() > 1 && i->back() == '\n') {
+			auto t = i - words.begin();
+			string w = *i;
+			words.insert(words.begin() + t + 1, "\n");
+			words.insert(words.begin() + t + 1, w.substr(0, w.length() - 1));
+			words.erase(words.begin() + t);
+			i = words.begin() + t;
+		}
+	}
+	/*
+	cerr << "inserting: ";
+	for(auto i : words)
+		cerr << "\"" << i << "\" ";
+	cerr << endl;
+	*/
 	if(words.empty())
 		return;
 	for(unsigned o = 0; o <= maxMarkovOrder; ++o)
@@ -145,9 +163,8 @@ string fetch(vector<string> seed) {
 	return dictionary[fetch(seedl)];
 }
 string recover(string initial, bool newline) {
-	vector<string> ivec = split(initial);
-	if(newline)
-		ivec.push_back("\n"); // TODO
+	vector<string> ivec = split(initial +
+			(newline ? "\n" : ""));
 	unsigned initSize = ivec.size();
 	list<unsigned> chain;
 	for(auto i : ivec)
@@ -164,15 +181,16 @@ string recover(string initial, bool newline) {
 		if(next == 0)
 			break;
 
-		newlineStreak = (nexts == "\n") ? newlineStreak + 1 : 0;
+		newlineStreak = (nexts.back() == '\n') ? newlineStreak + 1 : 0;
 
 		// if we hit a newline and we're in continue mode, try to get something
 		// else, unless we've hit a big streak of newlines (probably nothing to
 		// generate)
-		if(!newline && nexts == "\n") {
-			if(newlineStreak > 16)
+		if(!newline && nexts.back() == '\n') {
+			if(newlineStreak > 4) {
+				cerr << "newline streak break" << endl;
 				break;
-			else
+			} else
 				continue;
 		}
 
@@ -180,7 +198,7 @@ string recover(string initial, bool newline) {
 		chain.push_back(next);
 
 		// break on newline generation
-		if(nexts == "\n" && chain.size() > initSize + 3)
+		if(nexts.back() == '\n' && chain.size() > initSize + 3)
 			break;
 
 		// check to see if we should try to pick another one or just be done
@@ -205,10 +223,16 @@ string recover(string initial, bool newline) {
 			chain.erase(chain.begin());
 
 	// return the generated string
-	string result;
-	for(auto i : chain)
-		result += dictionary[i] + " ";
-	result.pop_back();
+	string result, word;
+	for(auto i : chain) {
+		word = dictionary[i];
+		if(newline && word == "\n")
+			continue;
+		else
+			result += dictionary[i] + " ";
+	}
+	if(!result.empty()) // TODO: what does this do?
+		result.pop_back();
 	return result;
 }
 
@@ -220,6 +244,9 @@ string count(string initial) {
 
 	// count occurences of the seed string
 	unsigned total = markovModel.count(seed);
+
+	if(total == 0 || markovModel[seed] == nullptr)
+		return "No occurrences of " + initial + " found";
 
 	stringstream ss;
 	ss << "Chains starting with: " << initial << ": ("
@@ -241,13 +268,19 @@ void markovSave(ostream &out) {
 
 static string lastObserve = "";
 Variable observe(vector<Variable> arguments) {
-	string now = join(arguments, " ");
+	string now = join(arguments, " ") + "\n";
+	//cerr << "lastObserve: \"" << lastObserve << "\"" << endl;
+	//cerr << "now: \"" << now << "\"" << endl;
 	insert(lastObserve + " " + now);
 	lastObserve = now;
 	return Variable(true, Permissions());
 }
 
+#include <iostream>
+using std::cerr;
+using std::endl;
 Variable markov(vector<Variable> arguments) {
+	cerr << "doing markov " << join(arguments, " ") << endl;
 	string seed = join(arguments, " "), r = recover(seed, false);
 	if(r == seed)
 		return Variable("Sorry, I don't know anything about that", Permissions());
@@ -268,7 +301,7 @@ Variable correct(vector<Variable> arguments) {
 Variable ccount(vector<Variable> arguments) {
 	return Variable(count(join(arguments, " ")), Permissions());
 }
-Variable dsize(vector<Variable> arguments) {
+Variable dsize(vector<Variable>) {
 	return Variable((long)dictionary.size(), Permissions());
 }
 Variable rword(vector<Variable> arguments) {
