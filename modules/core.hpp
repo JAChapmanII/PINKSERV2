@@ -51,4 +51,7 @@ Variable rgrep(std::vector<Variable> arguments);
 // #f: debug: prints result of parsing argument to cerr
 Variable debug(std::vector<Variable> arguments);
 
+// #f: todo: add a todo for jac to implement
+Variable todo(std::vector<Variable> arguments);
+
 #endif // MODULES_CORE_HPP

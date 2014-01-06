@@ -10,7 +10,11 @@ using std::uniform_real_distribution;
 
 #include <iostream>
 using std::cout;
+using std::cerr;
 using std::endl;
+
+#include <fstream>
+using std::ofstream;
 
 #include "global.hpp"
 #include "brain.hpp"
@@ -22,6 +26,8 @@ using util::join;
 #include "journal.hpp"
 #include "expression.hpp"
 #include "parser.hpp"
+
+#include "config.hpp"
 
 void coreLoad(std::istream &in) {
 	brain::read(in, global::vars);
@@ -157,9 +163,6 @@ Variable rgrep(vector<Variable> arguments) {
 	return Variable(lines[target].arguments, Permissions());
 }
 
-#include <iostream>
-using std::cerr;
-using std::endl;
 Variable debug(vector<Variable> arguments) {
 	string text = join(arguments, " ");
 	cerr << "debug: \"" << text << "\"" << endl;
@@ -177,5 +180,14 @@ Variable debug(vector<Variable> arguments) {
 		cerr << "string type error: " << s << endl;
 	}
 	return Variable(true, Permissions());
+}
+
+Variable todo(std::vector<Variable> arguments) {
+	string text = join(arguments, " ");
+	ofstream out(config::todoFileName, std::ios::app);
+	if(!out.good())
+		return Variable("error: couldn't save to TODO file", Permissions());
+	out << text << endl;
+	return Variable("saved!", Permissions());
 }
 
