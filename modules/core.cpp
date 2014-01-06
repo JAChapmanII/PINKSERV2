@@ -20,6 +20,8 @@ using util::asString;
 using util::contains;
 using util::join;
 #include "journal.hpp"
+#include "expression.hpp"
+#include "parser.hpp"
 
 void coreLoad(std::istream &in) {
 	brain::read(in, global::vars);
@@ -153,5 +155,27 @@ Variable rgrep(vector<Variable> arguments) {
 	unsigned target = uid(global::rengine);
 
 	return Variable(lines[target].arguments, Permissions());
+}
+
+#include <iostream>
+using std::cerr;
+using std::endl;
+Variable debug(vector<Variable> arguments) {
+	string text = join(arguments, " ");
+	cerr << "debug: \"" << text << "\"" << endl;
+	try {
+		auto expr = Parser::parse(text);
+		if(!expr)
+			cerr << "expr is null" << endl;
+		else
+			cerr << "expr: " << endl << expr->pretty() << endl;
+	} catch(ParseException e) {
+		cerr << e.pretty() << endl;
+	} catch(StackTrace e) {
+		cerr << e.toString() << endl;
+	} catch(string &s) {
+		cerr << "string type error: " << s << endl;
+	}
+	return Variable(true, Permissions());
 }
 

@@ -48,4 +48,7 @@ Variable jsize(std::vector<Variable> arguments);
 // #f: rgrep: returns a random line from the journal
 Variable rgrep(std::vector<Variable> arguments);
 
+// #f: debug: prints result of parsing argument to cerr
+Variable debug(std::vector<Variable> arguments);
+
 #endif // MODULES_CORE_HPP
