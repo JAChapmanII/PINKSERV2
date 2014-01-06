@@ -66,8 +66,10 @@ using std::endl;
 unsigned MarkovModel::random(list<unsigned> seed) {
 	// obtain the smooth, normalized model
 	map<unsigned, uint64_t> smoothModel = this->smooth(seed); // TODO
-	if(smoothModel.empty())
+	if(smoothModel.empty()) {
+		cerr << "returned smooth model was empty" << endl;
 		return 0;
+	}
 	// find total and square model
 	uint64_t total = 0, lt = 0;
 	for(auto &i : smoothModel) {
@@ -77,8 +79,10 @@ unsigned MarkovModel::random(list<unsigned> seed) {
 			cerr << "oh god why" << endl;
 		lt = total;
 	}
-	if(total < 1) // TODO:
+	if(total < 1) { // TODO:
+		cerr << "total is less than one" << endl;
 		return 0;
+	}
 	// generate a random number between 0 and 1
 	uniform_int_distribution<uint64_t> n(1, total);
 	uint64_t r = n(global::rengine), oR = r;
@@ -118,20 +122,30 @@ static unsigned maxMarkovOrder = 3;
 map<unsigned, uint64_t> MarkovModel::smooth(list<unsigned> seed) {
 	map<unsigned, uint64_t> smoothModel;
 	// TODO: this is not how it should actually work.... PPM
+	cerr << "start size: " << seed.size() << endl;
 	while(seed.size() > maxMarkovOrder)
 		seed.pop_front();
+	cerr << "abbreviated size: " << seed.size() << endl;
 	while(!seed.empty()) {
-		uint64_t multiplier = pow(2, pow(2, seed.size() + 1));
+		uint64_t multiplier = 1;//pow(2, pow(2, seed.size() + 1)); TODO
 		MarkovModel *submodel = (*this)[seed]; seed.pop_front();
 		// couldn't find seed
 		if(submodel == NULL)
 			continue;;
 		for(auto it : submodel->m_model) {
+			if(submodel->m_model[it.first]->m_count < 1)
+				continue;
 			uint64_t v = submodel->m_model[it.first]->m_count * multiplier;
 			smoothModel[it.first] += v;
 		}
+		if(smoothModel.empty())
+			continue;
+		cerr << "final size: " << seed.size() << endl;
+		return smoothModel; // TOOD: highest order only for testing
 	}
+	cerr << "after main" << endl;
 	if(smoothModel.empty()) {
+		cerr << "adding 0 order" << endl;
 		// 0 order model
 		MarkovModel *submodel = (*this)[seed];
 		// couldn't find seed

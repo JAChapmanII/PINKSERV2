@@ -176,6 +176,7 @@ string recover(string initial, bool newline) {
 		// find a random endpoint
 		unsigned next = fetch(chain);
 		string nexts = dictionary[next];
+		cerr << "nexts: \"" << nexts << "\"" << endl;
 
 		// if it is empty, it's because we don't know anything about that
 		if(next == 0)
@@ -186,12 +187,16 @@ string recover(string initial, bool newline) {
 		// if we hit a newline and we're in continue mode, try to get something
 		// else, unless we've hit a big streak of newlines (probably nothing to
 		// generate)
-		if(!newline && nexts.back() == '\n') {
-			if(newlineStreak > 4) {
-				cerr << "newline streak break" << endl;
-				break;
-			} else
-				continue;
+		if(!newline) {
+			if(nexts.back() == '\n')
+				nexts.pop_back();
+			if(nexts.empty()) {
+				if(newlineStreak > 8) {
+					cerr << "newline streak break" << endl;
+					break;
+				} else
+					continue;
+			}
 		}
 
 		// add next to the string
