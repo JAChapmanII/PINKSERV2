@@ -4,6 +4,7 @@
 #include <list>
 #include <map>
 #include <iostream>
+#include <cstdint>
 
 /* MarkovModel:
  * 	handles markov model related functionality
@@ -35,7 +36,7 @@ class MarkovModel {
 		double probability(std::list<unsigned> chain);
 
 		// return a smooth model for a seed
-		std::map<unsigned, double> smooth(std::list<unsigned> seed);
+		std::map<unsigned, uint64_t> smooth(std::list<unsigned> seed);
 
 		// return a rough model for a seed
 		std::map<unsigned, double> rough(std::list<unsigned> seed);

@@ -6,9 +6,16 @@ using std::ostream;
 
 #include <random>
 using std::uniform_real_distribution;
+using std::uniform_int_distribution;
 
 #include <string>
 using std::string;
+
+#include <limits>
+using std::numeric_limits;
+
+#include <algorithm>
+using std::min;
 
 #include "global.hpp"
 #include "util.hpp"
@@ -53,21 +60,47 @@ unsigned MarkovModel::count(list<unsigned> chain) {
 	return this->m_model[f]->count(chain);
 }
 
+#include <iostream>
+using std::cerr;
+using std::endl;
 unsigned MarkovModel::random(list<unsigned> seed) {
 	// obtain the smooth, normalized model
-	map<unsigned, double> smoothModel = this->smooth(seed);
+	map<unsigned, uint64_t> smoothModel = this->smooth(seed); // TODO
 	if(smoothModel.empty())
 		return 0;
+	// find total and square model
+	uint64_t total = 0, lt = 0;
+	for(auto &i : smoothModel) {
+		i.second *= i.second;
+		total += i.second;
+		if(total < lt)
+			cerr << "oh god why" << endl;
+		lt = total;
+	}
+	if(total < 1) // TODO:
+		return 0;
 	// generate a random number between 0 and 1
-	uniform_real_distribution<double> n(0, 1);
-	double r = n(global::rengine);
+	uniform_int_distribution<uint64_t> n(1, total);
+	uint64_t r = n(global::rengine), oR = r;
 	// lookup the key
 	auto it = smoothModel.begin();
+	map<unsigned, uint64_t>::iterator m = smoothModel.begin();
+	uint64_t sT = 0;
 	while(it != smoothModel.end() && it->second < r) {
+		if(it->second > m->second)
+			m = it;
+		sT += it->second;
 		r -= it->second, it++;
 	}
-	if(it == smoothModel.end())
-		throw (string)"fell off end";
+	if(it == smoothModel.end()) {
+		cerr << "total: " << total << endl;
+		cerr << "run off end, using max: " << m->second << "-> " << m->first << endl;
+		cerr << "r: " << oR << " -> " << r << endl;
+		cerr << "smSize: " << smoothModel.size() << endl;
+		cerr << "sT: " << sT << endl;
+		return m->first;
+		//throw (string)"fell off end";
+	}
 	// return the found key
 	return it->first;
 }
@@ -79,32 +112,38 @@ double MarkovModel::probability(list<unsigned> chain) {
 	return this->smooth(chain)[back];
 }
 
-map<unsigned, double> MarkovModel::smooth(list<unsigned> seed) {
-	map<unsigned, double> smoothModel;
+// TODO: debug printing, max markov order....
+// TODO: squaring large numbers can get very large
+static unsigned maxMarkovOrder = 3;
+map<unsigned, uint64_t> MarkovModel::smooth(list<unsigned> seed) {
+	map<unsigned, uint64_t> smoothModel;
 	// TODO: this is not how it should actually work.... PPM
-	double multiplier = 16.0;
+	while(seed.size() > maxMarkovOrder)
+		seed.pop_front();
 	while(!seed.empty()) {
+		uint64_t multiplier = pow(2, pow(2, seed.size() + 1));
 		MarkovModel *submodel = (*this)[seed]; seed.pop_front();
 		// couldn't find seed
 		if(submodel == NULL)
 			continue;;
 		for(auto it : submodel->m_model) {
-			double v = submodel->m_model[it.first]->m_count * multiplier;
+			uint64_t v = submodel->m_model[it.first]->m_count * multiplier;
 			smoothModel[it.first] += v;
 		}
-		multiplier /= 12.0;
 	}
-	multiplier /= 256.0;
-	// 0 order model
-	MarkovModel *submodel = (*this)[seed];
-	// couldn't find seed
-	if(submodel != NULL)
-		for(auto it : submodel->m_model) {
-			double v = submodel->m_model[it.first]->m_count * multiplier;
-			smoothModel[it.first] += v;
-		}
+	if(smoothModel.empty()) {
+		// 0 order model
+		MarkovModel *submodel = (*this)[seed];
+		// couldn't find seed
+		if(submodel != NULL)
+			for(auto it : submodel->m_model) {
+				uint64_t v = submodel->m_model[it.first]->m_count;
+				smoothModel[it.first] += v;
+			}
+	}
 
-	return normalize(smoothModel);
+	//return normalize(smoothModel);
+	return smoothModel;
 }
 
 map<unsigned, double> MarkovModel::rough(list<unsigned> seed) {
@@ -115,6 +154,8 @@ map<unsigned, double> MarkovModel::rough(list<unsigned> seed) {
 			seed.pop_front();
 		// seed not found
 		if(submodel == NULL)
+			continue;
+		if(submodel->m_model.size() == 0)
 			continue;
 
 		// translate model into result type
@@ -187,12 +228,20 @@ void MarkovModel::ensure(unsigned key) {
 }
 
 map<unsigned, double> normalize(map<unsigned, double> model) {
-	double total = 0.0;
+	double gMin = numeric_limits<double>::max();
 	for(auto i : model)
+		gMin = min(gMin, i.second);
+	cerr << "gMin: " << gMin << endl;
+	double total = 0.0;
+	for(auto i : model) {
+		i.second /= gMin;
+		i.second *= i.second;
 		total += i.second;
+	}
 
 	map<unsigned, double> normal;
 	for(auto i : model)
 		normal[i.first] = i.second / total;
 	return normal;
 }
+
