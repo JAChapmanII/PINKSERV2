@@ -30,7 +30,7 @@ vector<Variable> EventSystem::process(EventType etype) {
 	vector<Variable> output;
 	for(auto e : this->m_events[etype]) {
 		try {
-			auto expr = Parser::parse(e.body);
+			auto expr = Parser::parseCanonical(e.body);
 			Variable result = expr->evaluate("");
 			// TODO: hack
 			if(result.type == Type::String)
