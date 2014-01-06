@@ -34,10 +34,11 @@ using util::trim;
 #include "events.hpp"
 #include "regex.hpp"
 
-void process(string script, string nick, string target);
+void process(string network, string script, string nick, string target);
 string evaluate(string script, string nick);
 
 struct PrivateMessage {
+	string network;
 	string message;
 	string nick;
 	string target;
@@ -123,6 +124,8 @@ int main(int argc, char **argv) {
 
 		if(line.empty())
 			continue;
+		string network = line.substr(0, line.find(" "));
+		line = line.substr(line.find(" ") + 1);
 		journal::Entry entry(line);
 
 		vector<string> fields = split(line);
@@ -139,7 +142,7 @@ int main(int argc, char **argv) {
 			// check for a special hook
 			bool wasHook = false;
 			for(auto h : hooks)
-				if((*h)({ message, nick, target })) {
+				if((*h)({ network, message, nick, target })) {
 					wasHook = true;
 					break;
 				}
@@ -147,19 +150,19 @@ int main(int argc, char **argv) {
 			if(wasHook)
 				entry.etype = journal::ExecuteType::Hook;
 			// if the line is a ! command, run it
-			else if(message[0] == '!') {
+			else if(message[0] == '!' && message.length() > 1) {
 				// it might be a !: to force intepretation line
 				if(message.size() > 1 && message[1] == ':')
-					process(message.substr(2), nick, target);
+					process(network, message.substr(2), nick, target);
 				else
-					process(message, nick, target);
+					process(network, message, nick, target);
 				entry.etype = journal::ExecuteType::Function;
 			} else if(message.substr(0, 2) == (string)"${" && message.back() == '}') {
-				process(message, nick, target);
+				process(network, message, nick, target);
 				entry.etype = journal::ExecuteType::Function;
 			// if the line is a : invocation, evaluate it
 			} else if(canEvaluate(message)) {
-				process(message.substr(1), nick, target);
+				process(network, message.substr(1), nick, target);
 				entry.etype = journal::ExecuteType::Function;
 			}
 			// otherwise, run on text triggers
@@ -171,7 +174,7 @@ int main(int argc, char **argv) {
 
 				vector<Variable> results = global::eventSystem.process(EventType::Text);
 				if(results.size() == 1)
-					send(target, results.front().toString(), true);
+					send(network, target, results.front().toString(), true);
 			}
 		}
 		if(fields[1] == (string)"JOIN") {
@@ -186,7 +189,7 @@ int main(int argc, char **argv) {
 
 			vector<Variable> results = global::eventSystem.process(EventType::Join);
 			if(results.size() == 1)
-				send(where, results.front().toString(), true);
+				send(network, where, results.front().toString(), true);
 		}
 		if(fields[1] == (string)"NICK") {
 			;// run nick triggers
@@ -199,6 +202,7 @@ int main(int argc, char **argv) {
 		global::log << entry.format() << endl;
 	}
 
+	cerr << "pbrane: exited main loop" << endl;
 	journal::deinit();
 
 	// free memory associated with modules
@@ -210,7 +214,7 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-void process(string script, string nick, string target) {
+void process(string network, string script, string nick, string target) {
 	if(import)
 		return;
 	script = trim(script);
@@ -218,7 +222,7 @@ void process(string script, string nick, string target) {
 		return;
 
 	// assume we can run the script
-	send(target, evaluate(script, nick), true);
+	send(network, target, evaluate(script, nick), true);
 }
 string evaluate(string script, string nick) {
 	try {
@@ -272,12 +276,12 @@ bool regexHook(PrivateMessage pmsg) {
 				continue;
 			string result;
 			r.execute(it->arguments, result);
-			send(pmsg.target, result, true);
+			send(pmsg.network, pmsg.target, result, true);
 			break;
 		}
 		return true;
 	} catch(string e) {
-		send(pmsg.target, e, true);
+		send(pmsg.network, pmsg.target, e, true);
 	}
 
 	return false;

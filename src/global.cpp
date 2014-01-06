@@ -136,7 +136,7 @@ bool allSpaces(string str) {
 	return true;
 }
 
-void global::send(string target, string line, bool send) {
+void global::send(string network, string target, string line, bool send) {
 	line = escapeForPMSG(line); // TODO
 	if(allSpaces(line))
 		return;
@@ -150,7 +150,7 @@ void global::send(string target, string line, bool send) {
 	if(!send)
 		log << "\t(didn't really send it, we're being quiet)" << endl;
 	else {
-		cout << "PRIVMSG " << target << " :" << line << endl;
+		cout << network << " PRIVMSG " << target << " :" << line << endl;
 		// TODO: this looks like pbrane is predicting the result in the journal...
 		journal::push(journal::Entry(
 					global::vars["bot.nick"].toString() + "!~self@localhost " +

@@ -32,7 +32,8 @@ namespace global {
 	extern std::vector<std::string> ignoreList;
 	extern unsigned minSpeakTime;
 
-	void send(std::string target, std::string line, bool send = true);
+	void send(std::string network, std::string target, std::string line,
+			bool send = true);
 
 	bool isOwner(std::string nick);
 	bool isAdmin(std::string nick);
