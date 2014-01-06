@@ -29,10 +29,12 @@ struct ParseException {
 
 struct Parser {
 	static std::unique_ptr<Expression> parse(std::string str);
+	static std::unique_ptr<Expression> parseCanonical(std::string str);
 
 	Parser(std::string s) : _str(s), _len(_str.length()) { }
 
 	std::unique_ptr<Expression> parse();
+	std::unique_ptr<Expression> parseCanonical();
 
 	void ignoreWhiteSpace();
 	bool is(std::string needle) const;

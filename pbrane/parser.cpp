@@ -48,6 +48,10 @@ unique_ptr<Expression> Parser::parse(string str) {
 	Parser p(str);
 	return p.parse();
 }
+unique_ptr<Expression> Parser::parseCanonical(string str) {
+	Parser p(str);
+	return p.parseCanonical();
+}
 
 unique_ptr<Expression> parse(string str) {
 	return Parser::parse(str);
@@ -78,6 +82,9 @@ using std::cerr;
 using std::endl;
 unique_ptr<Expression> Parser::parse() {
 	return parseDefaultContext();
+}
+unique_ptr<Expression> Parser::parseCanonical() {
+	return parseExpression();
 }
 
 void Parser::ignoreWhiteSpace() {
