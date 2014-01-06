@@ -70,11 +70,16 @@ bool canEvaluate(string message) {
 	}
 	return false;
 }
+bool import = false;
 
 int main(int argc, char **argv) {
 	unsigned int seed = 0;
 	if(argc > 1) {
-		seed = fromString<unsigned int>(argv[1]);
+		if(string(argv[1]) == "--import") {
+			import = true;
+			cerr << "pbrane: import mode enabled" << endl;
+		} else
+			seed = fromString<unsigned int>(argv[1]);
 	} else {
 		random_device randomDevice;
 		seed = randomDevice();
@@ -92,6 +97,10 @@ int main(int argc, char **argv) {
 			global::vars["bot.owner"].toString());
 	evaluate("${(!undefined 'bot.maxLineLength')? { bot.maxLineLength = 256; }}",
 			global::vars["bot.owner"].toString());
+	if(import) {
+		evaluate("${!on \"text\" (null => !observe text)}",
+				global::vars["bot.owner"].toString());
+	}
 
 	if(!global::secondaryInit()) {
 		cerr << "pbrane: global::secondaryInit failed" << endl;
@@ -202,6 +211,8 @@ int main(int argc, char **argv) {
 }
 
 void process(string script, string nick, string target) {
+	if(import)
+		return;
 	script = trim(script);
 	if(script.empty())
 		return;
@@ -229,6 +240,8 @@ string evaluate(string script, string nick) {
 
 
 bool powerHook(PrivateMessage pmsg) {
+	if(import)
+		return false;
 	if(pmsg.message[0] == ':') // ignore starting colon
 		pmsg.message = pmsg.message.substr(1);
 	if(pmsg.message == (string)"!restart" && isOwner(pmsg.nick))
@@ -236,6 +249,8 @@ bool powerHook(PrivateMessage pmsg) {
 	return false;
 }
 bool regexHook(PrivateMessage pmsg) {
+	if(import)
+		return false;
 	if(pmsg.message[0] != 's')
 		return false;
 	if(pmsg.message.size() < 2)
