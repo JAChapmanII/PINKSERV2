@@ -276,14 +276,17 @@ bool regexHook(PrivateMessage pmsg) {
 			return true;
 		for(auto it = entries.rbegin(); it != entries.rend(); ++it) {
 			// only replace on non-executed things
-			if(it->etype != journal::ExecuteType::None)
+			if(it->etype == journal::ExecuteType::Hook || it->etype == journal::ExecuteType::Function)
 				continue;
 			// if a nick was specified as a flag and it's not who said it, continue
-			if(!r.flags().empty() && r.flags() != it->who)
+			if(!r.flags().empty() && r.flags() != it->nick())
 				continue;
 			string result;
 			r.execute(it->arguments, result);
-			send(pmsg.network, pmsg.target, result, true);
+			if(it->etype == journal::ExecuteType::None)
+				send(pmsg.network, pmsg.target, "<" + it->nick() + "> " + result, true);
+			else
+				send(pmsg.network, pmsg.target, result, true);
 			break;
 		}
 		return true;
