@@ -229,7 +229,7 @@ void process(string network, string script, string nick, string target) {
 		return;
 	}
 	// assume we can run the script
-	send(network, target, evaluate(script, nick), true);
+	send(network, target, result, true);
 }
 string evaluate(string script, string nick) {
 	try {
