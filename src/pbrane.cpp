@@ -164,10 +164,6 @@ int main(int argc, char **argv) {
 			} else if(message.substr(0, 2) == (string)"${" && message.back() == '}') {
 				process(network, message, nick, target);
 				entry.etype = journal::ExecuteType::Function;
-			// if the line is a : invocation, evaluate it
-			} else if(canEvaluate(message)) {
-				process(network, message.substr(1), nick, target);
-				entry.etype = journal::ExecuteType::Function;
 			}
 			// otherwise, run on text triggers
 			else {
@@ -222,6 +218,16 @@ void process(string network, string script, string nick, string target) {
 	if(script.empty())
 		return;
 
+	bool plainFunction = false;
+	string plainFName;
+	if(script[0] == '!')
+		plainFunction = true, plainFName = script.substr(1, script.find(" ") - 1);
+	string noF = plainFName + " does not exist as a callable function [stacktrace: !]";
+	string result = evaluate(script, nick);
+	if(plainFunction && result == noF) {
+		cerr << "simple call to nonexistante function error supressed" << endl;
+		return;
+	}
 	// assume we can run the script
 	send(network, target, evaluate(script, nick), true);
 }
