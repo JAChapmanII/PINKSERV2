@@ -82,7 +82,7 @@ PermissionFragment PermissionFragment::parse(string pstr) {
 
 Permissions::Permissions() : admin(Permission::all),
 		owner_nick(""), owner(Permission::all),
-		suser(), user(Permission::rx), sticky(0x0) {
+		suser(), user(Permission::all), sticky(0x0) {
 }
 Permissions::Permissions(string iowner) : admin(Permission::all),
 		owner_nick(iowner), owner(Permission::all),
