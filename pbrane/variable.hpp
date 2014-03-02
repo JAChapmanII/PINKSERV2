@@ -22,6 +22,7 @@ struct Value {
 class Variable {
 	public:
 		Variable();
+		Variable(const char *ivalue, Permissions ip);
 		Variable(std::string ivalue, Permissions ip);
 		Variable(bool ivalue, Permissions ip);
 		Variable(double ivalue, Permissions ip);

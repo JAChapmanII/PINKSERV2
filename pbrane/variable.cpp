@@ -41,6 +41,10 @@ vector<string> getList(map<string, Variable> vars, string variable) {
 
 Variable::Variable() : value(), permissions(), type(Type::String) {
 }
+Variable::Variable(const char *ivalue, Permissions ip) :
+		value(), permissions(ip), type(Type::String) {
+	value.s = ivalue;
+}
 Variable::Variable(string ivalue, Permissions ip) :
 		value(), permissions(ip), type(Type::String) {
 	value.s = ivalue;
