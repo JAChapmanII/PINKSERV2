@@ -130,3 +130,7 @@ string Entry::format() const {
 		this->contents;
 }
 
+string Entry::nick() const {
+	return this->who.substr(1, this->who.find("!") - 1);
+}
+

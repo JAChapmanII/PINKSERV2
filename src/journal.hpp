@@ -31,6 +31,9 @@ namespace journal {
 		std::string toString() const;
 		// formats this object for writing to a journal file
 		std::string format() const;
+
+		// returns the nick portion of who
+		std::string nick() const;
 	};
 
 	bool init();
