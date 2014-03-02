@@ -152,7 +152,7 @@ void global::send(string network, string target, string line, bool send) {
 	else {
 		cout << network << " PRIVMSG " << target << " :" << line << endl;
 		// TODO: this looks like pbrane is predicting the result in the journal...
-		journal::push(journal::Entry(
+		journal::push(journal::Entry(":" +
 					global::vars["bot.nick"].toString() + "!~self@localhost " +
 					"PRIVMSG " + target + " :" + line));
 	}
