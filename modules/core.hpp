@@ -48,6 +48,9 @@ Variable jsize(std::vector<Variable> arguments);
 // #f: rgrep: returns a random line from the journal
 Variable rgrep(std::vector<Variable> arguments);
 
+// #f: rline: returns a random line (with nick info) from the journal
+Variable rline(std::vector<Variable> arguments);
+
 // #f: debug: prints result of parsing argument to cerr
 Variable debug(std::vector<Variable> arguments);
 

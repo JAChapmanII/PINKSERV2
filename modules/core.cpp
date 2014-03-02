@@ -163,6 +163,18 @@ Variable rgrep(vector<Variable> arguments) {
 	return Variable(lines[target].arguments, Permissions());
 }
 
+Variable rline(vector<Variable> arguments) {
+	string regex = arguments.front().toString();
+	vector<journal::Entry> lines = journal::search(regex);
+	if(lines.size() < 1)
+		throw (string)"no matches";
+
+	uniform_int_distribution<> uid(0, lines.size() - 1);
+	unsigned target = uid(global::rengine);
+
+	return Variable("<" + lines[target].nick() + "> " + lines[target].arguments, Permissions());
+}
+
 Variable debug(vector<Variable> arguments) {
 	string text = join(arguments, " ");
 	cerr << "debug: \"" << text << "\"" << endl;
