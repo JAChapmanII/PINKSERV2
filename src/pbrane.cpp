@@ -147,6 +147,10 @@ int main(int argc, char **argv) {
 					break;
 				}
 
+			// TODO: proper environment for triggers
+			global::vars["nick"] = nick;
+			global::vars["text"] = message;
+
 			if(wasHook)
 				entry.etype = journal::ExecuteType::Hook;
 			// if the line is a ! command, run it
@@ -168,9 +172,6 @@ int main(int argc, char **argv) {
 			// otherwise, run on text triggers
 			else {
 				entry.etype = journal::ExecuteType::None;
-				// TODO: proper environment for triggers
-				global::vars["nick"] = nick;
-				global::vars["text"] = message;
 
 				vector<Variable> results = global::eventSystem.process(EventType::Text);
 				if(results.size() == 1)
