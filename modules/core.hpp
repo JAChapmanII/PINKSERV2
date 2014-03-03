@@ -57,4 +57,16 @@ Variable debug(std::vector<Variable> arguments);
 // #f: todo: add a todo for jac to implement
 Variable todo(std::vector<Variable> arguments);
 
+// #f: toint: force a result to be an integer
+Variable toint(std::vector<Variable> arguments);
+
+// #f: eventCount: return the number of on text events
+Variable eventCount(std::vector<Variable> arguments);
+
+// #f: getEvent: return a specific text event
+Variable getEvent(std::vector<Variable> arguments);
+
+// #f: eraseEvent: delete a specific text event
+Variable eraseEvent(std::vector<Variable> arguments);
+
 #endif // MODULES_CORE_HPP
