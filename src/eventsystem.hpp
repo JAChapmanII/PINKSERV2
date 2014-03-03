@@ -39,6 +39,10 @@ class EventSystem {
 		std::istream &read(std::istream &in);
 		std::ostream &write(std::ostream &out);
 
+		int eventsSize(EventType type);
+		Event getEvent(EventType type, int idx);
+		void deleteEvent(EventType type, int idx);
+
 	protected:
 		std::priority_queue<TimedEvent> m_queue;
 		std::map<EventType, std::vector<Event>> m_events;

@@ -33,7 +33,7 @@ vector<Variable> EventSystem::process(EventType etype) {
 			auto expr = Parser::parseCanonical(e.body);
 			Variable result = expr->evaluate("");
 			// TODO: hack
-			if(result.type == Type::String)
+			if(result.type == Type::String && !result.value.s.empty())
 				output.push_back(result);
 		} catch(ParseException e) {
 			// TODO: remove
@@ -68,5 +68,18 @@ ostream &EventSystem::write(ostream &out) {
 		brain::write(out, it.second);
 	}
 	return out;
+}
+
+int EventSystem::eventsSize(EventType type) {
+	return this->m_events[type].size();
+}
+Event EventSystem::getEvent(EventType type, int idx) {
+	return this->m_events[type][idx];
+}
+#include <iostream>
+void EventSystem::deleteEvent(EventType type, int idx) {
+	std::cerr << "EventSystem::deleteEvent: deleting: \"" <<
+		this->m_events[type][idx].body << endl;
+	this->m_events[type].erase(this->m_events[type].begin() + idx);
 }
 
