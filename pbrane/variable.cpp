@@ -229,8 +229,14 @@ Variable Variable::operator/(const Variable &rhs) const {
 		switch(this->type) {
 			case Type::Boolean: return Variable(
 					!rhs.asBoolean().value.b || this->asBoolean().value.b, this->permissions);
-			case Type::Integer: return Variable(this->value.l / rhs.value.l, this->permissions);
-			case Type::Double: return Variable(this->value.d / rhs.value.d, this->permissions);
+			case Type::Integer:
+				if(rhs.value.l == 0)
+					throw (string)"error: division by zero";
+				return Variable(this->value.l / rhs.value.l, this->permissions);
+			case Type::Double:
+				if(rhs.value.d == 0.0)
+					throw (string)"error: fdivision by zero";
+				return Variable(this->value.d / rhs.value.d, this->permissions);
 			case Type::String:
 				throw (string)"cannot divide strings";
 			default:
