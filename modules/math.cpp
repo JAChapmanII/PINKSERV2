@@ -12,6 +12,9 @@ Variable math_pow(vector<Variable> arguments) {
 		result(1L, Permissions());
 	long exponent = arguments.back().asInteger().value.l;
 
+	if(exponent > 1024 * 32)
+		throw (string)"wow, that's quite the exponent you have there";
+
 	for(long i = 0; i < exponent; ++i)
 		result = result * base;
 
