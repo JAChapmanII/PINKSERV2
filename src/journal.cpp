@@ -134,3 +134,10 @@ string Entry::nick() const {
 	return this->who.substr(1, this->who.find("!") - 1);
 }
 
+vector<Entry>::iterator journal::jbegin() {
+	return journal_entries.begin();
+}
+vector<Entry>::iterator journal::jend() {
+	return journal_entries.end();
+}
+

@@ -42,6 +42,9 @@ namespace journal {
 	void push(Entry nentry);
 	std::vector<Entry> search(std::string regex);
 	unsigned size();
+
+	std::vector<Entry>::iterator jbegin();
+	std::vector<Entry>::iterator jend();
 }
 
 #endif // JOURNAL_HPP
