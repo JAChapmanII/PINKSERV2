@@ -14,6 +14,10 @@ using std::vector;
 #include <random>
 using std::random_device;
 
+#include <fstream>
+using std::ifstream;
+using std::ofstream;
+
 #include "global.hpp"
 using global::isOwner;
 using global::send;
@@ -73,6 +77,14 @@ bool canEvaluate(string message) {
 }
 bool import = false;
 
+struct CrashInformation {
+	bool crashed{false};
+	string last{};
+};
+
+CrashInformation crashed();
+void crashed(bool val, string last = "");
+
 int main(int argc, char **argv) {
 	unsigned int seed = 0;
 	if(argc > 1) {
@@ -115,6 +127,16 @@ int main(int argc, char **argv) {
 	global::secondaryInit(); // TODO: we do this twice?
 	journal::init();
 
+	CrashInformation ci = crashed();
+	if(ci.crashed) {
+		cerr << "-- looks like I crashed" << endl;
+		send("slashnet", "#jitro", "oh no, " +
+				(ci.last.empty() ? "I crashed?" : ci.last + " made me crash?") +
+				" :(", true);
+	}
+
+	crashed(true, "{startup}");
+
 	// while there is more input coming
 	global::done = false;
 	while(!cin.eof() && !global::done) {
@@ -131,6 +153,7 @@ int main(int argc, char **argv) {
 		vector<string> fields = split(line);
 		if(fields[1] == (string)"PRIVMSG") {
 			string nick = fields[0].substr(1, fields[0].find("!") - 1);
+			crashed(true, nick);
 
 			size_t mstart = line.find(":", 1);
 			string message = line.substr(mstart + 1);
@@ -208,6 +231,8 @@ int main(int argc, char **argv) {
 	// deinit global
 	global::deinit();
 
+	crashed(false, "{shutdown?}");
+
 	return 0;
 }
 
@@ -233,10 +258,13 @@ void process(string network, string script, string nick, string target) {
 }
 string evaluate(string script, string nick) {
 	try {
+		cerr << "evaluate: " << script << endl;
 		auto expr = Parser::parse(script);
 		if(!expr)
 			cerr << "expr is null" << endl;
-		return expr->evaluate(nick).toString();
+		string res = expr->evaluate(nick).toString();
+		cerr << "res: " << res << endl;
+		return res;
 	} catch(ParseException e) {
 		cerr << e.pretty() << endl;
 		return e.msg + " @" + asString(e.idx);
@@ -256,6 +284,8 @@ bool powerHook(PrivateMessage pmsg) {
 	if(pmsg.message[0] == ':') // ignore starting colon
 		pmsg.message = pmsg.message.substr(1);
 	if(pmsg.message == (string)"!restart" && isOwner(pmsg.nick))
+		return global::done = true;
+	if(pmsg.message == (string)"!save")
 		return global::done = true;
 	return false;
 }
@@ -295,5 +325,27 @@ bool regexHook(PrivateMessage pmsg) {
 	}
 
 	return false;
+}
+
+CrashInformation crashed() {
+	CrashInformation ci;
+	ifstream in("PINKSERV3.crashed");
+	if(!in.good()) {
+		cerr << "crashed file does not exist" << endl;
+		return ci;
+	}
+	string l;
+	getline(in, l);
+	ci.crashed = (l == "crashed");
+	getline(in, ci.last);
+	return ci;
+}
+void crashed(bool val, string last) {
+	ofstream out("PINKSERV3.crashed");
+	if(val)
+		out << "crashed" << endl;
+	else
+		out << "safe" << endl;
+	out << last << endl;
 }
 
