@@ -8,6 +8,6 @@ if [[ ! -f ./bin/pbrane ]]; then
 	exit 1
 fi
 
-cat /dev/stdin | sed -ur "s/(.+)/:$nick!$nick@host PRIVMSG #$chan :\\1/" | \
+cat /dev/stdin | sed -ur "s/(.+)/console :$nick!$nick@host PRIVMSG #$chan :\\1/" | \
 	./bin/pbrane
 
