@@ -210,24 +210,3 @@ Variable toint(vector<Variable> arguments) {
 	return arguments.front().asInteger();
 }
 
-Variable eventCount(vector<Variable> arguments) {
-	if(arguments.size() != 0)
-		return Variable("error: eventCount takes no arguments", Permissions());
-	return Variable((long)global::eventSystem.eventsSize(EventType::Text), Permissions());
-}
-
-Variable getEvent(vector<Variable> arguments) {
-	if(arguments.size() != 1)
-		return Variable("error: getEvent takes one argument", Permissions());
-	return Variable(global::eventSystem.getEvent(EventType::Text,
-				arguments.front().asInteger().value.l).body, Permissions());
-}
-
-Variable eraseEvent(vector<Variable> arguments) {
-	if(arguments.size() != 1)
-		return Variable("error: eraseEvent takes one argument", Permissions());
-	global::eventSystem.deleteEvent(EventType::Text, arguments.front().asInteger().value.l);
-	return Variable((long)global::eventSystem.eventsSize(EventType::Text), Permissions());
-}
-
-
