@@ -208,6 +208,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 			context.except(func + " does not exist as a callable function");
 
 		string body = global::vars[func].toString();
+		cerr << "! body: " << body << endl;
 		ensurePermission(Permission::Execute, who, func);
 
 		// figure out the result of the arguments
@@ -221,7 +222,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 
 		// clear out argument variables
 		for(int i = 0; i < 10; ++i)
-			global::vars[asString(i + 1)] = "";
+			global::vars["$" + asString(i + 1)] = "";
 
 		// set the argument values
 		global::vars["args"] = argsstr;
