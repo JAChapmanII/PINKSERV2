@@ -60,4 +60,10 @@ Variable todo(std::vector<Variable> arguments);
 // #f: toint: force a result to be an integer
 Variable toint(std::vector<Variable> arguments);
 
+// #f: bmess: fuck with bots
+Variable bmess(std::vector<Variable> arguments);
+
+// #f: pol: pretty one line
+Variable pol(std::vector<Variable> arguments);
+
 #endif // MODULES_CORE_HPP

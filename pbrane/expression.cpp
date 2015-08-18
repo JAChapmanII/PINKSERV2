@@ -95,6 +95,20 @@ string Expression::pretty(char ident, int count, int level) const {
 	return res;
 }
 
+string Expression::prettyOneLine() const {
+	string res("(");
+
+	res += type;
+	if(!text.empty())
+		res += " [" + text + "]";
+	for(const unique_ptr<Expression> &i : args)
+		if(!i)
+			res += " (null)";
+		else
+			res += " " + i->prettyOneLine();
+	return res + ")";
+}
+
 string StackTrace::toString() const {
 	return error + " [stacktrace: " + join(frames, " -> ") + "]";
 }
@@ -290,6 +304,10 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 	// variable access
 	if(this->type == "var") {
 		string var = this->args[0]->evaluate(who).toString();
+		if(var == "true")
+			return Variable::parse("true");
+		if(var == "false")
+			return Variable::parse("false");
 		if(global::vars.find(var) == global::vars.end())
 			global::vars[var] = Variable(0L, Permissions(who));
 
@@ -342,6 +360,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 			// steal args from opExpr to avoid a copy, since we don't need opExpr
 			// anymore anyway
 			Expression assign("=", opExpr.args);
+			assign.args[1] = unique_ptr<Expression>(new Expression("str", result.toString()));
 			return assign.evaluate(who);
 		}
 	}

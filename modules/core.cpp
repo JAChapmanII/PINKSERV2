@@ -129,10 +129,12 @@ Variable undefined(std::vector<Variable> arguments) {
 }
 
 // TODO: how to do this partly? Gah... :(
-Variable rm(vector<Variable>) {
-	// TODO: we need to know the caller for this to work...
-	//for(auto var : arguments) {
-	//}
+Variable rm(vector<Variable> arguments) {
+	// TODO: we need to know the caller for this to work... (perms)
+	for(auto var : arguments) {
+		global::vars.erase(var.toString());
+	}
+	return Variable("erased", Permissions());
 	throw (string)"(not-implemented, bug " + global::vars["bot.owner"].toString() + ")";
 }
 
@@ -208,5 +210,21 @@ Variable toint(vector<Variable> arguments) {
 	if(arguments.size() != 1)
 		return Variable("error: toint takes one argument", Permissions());
 	return arguments.front().asInteger();
+}
+
+Variable bmess(vector<Variable> arguments) {
+	if(arguments.size() < 1)
+		return Variable("error: bmess takes a list of bytes", Permissions());
+	string res = "bmess: ";
+	for(auto &v : arguments)
+		res += (char)(v.asInteger().value.l & 0xFF);
+	return Variable(res, Permissions());
+}
+
+Variable pol(vector<Variable> arguments) {
+	if(arguments.size() != 1)
+		return Variable("error: pol takes one argument", Permissions());
+	auto e = Parser::parse("${ " + arguments.front().toString() + " }");
+	return Variable(e->prettyOneLine(), Permissions());
 }
 

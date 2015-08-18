@@ -39,6 +39,9 @@ struct Expression {
 	// return a human readable (but not parseable) representation of this
 	std::string pretty(char ident = ' ', int count = 1, int level = 0) const;
 
+	// return a oneline human readable representation of this
+	std::string prettyOneLine() const;
+
 	// return the result of evaluating the expression
 	// note: may throw StackTrace if there's an error
 	Variable evaluate(std::string who) const;
