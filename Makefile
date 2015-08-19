@@ -22,10 +22,10 @@ OBJS=${MOBJS}
 OBJS+=${ODIR}/util.o ${ODIR}/global.o ${ODIR}/journal.o ${ODIR}/config.o
 OBJS+=${ODIR}/expression.o ${ODIR}/parser.o
 OBJS+=${ODIR}/permission.o ${ODIR}/variable.o ${ODIR}/eventsystem.o
-OBJS+=${ODIR}/regex.o
+OBJS+=${ODIR}/regex.o ${ODIR}/kvpair.o
 
 CXXFLAGS=-std=c++0x -I${SDIR} -I${LDIR} -I${PDIR} -I${MDIR}
-LDFLAGS=-lboost_regex
+LDFLAGS=-lboost_regex -lsqlite3
 # -lgmp -lgmpxx
 
 ifndef release

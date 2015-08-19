@@ -228,3 +228,44 @@ Variable pol(vector<Variable> arguments) {
 	return Variable(e->prettyOneLine(), Permissions());
 }
 
+
+const string dbFile = "kv.db";
+const string tableName = "kvpairs";
+#include "kvpair.hpp"
+
+Variable getKV(vector<Variable> arguments) {
+	if(arguments.size() != 1)
+		return Variable("error: getKV takes one argument", Permissions());
+	string key = arguments.front().toString();
+
+	KVPairDB db(dbFile, tableName);
+	string *value = db.getValue(key);
+	if(value == nullptr) {
+		return Variable("{nullptr}", Permissions());
+	}
+	return Variable(*value, Permissions());
+}
+
+Variable setKV(vector<Variable> arguments) {
+	if(arguments.size() != 2)
+		return Variable("error: setKV takes two arguments", Permissions());
+
+	KVPairDB db(dbFile, tableName);
+	KVPair pair;
+	pair.key = arguments.front().toString();
+	pair.value = arguments.back().toString();
+
+	try {
+		if(db.exists(pair.key)) {
+			db.setPair(pair);
+		} else {
+			db.insertPair(pair);
+		}
+	} catch(int ex) {
+		cerr << "ex: " << ex << endl;
+		throw;
+	}
+
+	return Variable("success", Permissions());
+}
+
