@@ -18,6 +18,9 @@ std::istream &readMarkov(std::istream &in);
 // #f: observe: observes a line and adds it into the markov model
 Variable observe(std::vector<Variable> arguments);
 
+// #f: ngobserve: observes a line and adds it into the ngram model
+Variable ngobserve(std::vector<Variable> arguments);
+
 // #f: markov: returns a markov chain given a seed string
 Variable markov(std::vector<Variable> arguments);
 

@@ -281,6 +281,38 @@ Variable observe(vector<Variable> arguments) {
 	return Variable(true, Permissions());
 }
 
+#include "ngram.hpp"
+#include "db.hpp"
+const string ng_dbFile = "ng.db";
+const string ng_tableName = "ngrams";
+
+static string lastNGObserve = "";
+Variable ngobserve(std::vector<Variable> arguments) {
+	string now = join(arguments, " ") + "\n",
+		toObserve = lastNGObserve + " " + now;
+
+	db::Database db{ng_dbFile};
+	ngramStore store{db, ng_tableName};
+
+	vector<string> words_s = util::split(toObserve);
+	vector<unsigned> words{words_s.size()};
+	for(auto &word : words_s) words.push_back(global::dictionary[word]);
+
+	for(int i = 0; i < words.size(); ++i) {
+		vector<word_t> prefix;
+		ngram_t ngram{prefix, words[i]};
+		store.increment(ngram);
+
+		for(int j = 0; j < i; ++j) {
+			ngram.prefix.push_back(words[j]);
+			store.increment(ngram);
+		}
+	}
+
+	lastNGObserve = now;
+	return Variable(true, Permissions());
+}
+
 #include <iostream>
 using std::cerr;
 using std::endl;
