@@ -29,6 +29,7 @@ db::Database::~Database() {
 sqlite3 *db::Database::getDB() { return _db; }
 
 db::Statement::Statement(Database &db, string sql) : _db(db), _sql(sql) {
+	cerr << "Statement::Statement: sql: \"" << _sql << "\"" << endl;
 	const char *leftover{nullptr};
 	int rc = sqlite3_prepare_v2(_db.getDB(), _sql.c_str(), _sql.size(),
 			&_statement, &leftover);
