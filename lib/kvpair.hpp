@@ -2,7 +2,7 @@
 #define KVPAIR_HPP
 
 #include <string>
-#include <sqlite3.h>
+#include "db.hpp"
 
 struct KVPair {
 	std::string key{};
@@ -22,9 +22,8 @@ struct KVPairDB {
 	KVPairDB *operator=(KVPairDB &rhs) = delete;
 
 	protected:
-		std::string _dbFilename;
 		std::string _table;
-		sqlite3 *_db;
+		db::Database _db;
 };
 
 
