@@ -269,3 +269,42 @@ Variable setKV(vector<Variable> arguments) {
 	return Variable("success", Permissions());
 }
 
+#include "ngram.hpp"
+#include "db.hpp"
+const string ng_dbFile = "ng.db";
+const string ng_tableName = "ngrams";
+
+Variable getNgram(vector<Variable> arguments) {
+	if(arguments.size() < 1)
+		return Variable("error: getNgram takes at least one argument", Permissions());
+
+	vector<word_t> prefix;
+	for(int i = 0; i < arguments.size() - 1; ++i)
+		prefix.push_back(global::dictionary[arguments[i].toString()]);
+	word_t atom = global::dictionary[arguments.back().toString()];
+
+	db::Database db{ng_dbFile};
+	ngram_t ngram{prefix, atom};
+	ngramStore store{db, ng_tableName};
+	chain_t chain = store.fetch(ngram);
+
+	return Variable((long)chain.count, Permissions());
+}
+
+Variable incNgram(vector<Variable> arguments) {
+	if(arguments.size() < 1)
+		return Variable("error: incNgram takes at least one argument", Permissions());
+
+	vector<word_t> prefix;
+	for(int i = 0; i < arguments.size() - 1; ++i)
+		prefix.push_back(global::dictionary[arguments[i].toString()]);
+	word_t atom = global::dictionary[arguments.back().toString()];
+
+	db::Database db{ng_dbFile};
+	ngram_t ngram{prefix, atom};
+	ngramStore store{db, ng_tableName};
+	store.increment(ngram);
+
+	return Variable("success", Permissions());
+}
+
