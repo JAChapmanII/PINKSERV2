@@ -16,10 +16,11 @@ bool KVPairDB::exists(string key) {
 
 	statement.bind(1, key);
 
-	int rc = statement.step();
+	auto result = statement.execute();
+	int rc = result.status();
 	if(rc != SQLITE_ROW) { throw rc; }
 
-	return statement.getInteger(0) > 0;
+	return result.getInteger(0) > 0;
 }
 string *KVPairDB::getValue(string key) {
 	string sql = "SELECT value FROM " + _table + " WHERE key = ?;";
@@ -27,7 +28,8 @@ string *KVPairDB::getValue(string key) {
 
 	statement.bind(1, key);
 
-	int rc = statement.step();
+	auto result = statement.execute();
+	int rc = result.status();
 	if(rc == SQLITE_DONE) {
 		return nullptr;
 	}
@@ -35,7 +37,7 @@ string *KVPairDB::getValue(string key) {
 		throw rc;
 	}
 
-	return new string{statement.getString(0)};
+	return new string{result.getString(0)};
 }
 void KVPairDB::insertPair(KVPair pair) {
 	string sql = "INSERT INTO " + _table + " VALUES(?, ?)";
@@ -44,7 +46,8 @@ void KVPairDB::insertPair(KVPair pair) {
 	statement.bind(1, pair.key);
 	statement.bind(2, pair.value);
 
-	int rc = statement.step();
+	auto result = statement.execute();
+	int rc = result.status();
 	if(rc != SQLITE_DONE) { throw rc; }
 }
 void KVPairDB::setPair(KVPair pair) {
@@ -54,7 +57,8 @@ void KVPairDB::setPair(KVPair pair) {
 	statement.bind(1, pair.value);
 	statement.bind(2, pair.key);
 
-	int rc = statement.step();
+	auto result = statement.execute();
+	int rc = result.status();
 	if(rc != SQLITE_DONE) { throw rc; }
 }
 

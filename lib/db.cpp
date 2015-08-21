@@ -57,16 +57,24 @@ void db::Statement::bind(int idx, int val) {
 void db::Statement::bind(int idx, string val) {
 	sqlite3_bind_text(_statement, idx, val.c_str(), val.size(), SQLITE_STATIC);
 }
+db::Result db::Statement::execute() { return Result(*this); }
 
-int db::Statement::step() {
-	return sqlite3_step(_statement);
-}
+string db::Statement::sql() const { return _sql; }
+sqlite3_stmt *db::Statement::getStatement() { return _statement; }
 
-int db::Statement::getInteger(int idx) {
-	return sqlite3_column_int(_statement, idx);
+
+db::Result::Result(Statement &statement) : _statement(statement) { step(); }
+db::Result::~Result() { sqlite3_reset(_statement.getStatement()); }
+
+int db::Result::status() { return _rc; }
+int db::Result::step() { return _rc = sqlite3_step(_statement.getStatement()); }
+
+int db::Result::getInteger(int idx) {
+	return sqlite3_column_int(_statement.getStatement(), idx);
 }
-string db::Statement::getString(int idx) {
-	const unsigned char *result = sqlite3_column_text(_statement, idx);
+string db::Result::getString(int idx) {
+	const unsigned char *result = sqlite3_column_text(_statement.getStatement(), idx);
 	return string{(char *)result};
 }
+
 

@@ -19,6 +19,8 @@ namespace db {
 			sqlite3 *_db{nullptr};
 	};
 
+	struct Result;
+
 	struct Statement {
 		Statement(Database &db, std::string sql);
 		~Statement();
@@ -26,18 +28,33 @@ namespace db {
 		void bind(int idx, int val);
 		void bind(int idx, std::string val);
 
-		int step();
-
-		int getInteger(int idx);
-		std::string getString(int idx);
+		Result execute();
 
 		Statement(const Statement &rhs) = delete;
 		Statement *operator=(const Statement &rhs) = delete;
+
+		std::string sql() const;
+		sqlite3_stmt *getStatement();
 
 		private:
 			Database &_db;
 			std::string _sql{};
 			sqlite3_stmt *_statement{nullptr};
+	};
+
+	struct Result {
+		Result(Statement &statement);
+		~Result();
+
+		int status();
+		int step();
+
+		int getInteger(int idx);
+		std::string getString(int idx);
+
+		private:
+			int _rc{SQLITE_ERROR};
+			Statement &_statement;
 	};
 }
 
