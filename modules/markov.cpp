@@ -285,14 +285,13 @@ Variable observe(vector<Variable> arguments) {
 #include "db.hpp"
 const string ng_dbFile = "ng.db";
 const string ng_tableName = "ngrams";
+static db::Database ng_db{ng_dbFile};
+static ngramStore ng_store{ng_db, ng_tableName};
 
 static string lastNGObserve = "";
 Variable ngobserve(std::vector<Variable> arguments) {
 	string now = join(arguments, " ") + "\n",
 		toObserve = lastNGObserve + " " + now;
-
-	db::Database db{ng_dbFile};
-	ngramStore store{db, ng_tableName};
 
 	vector<string> words_s = util::split(toObserve);
 	vector<unsigned> words{words_s.size()};
@@ -301,11 +300,11 @@ Variable ngobserve(std::vector<Variable> arguments) {
 	for(int i = 0; i < words.size(); ++i) {
 		vector<word_t> prefix;
 		ngram_t ngram{prefix, words[i]};
-		store.increment(ngram);
+		ng_store.increment(ngram);
 
 		for(int j = 0; j < i; ++j) {
 			ngram.prefix.push_back(words[j]);
-			store.increment(ngram);
+			ng_store.increment(ngram);
 		}
 	}
 
