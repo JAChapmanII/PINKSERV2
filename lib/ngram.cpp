@@ -103,13 +103,19 @@ string ngramStoreStatementBuilder::qmarks(int order) const {
 	return util::join(qms, ", ");
 }
 string ngramStoreStatementBuilder::createTable(int order) const {
-	string sql = "CREATE TABLE IF NOT EXISTS " + table(order);
 	vector<string> columns;
 	for(int i = 0; i < order; ++i)
-		columns.push_back(column(i) + " int");
-	columns.push_back("atom int");
-	columns.push_back("count int");
-	sql += "( " + util::join(columns, ", ") + " )";
+		columns.push_back(column(i));
+	columns.push_back("atom");
+	columns.push_back("count");
+
+	string sql = "CREATE TABLE IF NOT EXISTS " + table(order);
+	sql += "( " + util::join(columns, " int, ") + " int);";
+
+	columns.pop_back(); // remove count for index
+
+	sql += "CREATE UNIQUE INDEX IF NOT EXISTS idx_" + table(order)
+		+ " ( " + util::join(columns, ", ") + ");";
 	return sql;
 }
 string ngramStoreStatementBuilder::ngramExists(int order) const {
@@ -176,6 +182,7 @@ bool ngramTableCache::exists(int order) {
 	auto result = statement.execute();
 	int rc = result.status();
 	if(rc != SQLITE_DONE) { throw rc; }
+
 
 	return _exists[order] = true;
 }
