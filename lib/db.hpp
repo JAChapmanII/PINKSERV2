@@ -5,11 +5,16 @@
 #include <sqlite3.h>
 
 namespace db {
+	struct Transaction;
+	struct Statement;
+
 	struct Database {
 		Database(std::string fileName);
 		~Database();
 
 		sqlite3 *getDB();
+
+		Transaction transaction();
 
 		Database(const Database &rhs) = delete;
 		Database *operator=(const Database &rhs) = delete;
@@ -17,6 +22,8 @@ namespace db {
 		private:
 			std::string _fileName{};
 			sqlite3 *_db{nullptr};
+			Statement *_startTransaction{nullptr};
+			Statement *_commitTransaction{nullptr};
 	};
 
 	struct Result;
@@ -55,6 +62,15 @@ namespace db {
 		private:
 			int _rc{SQLITE_ERROR};
 			Statement &_statement;
+	};
+
+	struct Transaction {
+		Transaction(Statement &start, Statement &end);
+		~Transaction();
+
+		private:
+			Statement &_start;
+			Statement &_end;
 	};
 }
 

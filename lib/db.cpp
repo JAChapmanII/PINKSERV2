@@ -15,6 +15,8 @@ db::Database::Database(string fileName) : _fileName(fileName) {
 	}
 }
 db::Database::~Database() {
+	if(_startTransaction) { delete _startTransaction; }
+	if(_commitTransaction) { delete _commitTransaction; }
 	if(_db) {
 		int rc = sqlite3_close(_db);
 		if(rc != SQLITE_OK) {
@@ -27,6 +29,15 @@ db::Database::~Database() {
 }
 
 sqlite3 *db::Database::getDB() { return _db; }
+db::Transaction db::Database::transaction() {
+	if(!_startTransaction) {
+		_startTransaction = new Statement{*this, "BEGIN TRANSACTION"};
+	}
+	if(!_commitTransaction) {
+		_commitTransaction = new Statement{*this, "COMMIT TRANSACTION"};
+	}
+	return Transaction{*_startTransaction, *_commitTransaction};
+}
 
 db::Statement::Statement(Database &db, string sql) : _db(db), _sql(sql) {
 	cerr << "Statement::Statement: sql: \"" << _sql << "\"" << endl;
@@ -77,4 +88,16 @@ string db::Result::getString(int idx) {
 	return string{(char *)result};
 }
 
+
+db::Transaction::Transaction(Statement &start, Statement &end)
+		: _start(start), _end(end) {
+	auto result = _start.execute();
+	int rc = result.status();
+	if(rc != SQLITE_DONE) { throw rc; }
+}
+db::Transaction::~Transaction() {
+	auto result = _end.execute();
+	int rc = result.status();
+	if(rc != SQLITE_DONE) { throw rc; }
+}
 
