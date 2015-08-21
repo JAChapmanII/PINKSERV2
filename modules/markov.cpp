@@ -288,6 +288,8 @@ const string ng_tableName = "ngrams";
 static db::Database ng_db{ng_dbFile};
 static ngramStore ng_store{ng_db, ng_tableName};
 
+static int ngObserveMaxOrder = 4;
+
 static string lastNGObserve = "";
 Variable ngobserve(std::vector<Variable> arguments) {
 	string now = join(arguments, " ") + "\n",
@@ -297,18 +299,24 @@ Variable ngobserve(std::vector<Variable> arguments) {
 	vector<unsigned> words{words_s.size()};
 	for(auto &word : words_s) words.push_back(global::dictionary[word]);
 
-	for(int i = 0; i < words.size(); ++i) {
-		vector<word_t> prefix;
-		ngram_t ngram{prefix, words[i]};
-		ng_store.increment(ngram);
+	{
+		auto tran = ng_db.transaction();
 
-		for(int j = 0; j < i; ++j) {
-			ngram.prefix.push_back(words[j]);
+		for(int i = 0; i < words.size(); ++i) {
+			vector<word_t> prefix;
+			ngram_t ngram{prefix, words[i]};
 			ng_store.increment(ngram);
+
+			for(int j = 0; j < i; ++j) {
+				ngram.prefix.push_back(words[j]);
+				if(ngram.order() > ngObserveMaxOrder)
+					break;
+				ng_store.increment(ngram);
+			}
 		}
 	}
 
-	lastNGObserve = now;
+	//lastNGObserve = now;
 	return Variable(true, Permissions());
 }
 
