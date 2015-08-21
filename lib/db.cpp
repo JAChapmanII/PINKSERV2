@@ -50,6 +50,9 @@ db::Statement::Statement(Database &db, string sql) : _db(db), _sql(sql) {
 			<< "    " << rc << endl;
 		throw rc;
 	}
+	if(*leftover != '\0') {
+		cerr << "Statement::Statement: leftover: " << leftover << endl;
+	}
 }
 db::Statement::~Statement() {
 	if(_statement) {
