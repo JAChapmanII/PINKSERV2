@@ -3,8 +3,8 @@ using std::vector;
 using std::string;
 using std::to_string;
 using std::map;
-using db::Database;
-using db::Statement;
+using zidcu::Database;
+using zidcu::Statement;
 
 #include "util.hpp"
 

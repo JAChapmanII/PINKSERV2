@@ -1,7 +1,7 @@
 #include "kvpair.hpp"
 using std::string;
-using db::Database;
-using db::Statement;
+using zidcu::Database;
+using zidcu::Statement;
 
 #include <iostream>
 using std::cerr;

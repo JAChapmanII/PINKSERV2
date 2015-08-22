@@ -27,14 +27,14 @@ struct chain_t {
 };
 
 struct StatementCache {
-	StatementCache(db::Database &db);
+	StatementCache(zidcu::Database &db);
 	~StatementCache();
 
-	db::Statement &operator[](std::string sql);
+	zidcu::Statement &operator[](std::string sql);
 
 	private:
-		db::Database &_db;
-		std::map<std::string, db::Statement *> _cache{};
+		zidcu::Database &_db;
+		std::map<std::string, zidcu::Statement *> _cache{};
 };
 
 struct ngramStoreStatementBuilder {
@@ -57,14 +57,14 @@ struct ngramStoreStatementBuilder {
 };
 
 struct ngramStatementCache {
-	ngramStatementCache(db::Database &db, ngramStoreStatementBuilder builder);
+	ngramStatementCache(zidcu::Database &db, ngramStoreStatementBuilder builder);
 
-	db::Statement &createTable(int order);
-	db::Statement &createIndex(int order);
-	db::Statement &ngramExists(int order);
-	db::Statement &ngramFetch(int order);
-	db::Statement &ngramInsert(int order);
-	db::Statement &ngramIncrement(int order);
+	zidcu::Statement &createTable(int order);
+	zidcu::Statement &createIndex(int order);
+	zidcu::Statement &ngramExists(int order);
+	zidcu::Statement &ngramFetch(int order);
+	zidcu::Statement &ngramInsert(int order);
+	zidcu::Statement &ngramIncrement(int order);
 
 	private:
 		ngramStoreStatementBuilder _builder;
@@ -88,17 +88,17 @@ struct ngramTableCache {
 };
 
 struct ngramStore {
-	ngramStore(db::Database &db, std::string baseTableName);
+	ngramStore(zidcu::Database &db, std::string baseTableName);
 
 	chain_t fetch(ngram_t ngram);
 	void increment(ngram_t ngram);
 	bool exists(ngram_t ngram);
 
 	private:
-		void bind(db::Statement &statement, ngram_t &ngram);
+		void bind(zidcu::Statement &statement, ngram_t &ngram);
 
 	private:
-		db::Database &_db;
+		zidcu::Database &_db;
 		std::string _baseTableName;
 		ngramStoreStatementBuilder _builder;
 		ngramStatementCache _cache;

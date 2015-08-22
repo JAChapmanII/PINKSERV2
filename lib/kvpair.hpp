@@ -23,7 +23,7 @@ struct KVPairDB {
 
 	protected:
 		std::string _table;
-		db::Database _db;
+		zidcu::Database _db;
 };
 
 

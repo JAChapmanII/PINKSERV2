@@ -4,11 +4,12 @@
 #include <string>
 #include <sqlite3.h>
 
-namespace db {
+namespace zidcu {
 	struct Transaction;
 	struct Statement;
 
 	struct Database {
+		Database();
 		Database(std::string fileName);
 		~Database();
 
@@ -19,7 +20,10 @@ namespace db {
 		Database(const Database &rhs) = delete;
 		Database *operator=(const Database &rhs) = delete;
 
+		void open(std::string fileName);
+
 		private:
+			bool _opened{false};
 			std::string _fileName{};
 			sqlite3 *_db{nullptr};
 			Statement *_startTransaction{nullptr};

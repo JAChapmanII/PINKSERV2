@@ -285,7 +285,7 @@ Variable observe(vector<Variable> arguments) {
 #include "db.hpp"
 const string ng_dbFile = "ng.db";
 const string ng_tableName = "ngrams";
-static db::Database ng_db{ng_dbFile};
+static zidcu::Database ng_db{ng_dbFile};
 static ngramStore ng_store{ng_db, ng_tableName};
 static bool ng_pragmad = false;
 
@@ -301,19 +301,19 @@ void sqlTrace(void *a, const char *b) {
 static string lastNGObserve = "";
 Variable ngobserve(std::vector<Variable> arguments) {
 	if(!ng_pragmad) {
-		db::Statement p1{ng_db, "PRAGMA cache_size = 10000;"};
+		zidcu::Statement p1{ng_db, "PRAGMA cache_size = 10000;"};
 		auto r1 = p1.execute(); if(r1.status() != SQLITE_DONE) { throw r1.status(); }
 
-		db::Statement p2{ng_db, "PRAGMA page_size = 8192;"};
+		zidcu::Statement p2{ng_db, "PRAGMA page_size = 8192;"};
 		auto r2 = p2.execute(); if(r2.status() != SQLITE_DONE) { throw r2.status(); }
 
-		db::Statement p3{ng_db, "PRAGMA temp_store = MEMORY;"};
+		zidcu::Statement p3{ng_db, "PRAGMA temp_store = MEMORY;"};
 		auto r3 = p3.execute(); if(r3.status() != SQLITE_DONE) { throw r3.status(); }
 
-		db::Statement p4{ng_db, "PRAGMA journal_mode = WAL;"};
+		zidcu::Statement p4{ng_db, "PRAGMA journal_mode = WAL;"};
 		auto r4 = p4.execute(); if(r4.status() != SQLITE_ROW) { throw r4.status(); }
 
-		db::Statement p5{ng_db, "PRAGMA synchronous = NORMAL;"};
+		zidcu::Statement p5{ng_db, "PRAGMA synchronous = NORMAL;"};
 		auto r5 = p5.execute(); if(r5.status() != SQLITE_DONE) { throw r5.status(); }
 
 		//void* res = sqlite3_trace(ng_db.getDB(), sqlTrace, nullptr);

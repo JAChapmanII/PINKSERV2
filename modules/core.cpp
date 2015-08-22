@@ -283,7 +283,7 @@ Variable getNgram(vector<Variable> arguments) {
 		prefix.push_back(global::dictionary[arguments[i].toString()]);
 	word_t atom = global::dictionary[arguments.back().toString()];
 
-	db::Database db{ng_dbFile};
+	zidcu::Database db{ng_dbFile};
 	ngram_t ngram{prefix, atom};
 	ngramStore store{db, ng_tableName};
 	chain_t chain = store.fetch(ngram);
@@ -300,7 +300,7 @@ Variable incNgram(vector<Variable> arguments) {
 		prefix.push_back(global::dictionary[arguments[i].toString()]);
 	word_t atom = global::dictionary[arguments.back().toString()];
 
-	db::Database db{ng_dbFile};
+	zidcu::Database db{ng_dbFile};
 	ngram_t ngram{prefix, atom};
 	ngramStore store{db, ng_tableName};
 	store.increment(ngram);
