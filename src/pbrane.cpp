@@ -144,10 +144,15 @@ int main(int argc, char **argv) {
 		string line;
 		getline(cin, line);
 
-		if(line.empty())
+		if(line.find_first_not_of(" \t\r\n") == string::npos)
 			continue;
+
 		string network = line.substr(0, line.find(" "));
 		line = line.substr(line.find(" ") + 1);
+
+		if(line.find_first_not_of(" \t\r\n") == string::npos)
+			continue;
+
 		journal::Entry entry(line);
 
 		vector<string> fields = split(line);
