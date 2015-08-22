@@ -38,6 +38,9 @@ Dictionary<string, unsigned> global::dictionary;
 EventSystem global::eventSystem;
 vector<string> global::moduleFunctionList;
 
+zidcu::Database global::db;
+static bool db_setup{false};
+
 map<string, Variable> global::vars;
 map<string, map<string, Variable>> global::lvars;
 
@@ -46,6 +49,9 @@ static unsigned int global_seed = 0;
 
 vector<string> global::ignoreList;
 unsigned global::minSpeakTime = 0;
+
+void sqlTrace(void *a, const char *b);
+void sqlTrace(void *a, const char *b) { cerr << "sqlTrace: " << b << endl; }
 
 bool global::init(unsigned int seed) {
 	// handle seeding the random number engine
@@ -62,6 +68,24 @@ bool global::init(unsigned int seed) {
 		cerr << "global::init: could not open error file!" << endl;
 		return false;
 	}
+
+	db.open(config::databaseFileName);
+	zidcu::Statement p1{db, "PRAGMA cache_size = 10000;"};
+	auto r1 = p1.execute(); if(r1.status() != SQLITE_DONE) { throw r1.status(); }
+
+	zidcu::Statement p2{db, "PRAGMA page_size = 8192;"};
+	auto r2 = p2.execute(); if(r2.status() != SQLITE_DONE) { throw r2.status(); }
+
+	zidcu::Statement p3{db, "PRAGMA temp_store = MEMORY;"};
+	auto r3 = p3.execute(); if(r3.status() != SQLITE_DONE) { throw r3.status(); }
+
+	zidcu::Statement p4{db, "PRAGMA journal_mode = WAL;"};
+	auto r4 = p4.execute(); if(r4.status() != SQLITE_ROW) { throw r4.status(); }
+
+	zidcu::Statement p5{db, "PRAGMA synchronous = NORMAL;"};
+	auto r5 = p5.execute(); if(r5.status() != SQLITE_DONE) { throw r5.status(); }
+
+	//void* res = sqlite3_trace(db.getDB(), sqlTrace, nullptr);
 
 	// TODO: these
 	// variable, function map

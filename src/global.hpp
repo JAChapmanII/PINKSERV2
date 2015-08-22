@@ -9,6 +9,7 @@
 #include "dictionary.hpp"
 #include "variable.hpp"
 #include "eventsystem.hpp"
+#include "db.hpp"
 
 namespace global {
 	extern bool done;
@@ -18,6 +19,8 @@ namespace global {
 	extern Dictionary<std::string, unsigned> dictionary;
 	extern EventSystem eventSystem;
 	extern std::vector<std::string> moduleFunctionList;
+
+	extern zidcu::Database db;
 
 	// variable, function map
 	extern std::map<std::string, Variable> vars;

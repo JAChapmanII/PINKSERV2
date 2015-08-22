@@ -11,6 +11,7 @@ namespace config {
 	string todoFileName = nick + ".todo";
 	string brainFileName = nick + ".brain";
 	string journalFileName = nick + ".journal";
+	string databaseFileName = nick + ".db";
 
 	namespace regex {
 		// TODO: this is a mess
