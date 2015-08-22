@@ -43,21 +43,23 @@ chain_t ngramStore::fetch(ngram_t ngram) {
 }
 void ngramStore::increment(ngram_t ngram) {
 	_tableCache.exists(ngram.order());
-	int rc = SQLITE_ERROR;
-	if(exists(ngram)) {
-		auto &statement = _cache.ngramIncrement(ngram.order());
-		bind(statement, ngram);
-		auto result = statement.execute();
-		rc = result.status();
-	} else {
+	{
 		auto &statement = _cache.ngramInsert(ngram.order());
 		bind(statement, ngram);
 		auto result = statement.execute();
-		rc = result.status();
+		if(result.status() != SQLITE_DONE) {
+			cerr << "ngramStore::increment: error: " << result.status() << endl;
+			throw result.status();
+		}
 	}
-	if(rc != SQLITE_DONE) {
-		cerr << "ngramStore::increment: error: " << rc << endl;
-		throw rc;
+	{
+		auto &statement = _cache.ngramIncrement(ngram.order());
+		bind(statement, ngram);
+		auto result = statement.execute();
+		if(result.status() != SQLITE_DONE) {
+			cerr << "ngramStore::increment: error: " << result.status() << endl;
+			throw result.status();
+		}
 	}
 }
 bool ngramStore::exists(ngram_t ngram) {
@@ -82,7 +84,6 @@ void ngramStore::bind(Statement &statement, ngram_t &ngram) {
 }
 
 
-
 ngramStoreStatementBuilder::ngramStoreStatementBuilder(string baseTableName)
 		: _baseTableName(baseTableName) { }
 string ngramStoreStatementBuilder::table(int order) const {
@@ -94,12 +95,14 @@ string ngramStoreStatementBuilder::column(int p) const {
 string ngramStoreStatementBuilder::where(int order) const {
 	vector<string> clauses;
 	for(int i = 0; i < order; ++i)
-		clauses.push_back(" (" + column(i) + " = ? )");
-	clauses.push_back(" (atom = ?)");
+		clauses.push_back("(" + column(i) + " = ?" + to_string(i + 1) + ")");
+	clauses.push_back("(atom = ?" + to_string(order + 1) + ")");
 	return util::join(clauses, " AND ");
 }
 string ngramStoreStatementBuilder::qmarks(int order) const {
-	vector<string> qms{order + 1, "?"}; // include atom
+	vector<string> qms;
+	for(int i = 0; i < order + 1; ++i) // include atom
+		qms.push_back("?" + to_string(i + 1));
 	return util::join(qms, ", ");
 }
 string ngramStoreStatementBuilder::createTable(int order) const {
@@ -107,16 +110,24 @@ string ngramStoreStatementBuilder::createTable(int order) const {
 	for(int i = 0; i < order; ++i)
 		columns.push_back(column(i));
 	columns.push_back("atom");
+
+	string pkColumns = util::join(columns, ", ");
+
 	columns.push_back("count");
+	string allColumns = util::join(columns, " int, ");
 
-	string sql = "CREATE TABLE IF NOT EXISTS " + table(order);
-	sql += "( " + util::join(columns, " int, ") + " int);";
+	return "CREATE TABLE IF NOT EXISTS " + table(order)
+		+ "(" + allColumns + " int, PRIMARY KEY(" + pkColumns + "));";
+}
+string ngramStoreStatementBuilder::createIndex(int order) const {
+	vector<string> columns;
+	for(int i = 0; i < order; ++i)
+		columns.push_back(column(i));
+	columns.push_back("atom");
+	string pkColumns = util::join(columns, ", ");
 
-	columns.pop_back(); // remove count for index
-
-	sql += "CREATE UNIQUE INDEX IF NOT EXISTS idx_" + table(order)
-		+ " ( " + util::join(columns, ", ") + ");";
-	return sql;
+	return "CREATE UNIQUE INDEX IF NOT EXISTS idx_" + table(order)
+		+ " ON " + table(order) + " ( " + pkColumns + ");";
 }
 string ngramStoreStatementBuilder::ngramExists(int order) const {
 	return "SELECT COUNT(1) FROM " + table(order) + " WHERE " + where(order);
@@ -125,7 +136,8 @@ string ngramStoreStatementBuilder::ngramFetch(int order) const {
 	return "SELECT count FROM " + table(order) + " WHERE " + where(order);
 }
 string ngramStoreStatementBuilder::ngramInsert(int order) const {
-	return "INSERT INTO " + table(order) + " VALUES(" + qmarks(order) + ", 1)";
+	return "INSERT OR IGNORE INTO " + table(order)
+		+ " VALUES(" + qmarks(order) + ", 0);";
 }
 string ngramStoreStatementBuilder::ngramIncrement(int order) const {
 	return "UPDATE " + table(order) + " SET count = count + 1 "
@@ -150,6 +162,11 @@ Statement &ngramStatementCache::createTable(int order) {
 	if(_tableCache.find(order) == _tableCache.end())
 		_tableCache[order] = _builder.createTable(order);
 	return _cache[_tableCache[order]];
+}
+Statement &ngramStatementCache::createIndex(int order) {
+	if(_indexCache.find(order) == _indexCache.end())
+		_indexCache[order] = _builder.createIndex(order);
+	return _cache[_indexCache[order]];
 }
 Statement &ngramStatementCache::ngramExists(int order) {
 	if(_existsCache.find(order) == _existsCache.end())
@@ -178,11 +195,16 @@ bool ngramTableCache::exists(int order) {
 	if(_exists.find(order) != _exists.end())
 		return true;
 
-	auto &statement = _cache.createTable(order);
-	auto result = statement.execute();
-	int rc = result.status();
-	if(rc != SQLITE_DONE) { throw rc; }
-
+	{
+		auto &statement = _cache.createTable(order);
+		auto result = statement.execute();
+		if(result.status() != SQLITE_DONE) { throw result.status(); }
+	}
+	{
+		auto &statement = _cache.createIndex(order);
+		auto result = statement.execute();
+		if(result.status() != SQLITE_DONE) { throw result.status(); }
+	}
 
 	return _exists[order] = true;
 }

@@ -46,6 +46,7 @@ struct ngramStoreStatementBuilder {
 	std::string qmarks(int order) const;
 
 	std::string createTable(int order) const;
+	std::string createIndex(int order) const;
 	std::string ngramExists(int order) const;
 	std::string ngramFetch(int order) const;
 	std::string ngramInsert(int order) const;
@@ -59,6 +60,7 @@ struct ngramStatementCache {
 	ngramStatementCache(db::Database &db, ngramStoreStatementBuilder builder);
 
 	db::Statement &createTable(int order);
+	db::Statement &createIndex(int order);
 	db::Statement &ngramExists(int order);
 	db::Statement &ngramFetch(int order);
 	db::Statement &ngramInsert(int order);
@@ -67,6 +69,7 @@ struct ngramStatementCache {
 	private:
 		ngramStoreStatementBuilder _builder;
 		std::map<int, std::string> _tableCache{};
+		std::map<int, std::string> _indexCache{};
 		std::map<int, std::string> _existsCache{};
 		std::map<int, std::string> _fetchCache{};
 		std::map<int, std::string> _insertCache{};
