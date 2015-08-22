@@ -129,5 +129,5 @@ bool modules::deinit(std::string brainFileName) {
 	return true;
 }
 
-#include "modules_gen.cpp"
+#include "modules.cpp.gen"
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OUTF="./lib/modules_gen.cpp"
+OUTF="./lib/modules.cpp.gen"
 
 :> mincs
 :> mods

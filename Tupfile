@@ -1,0 +1,41 @@
+CXX=g++
+
+SDIR=./src
+LDIR=./lib
+PDIR=./pbrane
+MDIR=./modules
+ODIR=./obj
+BDIR=./bin
+
+CXXFLAGS=-std=c++0x -I$(SDIR) -I$(LDIR) -I$(PDIR) -I$(MDIR)
+LDFLAGS=-lboost_regex -lsqlite3
+# -lgmp -lgmpxx
+
+ifndef release
+CXXFLAGS+=-g
+else
+CXXFLAGS+=-O3 -Os
+endif
+
+ifndef nowall
+CXXFLAGS+=-Wall -Wextra -pedantic -Wmain -Weffc++ -Wswitch-default -Wswitch-enum
+CXXFLAGS+=-Wmissing-include-dirs -Wmissing-declarations -Wunreachable-code
+CXXFLAGS+=-Winline -Wfloat-equal -Wundef -Wcast-align -Wredundant-decls
+CXXFLAGS+=-Winit-self -Wshadow
+endif
+
+ifdef profile
+CXXFLAGS+=-pg
+LDFLAGS+=-pg
+endif
+
+# : foreach $(SDIR) $(ODIR) $(BDIR) |> mkdir -p %f |> %B
+
+: $(MDIR)/*.hpp |> $(BDIR)/makemods |> $(LDIR)/modules.cpp.gen
+
+: foreach $(SDIR)/*.cpp | $(LDIR)/modules.cpp.gen |> $(CXX) -c %f -o %o $(CXXFLAGS) |> $(ODIR)/%B.o
+: foreach $(LDIR)/*.cpp | $(LDIR)/modules.cpp.gen |> $(CXX) -c %f -o %o $(CXXFLAGS) |> $(ODIR)/%B.o
+: foreach $(PDIR)/*.cpp | $(LDIR)/modules.cpp.gen |> $(CXX) -c %f -o %o $(CXXFLAGS) |> $(ODIR)/%B.o
+: foreach $(MDIR)/*.cpp | $(LDIR)/modules.cpp.gen |> $(CXX) -c %f -o %o $(CXXFLAGS) |> $(ODIR)/%B.o
+
+: $(ODIR)/*.o |> $(CXX) -o %o %f $(LDFLAGS) |> $(BDIR)/pbrane

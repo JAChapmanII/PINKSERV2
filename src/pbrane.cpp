@@ -85,12 +85,136 @@ struct CrashInformation {
 CrashInformation crashed();
 void crashed(bool val, string last = "");
 
+void cycle_brain(bool dump, bool read);
+void prettyPrint(string arg);
+void teval(vector<string> args);
+
+void cycle_brain(bool dump, bool read) {
+	// initialize modules
+	modules::init(config::brainFileName);
+
+	if(dump)
+		dumpMarkov(cout);
+	if(read)
+		readMarkov(cin);
+
+	// free memory associated with modules
+	modules::deinit(config::brainFileName);
+}
+
+void prettyPrint(string arg) {
+	cout << arg << endl;
+	try {
+		auto et = parse(arg);
+		cout << et->pretty(' ', 4) << endl;
+	} catch(ParseException e) {
+		cerr << e.pretty() << endl;
+	}
+}
+
+void teval(vector<string> args) {
+	global::vars["bot.owner"] = "jac";
+	global::vars["bot.admins"] = "Jext, RGCockatrices, bonzairob, quairlzr, Nybbles, ajanata";
+	global::vars["bot.maxIterations"] = "10";
+
+	// initialize modules
+	modules::init(config::brainFileName);
+
+	random_device randomDevice;
+	unsigned int seed = randomDevice();
+	global::init(seed);
+
+	if(!args.empty()) {
+		for(auto &arg : args) {
+			if(arg.empty())
+				continue;
+			cout << ": " << arg << endl;
+
+			try {
+				auto expr = Parser::parse(arg);
+				cout << "expr: " << (expr ? "true" : "false") << endl;
+
+				// print computed AST
+				cout << "final: " << endl;
+				cout << expr->pretty() << endl;
+				cout << "stringify: " << expr->toString() << endl;
+
+				cout << "result: " << expr->evaluate("jac").toString() << endl;
+				// TODO: other exception types...
+			} catch(ParseException e) {
+				cout << e.pretty() << endl;
+			} catch(StackTrace e) {
+				cout << e.toString() << endl;
+			} catch(string &s) {
+				cout << "\t: " << s << endl;
+			}
+		}
+
+		// free memory associated with modules
+		modules::deinit(config::brainFileName);
+		return;
+	}
+
+	while(cin.good() && !cin.eof()) {
+		string nick, line;
+		getline(cin, nick);
+		getline(cin, line);
+		if(nick.empty() || line.empty())
+			break;
+
+		try {
+			auto expr = Parser::parse(line);
+
+			cerr << "eval'ing: " << line << " as " << nick << endl;
+			cerr << "final AST: " << endl;
+			cerr << expr->pretty() << endl;
+			cerr << "stringify: " << expr->toString() << endl;
+
+			string res = expr->evaluate(nick).toString();
+			cerr << "result: " << res << endl;
+			cout << nick + ": " << res << endl;
+
+			// TODO: other exception types
+		} catch(ParseException e) {
+			cerr << e.pretty() << endl;
+		} catch(StackTrace e) {
+			cout << e.toString() << endl;
+		} catch(string &s) {
+			cerr << "\texception: " << s << endl;
+			cout << nick + ": error: " + s << endl;
+		}
+	}
+
+	// free memory associated with modules
+	modules::deinit(config::brainFileName);
+}
+
 int main(int argc, char **argv) {
 	unsigned int seed = 0;
 	if(argc > 1) {
-		if(string(argv[1]) == "--import") {
+		string arg{argv[1]};
+		if(arg == "--import") {
 			import = true;
 			cerr << "pbrane: import mode enabled" << endl;
+		} else if(arg == "--teval") {
+			vector<string> args;
+			for(int i = 2; i < argc; ++i)
+				args.push_back(argv[i]);
+			teval(args);
+			return 0;
+		} else if(arg == "--cycle") {
+			bool dump{false}, read{false};
+			for(int i = 2; i < argc; ++i) {
+				string arg2 = argv[i];
+				if(arg2 == "--dump") dump = true;
+				if(arg2 == "--read") read = true;
+			}
+			cycle_brain(dump, read);
+			return 0;
+		} else if(arg == "--pprint") {
+			for(int i = 2; i < argc; ++i)
+				prettyPrint(argv[i]);
+			return 0;
 		} else
 			seed = fromString<unsigned int>(argv[1]);
 	} else {
@@ -111,7 +235,7 @@ int main(int argc, char **argv) {
 	evaluate("${(!undefined 'bot.maxLineLength')? { bot.maxLineLength = 256; }}",
 			global::vars["bot.owner"].toString());
 	if(import) {
-		evaluate("${!on \"text\" (null => !observe text)}",
+		evaluate("${!on \"text\" (null => !ngobserve text)}",
 				global::vars["bot.owner"].toString());
 	}
 
