@@ -39,4 +39,7 @@ Variable dsize(std::vector<Variable> arguments);
 // #f: rword: returns a random word (can be restricted to frequency range)
 Variable rword(std::vector<Variable> arguments);
 
+// #f: ngrandom: return a random word given a prefix
+Variable ngrandom(std::vector<Variable> arguments);
+
 #endif // MODULES_MARKOV_HPP

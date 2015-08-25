@@ -295,7 +295,7 @@ Variable ngobserve(std::vector<Variable> arguments) {
 		toObserve = lastNGObserve + " " + now;
 
 	vector<string> words_s = util::split(toObserve);
-	vector<unsigned> words{words_s.size()};
+	vector<word_t> words; words.reserve(words_s.size());
 	for(auto &word : words_s) words.push_back(global::dictionary[word]);
 
 	{
@@ -307,8 +307,9 @@ Variable ngobserve(std::vector<Variable> arguments) {
 			ng_store.increment(ngram);
 			totalIncrements++;
 
-			for(int j = 0; j < i; ++j) {
-				ngram.prefix.push_back(words[j]);
+			for(int j = i + 1; j < words.size(); ++j) {
+				ngram.prefix.push_back(ngram.atom);
+				ngram.atom = words[j];
 				if(ngram.order() > ngObserveMaxOrder)
 					break;
 				ng_store.increment(ngram);
@@ -324,6 +325,14 @@ Variable ngobserve(std::vector<Variable> arguments) {
 
 	//lastNGObserve = now;
 	return Variable(true, Permissions());
+}
+Variable ngrandom(vector<Variable> arguments) {
+	prefix_t words; words.reserve(arguments.size());
+	for(auto &word : arguments)
+		words.push_back(global::dictionary[word.toString()]);
+
+	word_t res = ng_store.random(words);
+	return Variable(global::dictionary[res], Permissions());
 }
 
 #include <iostream>
