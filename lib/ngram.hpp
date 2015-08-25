@@ -51,6 +51,7 @@ struct ngramStoreStatementBuilder {
 	std::string ngramFetch(int order) const;
 	std::string ngramInsert(int order) const;
 	std::string ngramIncrement(int order) const;
+	std::string random(int order) const;
 
 	private:
 		std::string _baseTableName{};
@@ -65,6 +66,7 @@ struct ngramStatementCache {
 	zidcu::Statement &ngramFetch(int order);
 	zidcu::Statement &ngramInsert(int order);
 	zidcu::Statement &ngramIncrement(int order);
+	zidcu::Statement &random(int order);
 
 	private:
 		ngramStoreStatementBuilder _builder;
@@ -74,6 +76,7 @@ struct ngramStatementCache {
 		std::map<int, std::string> _fetchCache{};
 		std::map<int, std::string> _insertCache{};
 		std::map<int, std::string> _incrementCache{};
+		std::map<int, std::string> _randomCache{};
 		StatementCache _cache;
 };
 
@@ -94,8 +97,11 @@ struct ngramStore {
 	void increment(ngram_t ngram);
 	bool exists(ngram_t ngram);
 
+	word_t random(prefix_t prefix);
+
 	private:
 		void bind(zidcu::Statement &statement, ngram_t &ngram);
+		void bind(zidcu::Statement &statement, prefix_t &prefix);
 
 	private:
 		zidcu::Database &_db;

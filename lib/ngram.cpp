@@ -76,11 +76,29 @@ bool ngramStore::exists(ngram_t ngram) {
 
 	return (result.getInteger(0) > 0);
 }
+word_t ngramStore::random(prefix_t prefix) {
+	_tableCache.exists(prefix.size());
+	auto &statement = _cache.random(prefix.size());
+	bind(statement, prefix);
+
+	auto result = statement.execute();
+	if(result.status() == SQLITE_DONE) return -1;
+	if(result.status() != SQLITE_ROW) {
+		cerr << "ngramStore::random: error: " << result.status() << endl;
+		throw result.status();
+	}
+
+	return result.getInteger(0);
+}
 
 void ngramStore::bind(Statement &statement, ngram_t &ngram) {
 	for(int i = 0; i < ngram.order(); ++i)
 		statement.bind(i + 1, ngram.prefix[i]);
 	statement.bind(ngram.order() + 1, ngram.atom);
+}
+void ngramStore::bind(Statement &statement, prefix_t &prefix) {
+	for(int i = 0; i < prefix.size(); ++i)
+		statement.bind(i + 1, prefix[i]);
 }
 
 
@@ -143,6 +161,21 @@ string ngramStoreStatementBuilder::ngramIncrement(int order) const {
 	return "UPDATE " + table(order) + " SET count = count + 1 "
 		+ " WHERE " + where(order);
 }
+string ngramStoreStatementBuilder::random(int order) const {
+	vector<string> clauses;
+	for(int i = 0; i < order; ++i)
+		clauses.push_back("(" + column(i) + " = ?" + to_string(i + 1) + ")");
+	string where = util::join(clauses, " AND ");
+
+	return "SELECT atom FROM " + table(order) + " mo"
+		+ " WHERE (SELECT sum(count) FROM " + table(order) + " WHERE atom < mo.atom)"
+		+ "     > (abs(random() % "
+		+ "          (SELECT sum(count) FROM " + table(order) + " WHERE " + where + ")))"
+		+ "     AND " + where
+		+ " ORDER BY (SELECT sum(count) FROM " + table(order) + " WHERE atom < mo.atom"
+		+ "               AND " + where + ")"
+		+ " LIMIT 1";
+}
 
 
 StatementCache::StatementCache(Database &db) : _db{db}, _cache{} { }
@@ -187,6 +220,11 @@ Statement &ngramStatementCache::ngramIncrement(int order) {
 	if(_incrementCache.find(order) == _incrementCache.end())
 		_incrementCache[order] = _builder.ngramIncrement(order);
 	return _cache[_incrementCache[order]];
+}
+Statement &ngramStatementCache::random(int order) {
+	if(_randomCache.find(order) == _randomCache.end())
+		_randomCache[order] = _builder.random(order);
+	return _cache[_randomCache[order]];
 }
 
 ngramTableCache::ngramTableCache(ngramStatementCache &cache) : _cache(cache) { }
