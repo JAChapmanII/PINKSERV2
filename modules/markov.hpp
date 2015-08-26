@@ -42,4 +42,7 @@ Variable rword(std::vector<Variable> arguments);
 // #f: ngrandom: return a random word given a prefix
 Variable ngrandom(std::vector<Variable> arguments);
 
+// #f: ngmarkov: return a random string given a seed
+Variable ngmarkov(std::vector<Variable> arguments);
+
 #endif // MODULES_MARKOV_HPP

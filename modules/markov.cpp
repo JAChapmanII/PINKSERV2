@@ -27,6 +27,7 @@ using std::list;
 
 #include <algorithm>
 using std::remove_if;
+using std::min;
 
 #include "config.hpp"
 #include "util.hpp"
@@ -333,6 +334,57 @@ Variable ngrandom(vector<Variable> arguments) {
 
 	word_t res = ng_store.random(words);
 	return Variable(global::dictionary[res], Permissions());
+}
+Variable ngmarkov(vector<Variable> arguments) {
+	prefix_t words, result;
+	words.reserve(arguments.size());
+	result.reserve(arguments.size() * 3);
+	for(auto &word : arguments) {
+		word_t w = global::dictionary[word.toString()];
+		words.push_back(w);
+		result.push_back(w);
+	}
+
+	while(true && result.size() < 32) {
+		// check to see if we should try to pick another one or just be done
+		double prob = 0.999;
+
+		int order = min((size_t)ngObserveMaxOrder, words.size());
+		int rc = -1;
+		while((rc = ng_store.random(words)) == -1) {
+			if(words.empty())
+				break;
+			cerr << "stepping down from: " << words.size() << endl;
+			words.erase(words.begin());
+			prob *= .75;
+		}
+
+		result.push_back(rc);
+		words.push_back(rc);
+
+		//if(chain.size() <= maxMarkovOrder * 2.5)
+			//prob += (1 - prob) / 2.0;
+		if(result.size() >= 25)
+			prob /= 10;
+
+		string nexts = global::dictionary[rc];
+		// if we're currently ending with a punctuation, greatly increase the
+		// chance of ending and sounding somewhat coherent
+		if(((string)".?!;").find(nexts.back()) != string::npos)
+			prob /= 1.85;
+
+		// if a random num in [0, 1] is above our probability of ending, end
+		if(generate_canonical<double, 16>(global::rengine) > prob)
+			break;
+	}
+
+	// return the generated string
+	string rs;
+	for(auto &word : result) {
+		rs += global::dictionary[word] + " ";
+	}
+
+	return Variable(rs, Permissions());
 }
 
 #include <iostream>
