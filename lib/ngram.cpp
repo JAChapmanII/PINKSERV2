@@ -6,7 +6,11 @@ using std::map;
 using zidcu::Database;
 using zidcu::Statement;
 
+#include <random>
+using std::uniform_int_distribution;
+
 #include "util.hpp"
+#include "global.hpp"
 
 #include <iostream>
 using std::cerr;
@@ -77,18 +81,46 @@ bool ngramStore::exists(ngram_t ngram) {
 	return (result.getInteger(0) > 0);
 }
 word_t ngramStore::random(prefix_t prefix) {
-	_tableCache.exists(prefix.size());
-	auto &statement = _cache.random(prefix.size());
-	bind(statement, prefix);
+	cerr << "ngramStore::random: ";
+	for(word_t &w : prefix) cerr << global::dictionary[w] << " ";
+	cerr << endl;
 
-	auto result = statement.execute();
-	if(result.status() == SQLITE_DONE) return -1;
-	if(result.status() != SQLITE_ROW) {
-		cerr << "ngramStore::random: error: " << result.status() << endl;
-		throw result.status();
+	_tableCache.exists(prefix.size());
+	int total = 0;
+	{
+		auto &statement = _cache.prefixCount(prefix.size());
+		bind(statement, prefix);
+		auto result = statement.execute();
+		if(result.status() != SQLITE_ROW) { throw result.status(); }
+		total = result.getInteger(0);
 	}
 
-	return result.getInteger(0);
+	uniform_int_distribution<> uid(0, total);
+	total = uid(global::rengine);
+
+	long rowCount = 0;
+	{
+		auto &statement = _cache.prefixFetch(prefix.size());
+		bind(statement, prefix);
+		auto result = statement.execute();
+		if(result.status() == SQLITE_DONE) return -1;
+		if(result.status() != SQLITE_ROW) {
+			cerr << "ngramStore::random: prefixFetch failed: " << result.status() << endl;
+			throw result.status();
+		}
+		while(result.status() == SQLITE_ROW) {
+			rowCount++;
+			total -= result.getInteger(prefix.size() + 1);
+			if(total <= 0) {
+				cerr << "ngramStore::random: rowCount: " << rowCount << endl;
+				return result.getInteger(prefix.size());
+			}
+			result.step();
+		}
+	}
+	cerr << "ngramStore::random: " << prefix.size() << " order ran off edge" << endl
+		<< "    rows: " << rowCount << ", total: " << total << endl;
+	throw -1;
 }
 
 void ngramStore::bind(Statement &statement, ngram_t &ngram) {
@@ -137,7 +169,7 @@ string ngramStoreStatementBuilder::createTable(int order) const {
 	return "CREATE TABLE IF NOT EXISTS " + table(order)
 		+ "(" + allColumns + " int, PRIMARY KEY(" + pkColumns + "));";
 }
-string ngramStoreStatementBuilder::createIndex(int order) const {
+string ngramStoreStatementBuilder::createIndex1(int order) const {
 	vector<string> columns;
 	for(int i = 0; i < order; ++i)
 		columns.push_back(column(i));
@@ -145,7 +177,11 @@ string ngramStoreStatementBuilder::createIndex(int order) const {
 	string pkColumns = util::join(columns, ", ");
 
 	return "CREATE UNIQUE INDEX IF NOT EXISTS idx_" + table(order)
-		+ " ON " + table(order) + " ( " + pkColumns + ");";
+		+ " ON " + table(order) + " (" + pkColumns + ");";
+}
+string ngramStoreStatementBuilder::createIndex2(int order) const {
+	return "CREATE INDEX IF NOT EXISTS idx_" + table(order) + "_atom "
+		+ " ON " + table(order) + " (atom);";
 }
 string ngramStoreStatementBuilder::ngramExists(int order) const {
 	return "SELECT COUNT(1) FROM " + table(order) + " WHERE " + where(order);
@@ -161,26 +197,30 @@ string ngramStoreStatementBuilder::ngramIncrement(int order) const {
 	return "UPDATE " + table(order) + " SET count = count + 1 "
 		+ " WHERE " + where(order);
 }
-string ngramStoreStatementBuilder::random(int order) const {
+string ngramStoreStatementBuilder::prefixCount(int order) const {
 	vector<string> clauses;
 	for(int i = 0; i < order; ++i)
 		clauses.push_back("(" + column(i) + " = ?" + to_string(i + 1) + ")");
 	string where = util::join(clauses, " AND ");
+	if(!where.empty()) where = " WHERE " + where;
 
-	string sumLess = "(SELECT sum(count) FROM " + table(order)
-		+ " WHERE (atom < mo.atom)";
-	if (!clauses.empty()) sumLess += " AND " + where;
-	sumLess += ")";
+	return "SELECT SUM(count * count) FROM " + table(order) + where;
+}
+string ngramStoreStatementBuilder::prefixFetch(int order) const {
+	vector<string> columns;
+	for(int i = 0; i < order; ++i)
+		columns.push_back(column(i));
 
-	string sumTotal = "(SELECT sum(count) FROM " + table(order);
-	if (!clauses.empty()) sumTotal += " WHERE " + where;
-	sumTotal += ")";
+	string pkColumns = util::join(columns, ", ");
+	if(!pkColumns.empty()) pkColumns += ",";
 
-	return "SELECT atom FROM " + table(order) + " mo"
-		+ " WHERE " + sumLess + " > (abs(random() % " + sumTotal + "))"
-		+ (clauses.empty() ? "" : " AND " + where)
-		+ " ORDER BY " + sumLess
-		+ " LIMIT 1";
+	vector<string> clauses;
+	for(int i = 0; i < order; ++i)
+		clauses.push_back("(" + column(i) + " = ?" + to_string(i + 1) + ")");
+	string where = util::join(clauses, " AND ");
+	if(!where.empty()) where = " WHERE " + where;
+
+	return "SELECT " + pkColumns + " atom, count * count FROM " + table(order) + where;
 }
 
 
@@ -202,10 +242,15 @@ Statement &ngramStatementCache::createTable(int order) {
 		_tableCache[order] = _builder.createTable(order);
 	return _cache[_tableCache[order]];
 }
-Statement &ngramStatementCache::createIndex(int order) {
-	if(_indexCache.find(order) == _indexCache.end())
-		_indexCache[order] = _builder.createIndex(order);
-	return _cache[_indexCache[order]];
+Statement &ngramStatementCache::createIndex1(int order) {
+	if(_index1Cache.find(order) == _index1Cache.end())
+		_index1Cache[order] = _builder.createIndex1(order);
+	return _cache[_index1Cache[order]];
+}
+Statement &ngramStatementCache::createIndex2(int order) {
+	if(_index2Cache.find(order) == _index2Cache.end())
+		_index2Cache[order] = _builder.createIndex2(order);
+	return _cache[_index2Cache[order]];
 }
 Statement &ngramStatementCache::ngramExists(int order) {
 	if(_existsCache.find(order) == _existsCache.end())
@@ -227,10 +272,15 @@ Statement &ngramStatementCache::ngramIncrement(int order) {
 		_incrementCache[order] = _builder.ngramIncrement(order);
 	return _cache[_incrementCache[order]];
 }
-Statement &ngramStatementCache::random(int order) {
-	if(_randomCache.find(order) == _randomCache.end())
-		_randomCache[order] = _builder.random(order);
-	return _cache[_randomCache[order]];
+Statement &ngramStatementCache::prefixCount(int order) {
+	if(_prefixCountCache.find(order) == _prefixCountCache.end())
+		_prefixCountCache[order] = _builder.prefixCount(order);
+	return _cache[_prefixCountCache[order]];
+}
+Statement &ngramStatementCache::prefixFetch(int order) {
+	if(_prefixFetchCache.find(order) == _prefixFetchCache.end())
+		_prefixFetchCache[order] = _builder.prefixFetch(order);
+	return _cache[_prefixFetchCache[order]];
 }
 
 ngramTableCache::ngramTableCache(ngramStatementCache &cache) : _cache(cache) { }
@@ -245,10 +295,17 @@ bool ngramTableCache::exists(int order) {
 		if(result.status() != SQLITE_DONE) { throw result.status(); }
 	}
 	{
-		auto &statement = _cache.createIndex(order);
+		auto &statement = _cache.createIndex1(order);
 		auto result = statement.execute();
 		if(result.status() != SQLITE_DONE) { throw result.status(); }
 	}
+
+	if(order > 0) {
+		auto &statement = _cache.createIndex2(order);
+		auto result = statement.execute();
+		if(result.status() != SQLITE_DONE) { throw result.status(); }
+	}
+
 
 	return _exists[order] = true;
 }

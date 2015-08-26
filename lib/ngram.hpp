@@ -46,12 +46,14 @@ struct ngramStoreStatementBuilder {
 	std::string qmarks(int order) const;
 
 	std::string createTable(int order) const;
-	std::string createIndex(int order) const;
+	std::string createIndex1(int order) const;
+	std::string createIndex2(int order) const;
 	std::string ngramExists(int order) const;
 	std::string ngramFetch(int order) const;
 	std::string ngramInsert(int order) const;
 	std::string ngramIncrement(int order) const;
-	std::string random(int order) const;
+	std::string prefixCount(int order) const;
+	std::string prefixFetch(int order) const;
 
 	private:
 		std::string _baseTableName{};
@@ -61,22 +63,27 @@ struct ngramStatementCache {
 	ngramStatementCache(zidcu::Database &db, ngramStoreStatementBuilder builder);
 
 	zidcu::Statement &createTable(int order);
-	zidcu::Statement &createIndex(int order);
+	zidcu::Statement &createIndex1(int order);
+	zidcu::Statement &createIndex2(int order);
 	zidcu::Statement &ngramExists(int order);
 	zidcu::Statement &ngramFetch(int order);
 	zidcu::Statement &ngramInsert(int order);
 	zidcu::Statement &ngramIncrement(int order);
-	zidcu::Statement &random(int order);
+	zidcu::Statement &prefixCount(int order);
+	zidcu::Statement &prefixFetch(int order);
 
 	private:
 		ngramStoreStatementBuilder _builder;
 		std::map<int, std::string> _tableCache{};
-		std::map<int, std::string> _indexCache{};
+		std::map<int, std::string> _index1Cache{};
+		std::map<int, std::string> _index2Cache{};
 		std::map<int, std::string> _existsCache{};
 		std::map<int, std::string> _fetchCache{};
 		std::map<int, std::string> _insertCache{};
 		std::map<int, std::string> _incrementCache{};
 		std::map<int, std::string> _randomCache{};
+		std::map<int, std::string> _prefixCountCache{};
+		std::map<int, std::string> _prefixFetchCache{};
 		StatementCache _cache;
 };
 
