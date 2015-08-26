@@ -167,13 +167,19 @@ string ngramStoreStatementBuilder::random(int order) const {
 		clauses.push_back("(" + column(i) + " = ?" + to_string(i + 1) + ")");
 	string where = util::join(clauses, " AND ");
 
+	string sumLess = "(SELECT sum(count) FROM " + table(order)
+		+ " WHERE (atom < mo.atom)";
+	if (!clauses.empty()) sumLess += " AND " + where;
+	sumLess += ")";
+
+	string sumTotal = "(SELECT sum(count) FROM " + table(order);
+	if (!clauses.empty()) sumTotal += " WHERE " + where;
+	sumTotal += ")";
+
 	return "SELECT atom FROM " + table(order) + " mo"
-		+ " WHERE (SELECT sum(count) FROM " + table(order) + " WHERE atom < mo.atom)"
-		+ "     > (abs(random() % "
-		+ "          (SELECT sum(count) FROM " + table(order) + " WHERE " + where + ")))"
-		+ "     AND " + where
-		+ " ORDER BY (SELECT sum(count) FROM " + table(order) + " WHERE atom < mo.atom"
-		+ "               AND " + where + ")"
+		+ " WHERE " + sumLess + " > (abs(random() % " + sumTotal + "))"
+		+ (clauses.empty() ? "" : " AND " + where)
+		+ " ORDER BY " + sumLess
 		+ " LIMIT 1";
 }
 
