@@ -85,18 +85,13 @@ struct CrashInformation {
 CrashInformation crashed();
 void crashed(bool val, string last = "");
 
-void cycle_brain(bool dump, bool read);
+void cycle_brain();
 void prettyPrint(string arg);
 void teval(vector<string> args);
 
-void cycle_brain(bool dump, bool read) {
+void cycle_brain() {
 	// initialize modules
 	modules::init(config::brainFileName);
-
-	if(dump)
-		dumpMarkov(cout);
-	if(read)
-		readMarkov(cin);
 
 	// free memory associated with modules
 	modules::deinit(config::brainFileName);
@@ -203,13 +198,7 @@ int main(int argc, char **argv) {
 			teval(args);
 			return 0;
 		} else if(arg == "--cycle") {
-			bool dump{false}, read{false};
-			for(int i = 2; i < argc; ++i) {
-				string arg2 = argv[i];
-				if(arg2 == "--dump") dump = true;
-				if(arg2 == "--read") read = true;
-			}
-			cycle_brain(dump, read);
+			cycle_brain();
 			return 0;
 		} else if(arg == "--pprint") {
 			for(int i = 2; i < argc; ++i)

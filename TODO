@@ -45,3 +45,12 @@ m_write not really needed right?
 !help -> ?
 expose config variables as !set-etc'able things
 
+
+
+
+
+markov probability
+	smooth
+	rough
+	normalize
+
