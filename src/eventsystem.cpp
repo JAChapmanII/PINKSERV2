@@ -30,11 +30,13 @@ static void makeTable() {
 			"CREATE TABLE IF NOT EXISTS " + table
 			+ " (id integer primary key, type integer, body text)"};
 	}
+	auto tran = _db.transaction();
 	auto result = _createTable->execute();
 	if(result.status() != SQLITE_DONE) {
 		cerr << "EventSystem::makeTable: sqlite error: " << result.status() << endl;
 		throw result.status();
 	}
+	_tableCreated = true;
 }
 static Statement &eventTypeCount() {
 	makeTable();
@@ -80,6 +82,7 @@ static Statement &insertEvent() {
 
 void EventSystem::push(EventType etype, Event e) {
 	auto &statement = insertEvent();
+	auto tran = _db.transaction();
 	statement.bind(1, (int)etype);
 	statement.bind(2, e);
 	auto result = statement.execute();
@@ -89,14 +92,31 @@ void EventSystem::push(EventType etype, Event e) {
 	}
 }
 
-vector<Variable> EventSystem::process(EventType etype) {
-	vector<Variable> output;
+vector<string> getEventBodies(EventType etype);
+vector<string> getEventBodies(EventType etype) {
+	vector<string> bodies;
 	auto &statement = getEvents();
+	auto tran = _db.transaction();
 	statement.bind(1, (int)etype);
 	auto result = statement.execute();
 	while(result.status() == SQLITE_ROW) {
+		string body = result.getString(2);
+		bodies.push_back(body);
+		result.step();
+	}
+	if(result.status() != SQLITE_DONE) {
+		cerr << "EventSystem::process(" << (int)etype << "): sqlite error: "
+			<< result.status() << endl;
+		throw result.status();
+	}
+	return bodies;
+}
+
+vector<Variable> EventSystem::process(EventType etype) {
+	vector<Variable> output;
+	auto bodies = getEventBodies(etype);
+	for(auto &body : bodies) {
 		try {
-			string body = result.getString(2);
 			if(global::debugEventSystem)
 				cerr << "EventSystem::process: body: \"" << body << "\"" << endl;
 
@@ -113,18 +133,13 @@ vector<Variable> EventSystem::process(EventType etype) {
 		} catch(string &s) {
 			cerr << "EventSystem::process: " << s << endl; // TODO
 		}
-		result.step();
-	}
-	if(result.status() != SQLITE_DONE) {
-		cerr << "EventSystem::process(" << (int)etype << "): sqlite error: "
-			<< result.status() << endl;
-		throw result.status();
 	}
 	return output;
 }
 
 int EventSystem::eventsSize(EventType etype) {
 	auto &statement = eventTypeCount();
+	auto tran = _db.transaction();
 	statement.bind(1, (int)etype);
 	auto result = statement.execute();
 	if(result.status() != SQLITE_ROW) {
@@ -135,6 +150,7 @@ int EventSystem::eventsSize(EventType etype) {
 }
 Event EventSystem::getEvent(int id) {
 	auto &statement = ::getEvent();
+	auto tran = _db.transaction();
 	statement.bind(1, id);
 	auto result = statement.execute();
 	if(result.status() == SQLITE_DONE) { return ""; }
@@ -149,6 +165,7 @@ void EventSystem::deleteEvent(int id) {
 		<< getEvent(id) << "\"" << endl;
 
 	auto &statement = removeEvent();
+	auto tran = _db.transaction();
 	statement.bind(1, id);
 	auto result = statement.execute();
 	if(result.status() != SQLITE_DONE) {
