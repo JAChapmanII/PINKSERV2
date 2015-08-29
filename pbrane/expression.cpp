@@ -222,7 +222,8 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 			context.except(func + " does not exist as a callable function");
 
 		string body = global::vars[func].toString();
-		cerr << "! body: " << body << endl;
+		if(global::debugFunctionBody)
+			cerr << "! body: " << body << endl;
 		ensurePermission(Permission::Execute, who, func);
 
 		// figure out the result of the arguments

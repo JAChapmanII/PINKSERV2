@@ -97,7 +97,8 @@ vector<Variable> EventSystem::process(EventType etype) {
 	while(result.status() == SQLITE_ROW) {
 		try {
 			string body = result.getString(2);
-			cerr << "EventSystem::process: body: \"" << body << "\"" << endl;
+			if(global::debugEventSystem)
+				cerr << "EventSystem::process: body: \"" << body << "\"" << endl;
 
 			auto expr = Parser::parseCanonical(body);
 			Variable res = expr->evaluate("");

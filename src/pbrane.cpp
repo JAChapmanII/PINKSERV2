@@ -121,7 +121,7 @@ void teval(vector<string> args) {
 
 	if(!args.empty()) {
 		for(auto &arg : args) {
-			if(arg.empty())
+			if(arg.empty() || startsWith(arg, "--"))
 				continue;
 			cout << ": " << arg << endl;
 
@@ -185,28 +185,45 @@ void teval(vector<string> args) {
 }
 
 int main(int argc, char **argv) {
+	vector<string> args;
+	for(int i = 1; i < argc; ++i)
+		args.push_back(argv[i]);
+
 	unsigned int seed = 0;
-	if(argc > 1) {
-		string arg{argv[1]};
+	for(auto &arg : args) {
+		if (arg == "--teval") {
+			teval(args);
+			return 0;
+		}
+		if(arg == "--cycle") {
+			cycle_brain();
+			return 0;
+		}
+		if(arg == "--pprint") {
+			for(auto &arg2 : args)
+				if(!startsWith(arg2, "--"))
+					prettyPrint(arg2);
+			return 0;
+		}
+
 		if(arg == "--import") {
 			import = true;
 			cerr << "pbrane: import mode enabled" << endl;
-		} else if(arg == "--teval") {
-			vector<string> args;
-			for(int i = 2; i < argc; ++i)
-				args.push_back(argv[i]);
-			teval(args);
-			return 0;
-		} else if(arg == "--cycle") {
-			cycle_brain();
-			return 0;
-		} else if(arg == "--pprint") {
-			for(int i = 2; i < argc; ++i)
-				prettyPrint(argv[i]);
-			return 0;
-		} else
+		} else if(arg == "--debugSQL") {
+			global::debugSQL = true;
+			cerr << "pbrane: debug sql enabled" << endl;
+		} else if(arg == "--debugEventSystem") {
+			global::debugEventSystem = true;
+			cerr << "pbrane: debug event system enabled" << endl;
+		} else if(arg == "--debugFunctionBody") {
+			global::debugFunctionBody = true;
+			cerr << "pbrane: debug function body enabled" << endl;
+		} else {
 			seed = fromString<unsigned int>(argv[1]);
-	} else {
+		}
+	}
+
+	if(args.empty()) {
 		random_device randomDevice;
 		seed = randomDevice();
 	}

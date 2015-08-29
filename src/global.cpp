@@ -52,6 +52,10 @@ unsigned global::minSpeakTime = 0;
 void sqlTrace(void *a, const char *b);
 void sqlTrace(void *a, const char *b) { cerr << "sqlTrace: " << b << endl; }
 
+bool global::debugSQL{false};
+bool global::debugEventSystem{false};
+bool global::debugFunctionBody{false};
+
 bool global::init(unsigned int seed) {
 	// handle seeding the random number engine
 	global_seed = seed;
@@ -84,7 +88,8 @@ bool global::init(unsigned int seed) {
 	zidcu::Statement p5{db, "PRAGMA synchronous = NORMAL;"};
 	auto r5 = p5.execute(); if(r5.status() != SQLITE_DONE) { throw r5.status(); }
 
-	void* res = sqlite3_trace(db.getDB(), sqlTrace, nullptr);
+	if(global::debugSQL)
+		void* res = sqlite3_trace(db.getDB(), sqlTrace, nullptr);
 
 	// TODO: these
 	// variable, function map

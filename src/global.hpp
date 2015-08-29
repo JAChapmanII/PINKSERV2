@@ -42,6 +42,11 @@ namespace global {
 
 	// get current time
 	long long now();
+
+	// debug flags
+	extern bool debugSQL;
+	extern bool debugEventSystem;
+	extern bool debugFunctionBody;
 }
 
 #endif // GLOBAL_HPP
