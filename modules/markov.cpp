@@ -14,6 +14,7 @@ using std::endl;
 using util::split;
 using util::join;
 
+#include "dictionary.hpp"
 #include "global.hpp"
 using global::dictionary;
 
@@ -33,11 +34,13 @@ static string lastNGObserve = "";
 
 Variable ngobserve(std::vector<Variable> arguments) {
 	string now = join(arguments, " ") + "\n",
-		toObserve = lastNGObserve + " " + now;
+		toObserve = /*lastNGObserve + " " +*/ now;
 
 	vector<string> words_s = util::split(toObserve);
 	vector<word_t> words; words.reserve(words_s.size());
+	words.push_back(Dictionary<string, unsigned>::Start);
 	for(auto &word : words_s) words.push_back(global::dictionary[word]);
+	words.push_back(Dictionary<string, unsigned>::End);
 
 	{
 		auto tran = global::db.transaction();
@@ -45,7 +48,9 @@ Variable ngobserve(std::vector<Variable> arguments) {
 		for(int i = 0; i < (int)words.size(); ++i) {
 			vector<word_t> prefix;
 			ngram_t ngram{prefix, words[i]};
-			ng_store.increment(ngram);
+			if(ngram.atom != Dictionary<string, unsigned>::Start
+					&& ngram.atom != Dictionary<string, unsigned>::End)
+				ng_store.increment(ngram);
 			totalIncrements++;
 
 			for(int j = i + 1; j < (int)words.size(); ++j) {
@@ -97,7 +102,11 @@ Variable ngmarkov(vector<Variable> arguments) {
 				break;
 			cerr << "stepping down from: " << words.size() << endl;
 			words.erase(words.begin());
-			prob *= .75;
+			prob *= .98;
+		}
+		if(rc == Dictionary<string, unsigned>::End) {
+			cerr << "ngmarkov: end break" << endl;
+			break;
 		}
 
 		result.push_back(rc);
