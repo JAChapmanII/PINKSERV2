@@ -35,7 +35,6 @@ ofstream global::log;
 ofstream global::err;
 mt19937_64 global::rengine;
 Dictionary<string, unsigned> global::dictionary;
-EventSystem global::eventSystem;
 vector<string> global::moduleFunctionList;
 
 zidcu::Database global::db;
@@ -85,7 +84,7 @@ bool global::init(unsigned int seed) {
 	zidcu::Statement p5{db, "PRAGMA synchronous = NORMAL;"};
 	auto r5 = p5.execute(); if(r5.status() != SQLITE_DONE) { throw r5.status(); }
 
-	//void* res = sqlite3_trace(db.getDB(), sqlTrace, nullptr);
+	void* res = sqlite3_trace(db.getDB(), sqlTrace, nullptr);
 
 	// TODO: these
 	// variable, function map

@@ -310,7 +310,7 @@ int main(int argc, char **argv) {
 			else {
 				entry.etype = journal::ExecuteType::None;
 
-				vector<Variable> results = global::eventSystem.process(EventType::Text);
+				vector<Variable> results = EventSystem::process(EventType::Text);
 				if(results.size() == 1)
 					send(network, target, results.front().toString(), true);
 			}
@@ -325,7 +325,7 @@ int main(int argc, char **argv) {
 			global::vars["nick"] = nick;
 			global::vars["where"] = where;
 
-			vector<Variable> results = global::eventSystem.process(EventType::Join);
+			vector<Variable> results = EventSystem::process(EventType::Join);
 			if(results.size() == 1)
 				send(network, where, results.front().toString(), true);
 		}

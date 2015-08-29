@@ -4,9 +4,7 @@
 #include <vector>
 #include "variable.hpp"
 
-// #m: events: core functions: eventsLoad: eventsSave
-void eventsLoad(std::istream &in);
-void eventsSave(std::ostream &out);
+// #m: events: event functions: none: none
 
 // #f: on: adds an event based trigger
 Variable on(std::vector<Variable> arguments);

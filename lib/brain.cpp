@@ -84,12 +84,3 @@ istream &brain::read(istream &in, Variable &variable) {
 	return in;
 }
 
-ostream &brain::write(ostream &out, const Event &variable) {
-	write(out, variable.body);
-	return out;
-}
-istream &brain::read(istream &in, Event &variable) {
-	read(in, variable.body);
-	return in;
-}
-

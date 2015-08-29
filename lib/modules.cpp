@@ -23,7 +23,6 @@ vector<Module> modules::modules;
 static bool modules_inited = false;
 
 Module findModule(string mname);
-bool moduleLoaded(string mname);
 
 void defineModules();
 void setupFunctions();
@@ -38,10 +37,6 @@ Module findModule(std::string mname) {
 		if(mod.name == mname)
 			return mod;
 	throw (string)"module " + mname + " nonexistant";
-}
-
-bool moduleLoaded(std::string mname) {
-	return findModule(mname).loaded;
 }
 
 bool modules::init(std::string brainFileName) {

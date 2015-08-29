@@ -22,8 +22,6 @@ namespace modules {
 	extern std::map<std::string, Function> hfmap;
 	extern std::vector<Module> modules;
 
-	bool moduleLoaded(std::string mname);
-
 	bool init(std::string brainFileName);
 	bool deinit(std::string brainFileName);
 }

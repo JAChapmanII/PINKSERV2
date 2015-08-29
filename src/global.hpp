@@ -17,7 +17,6 @@ namespace global {
 	extern std::ofstream err;
 	extern std::mt19937_64 rengine;
 	extern Dictionary<std::string, unsigned> dictionary;
-	extern EventSystem eventSystem;
 	extern std::vector<std::string> moduleFunctionList;
 
 	extern zidcu::Database db;
