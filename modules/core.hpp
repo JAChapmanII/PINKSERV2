@@ -61,16 +61,4 @@ Variable bmess(std::vector<Variable> arguments);
 // #f: pol: pretty one line
 Variable pol(std::vector<Variable> arguments);
 
-// #f: getKV: get a value given a key
-Variable getKV(std::vector<Variable> arguments);
-
-// #f: setKV: set a value given a pair
-Variable setKV(std::vector<Variable> arguments);
-
-// #f: getNgram: get a value given an ngram
-Variable getNgram(std::vector<Variable> arguments);
-
-// #f: incNgram: increment an ngram
-Variable incNgram(std::vector<Variable> arguments);
-
 #endif // MODULES_CORE_HPP
