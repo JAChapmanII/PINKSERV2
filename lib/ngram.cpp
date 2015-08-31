@@ -27,12 +27,11 @@ chain_t::chain_t(ngram_t ingram, count_t icount)
 
 
 ngramStore::ngramStore(Database &db, std::string baseTableName)
-		: _db(db), _baseTableName(baseTableName), _builder(baseTableName),
-		  _cache(_db, _builder), _tableCache(_cache) { }
+		: _db(db), _baseTableName(baseTableName), _builder(baseTableName) { }
 
 chain_t ngramStore::fetch(ngram_t ngram) {
-	_tableCache.exists(ngram.order());
-	auto &statement = _cache.ngramFetch(ngram.order());
+	createTable(ngram.order());
+	auto &statement = _db[_builder.ngramFetch(ngram.order())];
 	bind(statement, ngram);
 
 	chain_t chain{ngram};
@@ -46,9 +45,9 @@ chain_t ngramStore::fetch(ngram_t ngram) {
 	return chain;
 }
 void ngramStore::increment(ngram_t ngram) {
-	_tableCache.exists(ngram.order());
+	createTable(ngram.order());
 	{
-		auto &statement = _cache.ngramInsert(ngram.order());
+		auto &statement = _db[_builder.ngramInsert(ngram.order())];
 		bind(statement, ngram);
 		auto result = statement.execute();
 		if(result.status() != SQLITE_DONE) {
@@ -57,7 +56,7 @@ void ngramStore::increment(ngram_t ngram) {
 		}
 	}
 	{
-		auto &statement = _cache.ngramIncrement(ngram.order());
+		auto &statement = _db[_builder.ngramIncrement(ngram.order())];
 		bind(statement, ngram);
 		auto result = statement.execute();
 		if(result.status() != SQLITE_DONE) {
@@ -67,8 +66,8 @@ void ngramStore::increment(ngram_t ngram) {
 	}
 }
 bool ngramStore::exists(ngram_t ngram) {
-	_tableCache.exists(ngram.order());
-	auto &statement = _cache.ngramExists(ngram.order());
+	createTable(ngram.order());
+	auto &statement = _db[_builder.ngramExists(ngram.order())];
 	bind(statement, ngram);
 
 	auto result = statement.execute();
@@ -85,10 +84,10 @@ word_t ngramStore::random(prefix_t prefix) {
 	for(word_t &w : prefix) cerr << global::dictionary[w] << " ";
 	cerr << endl;
 
-	_tableCache.exists(prefix.size());
+	createTable(prefix.size());
 	int total = 0;
 	{
-		auto &statement = _cache.prefixCount(prefix.size());
+		auto &statement = _db[_builder.prefixCount(prefix.size())];
 		bind(statement, prefix);
 		auto result = statement.execute();
 		if(result.status() != SQLITE_ROW) { throw result.status(); }
@@ -100,7 +99,7 @@ word_t ngramStore::random(prefix_t prefix) {
 
 	long rowCount = 0;
 	{
-		auto &statement = _cache.prefixFetch(prefix.size());
+		auto &statement = _db[_builder.prefixFetch(prefix.size())];
 		bind(statement, prefix);
 		auto result = statement.execute();
 		if(result.status() == SQLITE_DONE) return -1;
@@ -129,7 +128,7 @@ void ngramStore::bind(Statement &statement, ngram_t &ngram) {
 	statement.bind(ngram.order() + 1, ngram.atom);
 }
 void ngramStore::bind(Statement &statement, prefix_t &prefix) {
-	for(int i = 0; i < prefix.size(); ++i)
+	for(int i = 0; i < (int)prefix.size(); ++i)
 		statement.bind(i + 1, prefix[i]);
 }
 
@@ -224,80 +223,29 @@ string ngramStoreStatementBuilder::prefixFetch(int order) const {
 }
 
 
-ngramStatementCache::ngramStatementCache(
-		Database &db, ngramStoreStatementBuilder builder)
-			: _builder(builder),  _cache(db) { }
-
-Statement &ngramStatementCache::createTable(int order) {
-	if(_tableCache.find(order) == _tableCache.end())
-		_tableCache[order] = _builder.createTable(order);
-	return _cache[_tableCache[order]];
-}
-Statement &ngramStatementCache::createIndex1(int order) {
-	if(_index1Cache.find(order) == _index1Cache.end())
-		_index1Cache[order] = _builder.createIndex1(order);
-	return _cache[_index1Cache[order]];
-}
-Statement &ngramStatementCache::createIndex2(int order) {
-	if(_index2Cache.find(order) == _index2Cache.end())
-		_index2Cache[order] = _builder.createIndex2(order);
-	return _cache[_index2Cache[order]];
-}
-Statement &ngramStatementCache::ngramExists(int order) {
-	if(_existsCache.find(order) == _existsCache.end())
-		_existsCache[order] = _builder.ngramExists(order);
-	return _cache[_existsCache[order]];
-}
-Statement &ngramStatementCache::ngramFetch(int order) {
-	if(_fetchCache.find(order) == _fetchCache.end())
-		_fetchCache[order] = _builder.ngramFetch(order);
-	return _cache[_fetchCache[order]];
-}
-Statement &ngramStatementCache::ngramInsert(int order) {
-	if(_insertCache.find(order) == _insertCache.end())
-		_insertCache[order] = _builder.ngramInsert(order);
-	return _cache[_insertCache[order]];
-}
-Statement &ngramStatementCache::ngramIncrement(int order) {
-	if(_incrementCache.find(order) == _incrementCache.end())
-		_incrementCache[order] = _builder.ngramIncrement(order);
-	return _cache[_incrementCache[order]];
-}
-Statement &ngramStatementCache::prefixCount(int order) {
-	if(_prefixCountCache.find(order) == _prefixCountCache.end())
-		_prefixCountCache[order] = _builder.prefixCount(order);
-	return _cache[_prefixCountCache[order]];
-}
-Statement &ngramStatementCache::prefixFetch(int order) {
-	if(_prefixFetchCache.find(order) == _prefixFetchCache.end())
-		_prefixFetchCache[order] = _builder.prefixFetch(order);
-	return _cache[_prefixFetchCache[order]];
-}
-
-ngramTableCache::ngramTableCache(ngramStatementCache &cache) : _cache(cache) { }
-
-bool ngramTableCache::exists(int order) {
-	if(_exists.find(order) != _exists.end())
-		return true;
+void ngramStore::createTable(int order) {
+	while((int)_tableCache.size() <= order)
+		_tableCache.push_back(false);
+	if(_tableCache[order])
+		return;
 
 	{
-		auto &statement = _cache.createTable(order);
+		auto &statement = _db[_builder.createTable(order)];
 		auto result = statement.execute();
 		if(result.status() != SQLITE_DONE) { throw result.status(); }
 	}
 	{
-		auto &statement = _cache.createIndex1(order);
+		auto &statement = _db[_builder.createIndex1(order)];
 		auto result = statement.execute();
 		if(result.status() != SQLITE_DONE) { throw result.status(); }
 	}
 
 	if(order > 0) {
-		auto &statement = _cache.createIndex2(order);
+		auto &statement = _db[_builder.createIndex2(order)];
 		auto result = statement.execute();
 		if(result.status() != SQLITE_DONE) { throw result.status(); }
 	}
 
-
-	return _exists[order] = true;
+	_tableCache[order] = true;
 }
 

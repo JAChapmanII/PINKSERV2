@@ -48,44 +48,6 @@ struct ngramStoreStatementBuilder {
 		std::string _baseTableName{};
 };
 
-struct ngramStatementCache {
-	ngramStatementCache(zidcu::Database &db, ngramStoreStatementBuilder builder);
-
-	zidcu::Statement &createTable(int order);
-	zidcu::Statement &createIndex1(int order);
-	zidcu::Statement &createIndex2(int order);
-	zidcu::Statement &ngramExists(int order);
-	zidcu::Statement &ngramFetch(int order);
-	zidcu::Statement &ngramInsert(int order);
-	zidcu::Statement &ngramIncrement(int order);
-	zidcu::Statement &prefixCount(int order);
-	zidcu::Statement &prefixFetch(int order);
-
-	private:
-		ngramStoreStatementBuilder _builder;
-		std::map<int, std::string> _tableCache{};
-		std::map<int, std::string> _index1Cache{};
-		std::map<int, std::string> _index2Cache{};
-		std::map<int, std::string> _existsCache{};
-		std::map<int, std::string> _fetchCache{};
-		std::map<int, std::string> _insertCache{};
-		std::map<int, std::string> _incrementCache{};
-		std::map<int, std::string> _randomCache{};
-		std::map<int, std::string> _prefixCountCache{};
-		std::map<int, std::string> _prefixFetchCache{};
-		zidcu::StatementCache _cache;
-};
-
-struct ngramTableCache {
-	ngramTableCache(ngramStatementCache &cache);
-
-	bool exists(int order);
-
-	private:
-		ngramStatementCache &_cache;
-		std::map<int, bool> _exists{};
-};
-
 struct ngramStore {
 	ngramStore(zidcu::Database &db, std::string baseTableName);
 
@@ -99,12 +61,14 @@ struct ngramStore {
 		void bind(zidcu::Statement &statement, ngram_t &ngram);
 		void bind(zidcu::Statement &statement, prefix_t &prefix);
 
+		void createTable(int order);
+
 	private:
 		zidcu::Database &_db;
-		std::string _baseTableName;
+		std::string _baseTableName{};
+
 		ngramStoreStatementBuilder _builder;
-		ngramStatementCache _cache;
-		ngramTableCache _tableCache;
+		std::vector<bool> _tableCache{};
 };
 
 #endif // NGRAM_HPP

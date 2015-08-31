@@ -1,8 +1,8 @@
 #ifndef DB_HPP
 #define DB_HPP
 
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <sqlite3.h>
 
 namespace zidcu {
@@ -90,7 +90,7 @@ namespace zidcu {
 
 		private:
 			zidcu::Database &_db;
-			std::map<std::string, zidcu::Statement *> _cache{};
+			std::unordered_map<std::string, zidcu::Statement *> _cache{};
 	};
 }
 
