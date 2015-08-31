@@ -67,6 +67,9 @@ Variable ngobserve(std::vector<Variable> arguments) {
 	if(global::now() > ng_timestamp + 10) {
 		cerr << "totalIncrements: " << totalIncrements << endl;
 		ng_timestamp = global::now();
+		cerr << "checkpointing..." << endl;
+		sqlite3_wal_checkpoint(global::db.getDB(), nullptr);
+		cerr << "    done" << endl;
 	}
 
 	//lastNGObserve = now;
