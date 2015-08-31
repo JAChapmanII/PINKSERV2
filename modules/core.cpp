@@ -139,8 +139,7 @@ Variable jsize(vector<Variable>) {
 	return Variable((long)journal::size(), Permissions());
 }
 
-Variable rgrep(vector<Variable> arguments) {
-	string regex = arguments.front().toString();
+journal::Entry regexRandomEntry(string regex) {
 	vector<journal::Entry> lines = journal::search(regex);
 	if(lines.size() < 1)
 		throw (string)"no matches";
@@ -148,19 +147,19 @@ Variable rgrep(vector<Variable> arguments) {
 	uniform_int_distribution<> uid(0, lines.size() - 1);
 	unsigned target = uid(global::rengine);
 
-	return Variable(lines[target].arguments, Permissions());
+	return lines[target];
+}
+
+Variable rgrep(vector<Variable> arguments) {
+	string regex = arguments.front().toString();
+	auto line = regexRandomEntry(regex);
+	return Variable(line.arguments, Permissions());
 }
 
 Variable rline(vector<Variable> arguments) {
 	string regex = arguments.front().toString();
-	vector<journal::Entry> lines = journal::search(regex);
-	if(lines.size() < 1)
-		throw (string)"no matches";
-
-	uniform_int_distribution<> uid(0, lines.size() - 1);
-	unsigned target = uid(global::rengine);
-
-	return Variable("<" + lines[target].nick() + "> " + lines[target].arguments, Permissions());
+	auto line = regexRandomEntry(regex);
+	return Variable("<" + line.nick() + "> " + line.arguments, Permissions());
 }
 
 Variable debug(vector<Variable> arguments) {
