@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 #include "global.hpp"
 
 namespace journal {
@@ -36,11 +37,15 @@ namespace journal {
 		std::string nick() const;
 	};
 
+	using SecondaryPredicate = std::function<bool(Entry &)>;
+	bool NoopPredicate(Entry &e);
+
 	bool init();
 	bool deinit();
 
 	void push(Entry nentry);
-	std::vector<Entry> search(std::string regex);
+	std::vector<Entry> search(std::string regex,
+			SecondaryPredicate predicate = NoopPredicate, int limit = -1);
 	unsigned size();
 
 	std::vector<Entry>::iterator jbegin();

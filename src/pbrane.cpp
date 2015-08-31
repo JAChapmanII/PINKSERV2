@@ -423,24 +423,28 @@ bool regexHook(PrivateMessage pmsg) {
 
 	try {
 		Regex r(pmsg.message.substr(1));
-		auto entries = journal::search(r.match());
+		auto entries = journal::search(r.match(), [=](journal::Entry &e) {
+			// only replace on non-executed things
+			if(e.etype == journal::ExecuteType::Hook
+					|| e.etype == journal::ExecuteType::Function)
+				return false;
+			// if a nick was specified as a flag and it's not who said it, continue
+			if(!r.flags().empty() && r.flags() != e.nick())
+				return false;
+			return true;
+				}, 1);
+
 		if(entries.empty())
 			return true;
-		for(auto it = entries.rbegin(); it != entries.rend(); ++it) {
-			// only replace on non-executed things
-			if(it->etype == journal::ExecuteType::Hook || it->etype == journal::ExecuteType::Function)
-				continue;
-			// if a nick was specified as a flag and it's not who said it, continue
-			if(!r.flags().empty() && r.flags() != it->nick())
-				continue;
-			string result;
-			r.execute(it->arguments, result);
-			if(it->etype == journal::ExecuteType::None)
-				send(pmsg.network, pmsg.target, "<" + it->nick() + "> " + result, true);
-			else
-				send(pmsg.network, pmsg.target, result, true);
-			break;
-		}
+		auto e = entries.front();
+
+		string result;
+		r.execute(e.arguments, result);
+		if(e.etype == journal::ExecuteType::None)
+			send(pmsg.network, pmsg.target, "<" + e.nick() + "> " + result, true);
+		else
+			send(pmsg.network, pmsg.target, result, true);
+
 		return true;
 	} catch(string e) {
 		send(pmsg.network, pmsg.target, e, true);

@@ -67,16 +67,23 @@ void journal::push(Entry nentry) {
 	journal_file << nentry.format() << endl;
 }
 
-std::vector<Entry> journal::search(string regex) {
+bool journal::NoopPredicate(Entry &e) { return true; }
+std::vector<Entry> journal::search(string regex, SecondaryPredicate predicate, int limit) {
 	vector<Entry> matches;
+	if(limit == 0)
+		return matches;
 	boost::regex r(regex, boost::regex::perl);
 
-	for(auto i : journal_entries) {
+	for(auto it = journal_entries.rbegin(); it != journal_entries.rend(); ++it) {
+		auto i = *it;
 		if(i.type != EntryType::Text)
 			continue;
 		try {
-			if(boost::regex_search(i.arguments, r, boost::match_default))
+			if(predicate(i)
+					&& boost::regex_search(i.arguments, r, boost::match_default))
 				matches.push_back(i);
+			if(limit > 0 && matches.size() > limit)
+				break;
 		} catch(exception &e) {
 			cerr << "journal::search: regex exception: " << e.what() << endl;
 		}
