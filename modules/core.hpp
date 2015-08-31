@@ -5,9 +5,7 @@
 #include <vector>
 #include "variable.hpp"
 
-// #m: core: core functions: coreLoad: coreSave
-void coreLoad(std::istream &in);
-void coreSave(std::ostream &out);
+// #m: core: core functions
 
 // #f: help: returns a list of builtin functions, or the help text
 Variable help(std::vector<Variable> arguments);
@@ -35,9 +33,6 @@ Variable undefined(std::vector<Variable> arguments);
 
 // #f: rm: wipe a variable form existence
 Variable rm(std::vector<Variable> arguments);
-
-// #f: die: reload bot code without saving brain
-Variable die(std::vector<Variable> arguments);
 
 // #f: sleep: stop being awake
 Variable sleep(std::vector<Variable> arguments);

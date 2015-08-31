@@ -4,7 +4,7 @@
 #include <vector>
 #include "variable.hpp"
 
-// #m: math: math functions: none: none
+// #m: math: math functions
 
 // #f: math_pow = pow: raise a number to a power
 Variable math_pow(std::vector<Variable> arguments);

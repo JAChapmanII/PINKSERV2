@@ -15,14 +15,12 @@ for f in modules/*.hpp; do
 	module=$(grep '^// #m: ' "$f" | cut -d':' -f2-)
 	mname=$(echo $(echo $module | cut -d':' -f1))
 	mdesc=$(echo $(echo $module | cut -d':' -f2))
-	loadf=$(echo $(echo $module | cut -d':' -f3))
-	savef=$(echo $(echo $module | cut -d':' -f4))
 
-	echo "module $mname ($mdesc) uses $loadf and $savef"
+	echo "module $mname ($mdesc)"
 
 	echo -e "#include \"$(basename "$f")\"" >> mincs
 	# save the module definition data to a file
-	echo -e "\tModule $mname = { \"$mname\", \"$mdesc\", &$loadf, &$savef, false };" >> mods
+	echo -e "\tModule $mname = { \"$mname\", \"$mdesc\", false };" >> mods
 	echo -e "\tmodules::modules.push_back($mname);" >> mods
 
 	# add module function header to file

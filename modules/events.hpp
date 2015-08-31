@@ -4,7 +4,7 @@
 #include <vector>
 #include "variable.hpp"
 
-// #m: events: event functions: none: none
+// #m: events: event functions
 
 // #f: on: adds an event based trigger
 Variable on(std::vector<Variable> arguments);

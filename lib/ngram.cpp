@@ -224,15 +224,6 @@ string ngramStoreStatementBuilder::prefixFetch(int order) const {
 }
 
 
-StatementCache::StatementCache(Database &db) : _db{db}, _cache{} { }
-StatementCache::~StatementCache() { for(auto &e : _cache) delete e.second; }
-
-Statement &StatementCache::operator[](string sql) {
-	if(_cache.find(sql) != _cache.end())
-		return *_cache[sql];
-	return *(_cache[sql] = new Statement{_db, sql});
-}
-
 ngramStatementCache::ngramStatementCache(
 		Database &db, ngramStoreStatementBuilder builder)
 			: _builder(builder),  _cache(db) { }

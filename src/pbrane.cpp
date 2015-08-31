@@ -85,17 +85,8 @@ struct CrashInformation {
 CrashInformation crashed();
 void crashed(bool val, string last = "");
 
-void cycle_brain();
 void prettyPrint(string arg);
 void teval(vector<string> args);
-
-void cycle_brain() {
-	// initialize modules
-	modules::init(config::brainFileName);
-
-	// free memory associated with modules
-	modules::deinit(config::brainFileName);
-}
 
 void prettyPrint(string arg) {
 	cout << arg << endl;
@@ -113,7 +104,7 @@ void teval(vector<string> args) {
 	global::vars["bot.maxIterations"] = "10";
 
 	// initialize modules
-	modules::init(config::brainFileName);
+	modules::init();
 
 	random_device randomDevice;
 	unsigned int seed = randomDevice();
@@ -146,7 +137,7 @@ void teval(vector<string> args) {
 		}
 
 		// free memory associated with modules
-		modules::deinit(config::brainFileName);
+		modules::deinit();
 		return;
 	}
 
@@ -181,7 +172,7 @@ void teval(vector<string> args) {
 	}
 
 	// free memory associated with modules
-	modules::deinit(config::brainFileName);
+	modules::deinit();
 }
 
 int main(int argc, char **argv) {
@@ -193,10 +184,6 @@ int main(int argc, char **argv) {
 	for(auto &arg : args) {
 		if (arg == "--teval") {
 			teval(args);
-			return 0;
-		}
-		if(arg == "--cycle") {
-			cycle_brain();
 			return 0;
 		}
 		if(arg == "--pprint") {
@@ -232,7 +219,7 @@ int main(int argc, char **argv) {
 		cerr << "pbrane: global::init failed" << endl;
 		return -1;
 	}
-	modules::init(config::brainFileName);
+	modules::init();
 
 	// TODO: don't hard-code these. These should be set in the startup file?
 	evaluate("${(!undefined 'bot.owner')? { bot.owner = 'jac'; }}", "jac");
@@ -361,7 +348,7 @@ int main(int argc, char **argv) {
 	journal::deinit();
 
 	// free memory associated with modules
-	modules::deinit(config::brainFileName);
+	modules::deinit();
 
 	// deinit global
 	global::deinit();

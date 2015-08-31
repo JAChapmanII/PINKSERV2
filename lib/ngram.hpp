@@ -26,17 +26,6 @@ struct chain_t {
 	count_t count;
 };
 
-struct StatementCache {
-	StatementCache(zidcu::Database &db);
-	~StatementCache();
-
-	zidcu::Statement &operator[](std::string sql);
-
-	private:
-		zidcu::Database &_db;
-		std::map<std::string, zidcu::Statement *> _cache{};
-};
-
 struct ngramStoreStatementBuilder {
 	ngramStoreStatementBuilder(std::string baseTableName);
 
@@ -84,7 +73,7 @@ struct ngramStatementCache {
 		std::map<int, std::string> _randomCache{};
 		std::map<int, std::string> _prefixCountCache{};
 		std::map<int, std::string> _prefixFetchCache{};
-		StatementCache _cache;
+		zidcu::StatementCache _cache;
 };
 
 struct ngramTableCache {

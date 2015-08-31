@@ -9,7 +9,6 @@ namespace config {
 	string errFileName = nick + ".err";
 	string chatFileName = nick + ".chat";
 	string todoFileName = nick + ".todo";
-	string brainFileName = nick + ".brain";
 	string journalFileName = nick + ".journal";
 	string databaseFileName = nick + ".db";
 

@@ -53,6 +53,12 @@ void zidcu::Database::open(string fileName) {
 	}
 }
 
+zidcu::Statement &zidcu::Database::operator[](string sql) {
+	if(!_cache)
+		_cache = new StatementCache(*this);
+	return (*_cache)[sql];
+}
+
 zidcu::Statement::Statement(Database &db, string sql) : _db(db), _sql(sql) {
 	cerr << "Statement::Statement: sql: \"" << _sql << "\"" << endl;
 	const char *leftover{nullptr};
@@ -117,4 +123,14 @@ zidcu::Transaction::~Transaction() {
 	int rc = result.status();
 	if(rc != SQLITE_DONE) { throw rc; }
 }
+
+zidcu::StatementCache::StatementCache(Database &db) : _db{db}, _cache{} { }
+zidcu::StatementCache::~StatementCache() { for(auto &e : _cache) delete e.second; }
+
+zidcu::Statement &zidcu::StatementCache::operator[](string sql) {
+	if(_cache.find(sql) != _cache.end())
+		return *_cache[sql];
+	return *(_cache[sql] = new Statement{_db, sql});
+}
+
 

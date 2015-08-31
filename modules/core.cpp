@@ -17,7 +17,6 @@ using std::endl;
 using std::ofstream;
 
 #include "global.hpp"
-#include "brain.hpp"
 #include "util.hpp"
 using util::fromString;
 using util::asString;
@@ -28,13 +27,6 @@ using util::join;
 #include "parser.hpp"
 
 #include "config.hpp"
-
-void coreLoad(std::istream &in) {
-	brain::read(in, global::vars);
-}
-void coreSave(std::ostream &out) {
-	brain::write(out, global::vars);
-}
 
 Variable help(vector<Variable> arguments) {
 	if(arguments.size() > 1)
@@ -136,13 +128,6 @@ Variable rm(vector<Variable> arguments) {
 	}
 	return Variable("erased", Permissions());
 	throw (string)"(not-implemented, bug " + global::vars["bot.owner"].toString() + ")";
-}
-
-Variable die(vector<Variable>) {
-	return Variable("what the hell! jac! help! somebody is abusing me!", Permissions());
-	//exit(0);
-	//throw (string)"uh-oh, we were supposed to die; " + 
-		//"bug " + global::vars["bot.owner"].toString();
 }
 
 Variable sleep(vector<Variable>) {

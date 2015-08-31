@@ -4,7 +4,7 @@
 #include <vector>
 #include "variable.hpp"
 
-// #m: markov: markov functions: none: none
+// #m: markov: markov functions
 
 // #f: ngobserve: observes a line and adds it into the ngram model
 Variable ngobserve(std::vector<Variable> arguments);

@@ -38,9 +38,9 @@ Variable ngobserve(std::vector<Variable> arguments) {
 
 	vector<string> words_s = util::split(toObserve);
 	vector<word_t> words; words.reserve(words_s.size());
-	words.push_back(Dictionary<string, unsigned>::Start);
+	words.push_back((word_t)Anchor::Start);
 	for(auto &word : words_s) words.push_back(global::dictionary[word]);
-	words.push_back(Dictionary<string, unsigned>::End);
+	words.push_back((word_t)Anchor::End);
 
 	{
 		auto tran = global::db.transaction();
@@ -48,8 +48,8 @@ Variable ngobserve(std::vector<Variable> arguments) {
 		for(int i = 0; i < (int)words.size(); ++i) {
 			vector<word_t> prefix;
 			ngram_t ngram{prefix, words[i]};
-			if(ngram.atom != Dictionary<string, unsigned>::Start
-					&& ngram.atom != Dictionary<string, unsigned>::End)
+			if(ngram.atom != (word_t)Anchor::Start
+					&& ngram.atom != (word_t)Anchor::End)
 				ng_store.increment(ngram);
 			totalIncrements++;
 
@@ -107,7 +107,7 @@ Variable ngmarkov(vector<Variable> arguments) {
 			words.erase(words.begin());
 			prob *= .98;
 		}
-		if(rc == Dictionary<string, unsigned>::End) {
+		if(rc == (int)Anchor::End) {
 			cerr << "ngmarkov: end break" << endl;
 			break;
 		}

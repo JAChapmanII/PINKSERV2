@@ -1,12 +1,14 @@
 #ifndef DB_HPP
 #define DB_HPP
 
+#include <map>
 #include <string>
 #include <sqlite3.h>
 
 namespace zidcu {
 	struct Transaction;
 	struct Statement;
+	struct StatementCache;
 
 	struct Database {
 		Database();
@@ -22,12 +24,15 @@ namespace zidcu {
 
 		void open(std::string fileName);
 
+		Statement &operator[](std::string sql);
+
 		private:
 			bool _opened{false};
 			std::string _fileName{};
 			sqlite3 *_db{nullptr};
 			Statement *_startTransaction{nullptr};
 			Statement *_commitTransaction{nullptr};
+			StatementCache *_cache{nullptr};
 	};
 
 	struct Result;
@@ -75,6 +80,17 @@ namespace zidcu {
 		private:
 			Statement &_start;
 			Statement &_end;
+	};
+
+	struct StatementCache {
+		StatementCache(zidcu::Database &db);
+		~StatementCache();
+
+		zidcu::Statement &operator[](std::string sql);
+
+		private:
+			zidcu::Database &_db;
+			std::map<std::string, zidcu::Statement *> _cache{};
 	};
 }
 

@@ -34,7 +34,6 @@ bool global::done;
 ofstream global::log;
 ofstream global::err;
 mt19937_64 global::rengine;
-Dictionary<string, unsigned> global::dictionary;
 vector<string> global::moduleFunctionList;
 
 zidcu::Database global::db;
@@ -55,6 +54,8 @@ void sqlTrace(void *a, const char *b) { cerr << "sqlTrace: " << b << endl; }
 bool global::debugSQL{false};
 bool global::debugEventSystem{false};
 bool global::debugFunctionBody{false};
+
+Dictionary global::dictionary{global::db};
 
 bool global::init(unsigned int seed) {
 	// handle seeding the random number engine
