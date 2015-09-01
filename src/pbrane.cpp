@@ -54,27 +54,6 @@ bool regexHook(PrivateMessage pmsg);
 
 vector<hook> hooks = { &powerHook, &regexHook };
 
-vector<string> noInterpret = { ":p", ":P", ":)", ":(", ":|", ":]", ":[" };
-bool notBlacklisted(string s);
-bool notBlacklisted(string s) {
-	for(auto b : noInterpret)
-		if(s == b)
-			return false;
-	return true;
-}
-
-bool canEvaluate(string message);
-bool canEvaluate(string message) {
-	if(!notBlacklisted(message))
-		return false;
-	if(message.front() == ':') {
-		if(message.find(';') != string::npos)
-			return true;
-		if(message.find("!") != string::npos)
-			return true;
-	}
-	return false;
-}
 bool import = false;
 
 void prettyPrint(string arg);
