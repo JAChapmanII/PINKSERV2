@@ -34,11 +34,6 @@ vector<string> makeList(string lists) {
 	return list;
 }
 
-vector<string> getList(map<string, Variable> vars, string variable) {
-	string lists = vars[variable].toString();
-	return makeList(lists);
-}
-
 Variable::Variable() : value(), permissions(), type(Type::String) {
 }
 Variable::Variable(const char *ivalue, Permissions ip) :

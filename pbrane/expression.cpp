@@ -184,14 +184,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 		if(var == "null")
 			return result;
 
-		// it's a new variable, add it to the map under who
-		if(global::vars.find(var) == global::vars.end())
-			result.permissions = Permissions(who);
-		else // make sure we have permission
-			// this can throw? TODO: wrap this throw into StackTrace
-			ensurePermission(Permission::Write, who, var);
-
-		return (global::vars[var] = result); // TODO: assignment should merge permissions?
+		return global::vars.set(var, result); // TODO: perms?
 	}
 
 	// see = implementation above for comments
@@ -205,11 +198,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 		if(func == "null")
 			return Variable(body, Permissions());
 
-		if(global::vars.find(func) == global::vars.end())
-			return (global::vars[func] = Variable(body, Permissions(who)));
-
-		ensurePermission(Permission::Write, who, func);
-		return (global::vars[func] = Variable(body, Permissions()));
+		return global::vars.set(func, body);
 	}
 
 	// function calls, special :D
@@ -217,11 +206,10 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 		if(this->args[0]->type != "var")
 			context.except("rhs of ! is not a variable");
 		string func = this->args[0]->args[0]->evaluate(who).toString();
-		if((global::vars.find(func) == global::vars.end()) &&
-				!(contains(modules::hfmap, func)))
+		if(!global::vars.defined(func) && !contains(modules::hfmap, func))
 			context.except(func + " does not exist as a callable function");
+		string body = global::vars.getString(func);
 
-		string body = global::vars[func].toString();
 		if(global::debugFunctionBody)
 			cerr << "! body: " << body << endl;
 		ensurePermission(Permission::Execute, who, func);
@@ -237,13 +225,13 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 
 		// clear out argument variables
 		for(int i = 0; i < 10; ++i)
-			global::vars["$" + asString(i + 1)] = "";
+			global::vars.set("$" + asString(i + 1), "");
 
 		// set the argument values
-		global::vars["args"] = argsstr;
-		global::vars["$0"] = Variable(func, Permissions());
+		global::vars.set("args", argsstr);
+		global::vars.set("$0", func);
 		for(unsigned i = 0; i < args.size() - 1; ++i)
-			global::vars["$" + asString(i + 1)] = argVars[i];
+			global::vars.set("$" + asString(i + 1), argVars[i]);
 
 		// a module function
 		if(contains(modules::hfmap, func)) {
@@ -280,8 +268,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 
 			// TODO: group variables, r0, r1, etc
 			bool matches = r.execute(text, result);
-			return (global::vars["r_"] =
-					Variable(result, Permissions(Permission::Read)));
+			return global::vars.set("r_", result); // TODO: read-only
 		} catch(string &e) {
 			context.except(e);
 		}
@@ -309,11 +296,9 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 			return Variable::parse("true");
 		if(var == "false")
 			return Variable::parse("false");
-		if(global::vars.find(var) == global::vars.end())
-			global::vars[var] = Variable(0L, Permissions(who));
-
-		ensurePermission(Permission::Read, who, var);
-		return global::vars[var];
+		if(!global::vars.defined(var))
+			return global::vars.set(var, "0");
+		return global::vars.get(var);
 	}
 
 	// TODO: de-int this. double? Only when "appropriate"?
@@ -367,6 +352,6 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 	}
 
 	context.except("unknown node " + this->type + " -- bug " +
-			global::vars["bot.owner"].toString() + " to fix");
+			global::vars.getString("bot.owner") + " to fix");
 }
 

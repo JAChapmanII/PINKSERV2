@@ -10,6 +10,7 @@
 #include "variable.hpp"
 #include "eventsystem.hpp"
 #include "db.hpp"
+#include "varstore.hpp"
 
 namespace global {
 	extern bool done;
@@ -22,7 +23,7 @@ namespace global {
 	extern zidcu::Database db;
 
 	// variable, function map
-	extern std::map<std::string, Variable> vars;
+	extern VarStore vars;
 
 	// local variable map
 	extern std::map<std::string, std::map<std::string, Variable>> lvars;

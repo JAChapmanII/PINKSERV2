@@ -72,7 +72,6 @@ class Variable {
 		Type type;
 };
 
-std::vector<std::string> getList(std::map<std::string, Variable> vars, std::string variable);
 std::vector<std::string> makeList(std::string lists);
 
 #endif // VARIABLE_HPP

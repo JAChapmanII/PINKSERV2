@@ -39,7 +39,7 @@ vector<string> global::moduleFunctionList;
 zidcu::Database global::db;
 static bool db_setup{false};
 
-map<string, Variable> global::vars;
+VarStore global::vars{global::db, "vars", "var_perms" };
 map<string, map<string, Variable>> global::lvars;
 
 static unsigned int global_seed = 0;
@@ -115,7 +115,7 @@ bool global::secondaryInit() {
 			try {
 				auto expr = Parser::parse(line);
 				string result = expr->evaluate(
-						global::vars["bot.owner"].toString()).toString();
+						global::vars.getString("bot.owner")).toString();
 			// TODO: more exception types
 			} catch(ParseException e) {
 				cerr << "parse exception" << endl;
@@ -170,7 +170,7 @@ void global::send(string network, string target, string line, bool send) {
 		return;
 	log << " -> " << target << " :" << line << endl;
 	unsigned maxLineLength =
-		fromString<unsigned>(global::vars["bot.maxLineLength"].toString());
+		fromString<unsigned>(global::vars.getString("bot.maxLineLength"));
 	if(line.length() > maxLineLength) {
 		line = line.substr(0, maxLineLength);
 		log << "\t(line had to be shortened)" << endl;;
@@ -181,16 +181,16 @@ void global::send(string network, string target, string line, bool send) {
 		cout << network << " PRIVMSG " << target << " :" << line << endl;
 		// TODO: this looks like pbrane is predicting the result in the journal...
 		journal::push(journal::Entry(":" +
-					global::vars["bot.nick"].toString() + "!~self@localhost " +
+					global::vars.get("bot.nick").toString() + "!~self@localhost " +
 					"PRIVMSG " + target + " :" + line));
 	}
 }
 
 bool global::isOwner(std::string nick) {
-	return (nick == global::vars["bot.owner"].toString());
+	return (nick == global::vars.getString("bot.owner"));
 }
 bool global::isAdmin(std::string nick) {
-	return contains(global::vars["bot.admins"].toString(), " " + nick + " ");
+	return contains(global::vars.getString("bot.admins"), " " + nick + " ");
 }
 
 long long global::now() {

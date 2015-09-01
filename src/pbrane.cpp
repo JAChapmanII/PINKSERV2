@@ -99,9 +99,8 @@ void prettyPrint(string arg) {
 }
 
 void teval(vector<string> args) {
-	global::vars["bot.owner"] = "jac";
-	global::vars["bot.admins"] = "Jext, RGCockatrices, bonzairob, quairlzr, Nybbles, ajanata";
-	global::vars["bot.maxIterations"] = "10";
+	global::vars.set("bot.owner", "jac");
+	global::vars.set("bot.admins", "jac");
 
 	// initialize modules
 	modules::init();
@@ -224,12 +223,12 @@ int main(int argc, char **argv) {
 	// TODO: don't hard-code these. These should be set in the startup file?
 	evaluate("${(!undefined 'bot.owner')? { bot.owner = 'jac'; }}", "jac");
 	evaluate("${(!undefined 'bot.nick')? { bot.nick = 'PINKSERV3'; }}",
-			global::vars["bot.owner"].toString());
+			global::vars.getString("bot.owner"));
 	evaluate("${(!undefined 'bot.maxLineLength')? { bot.maxLineLength = 256; }}",
-			global::vars["bot.owner"].toString());
+			global::vars.getString("bot.owner"));
 	if(import) {
 		evaluate("${!on \"text\" (null => !ngobserve text)}",
-				global::vars["bot.owner"].toString());
+				global::vars.getString("bot.owner"));
 	}
 
 	if(!global::secondaryInit()) {
@@ -238,8 +237,8 @@ int main(int argc, char **argv) {
 	}
 
 
-	global::log << "----- " << global::vars["bot.nick"].toString() << " started -----" << endl;
-	cerr << "----- " << global::vars["bot.nick"].toString() << " started -----" << endl;
+	global::log << "----- " << global::vars.getString("bot.nick") << " started -----" << endl;
+	cerr << "----- " << global::vars.getString("bot.nick") << " started -----" << endl;
 
 	global::secondaryInit(); // TODO: we do this twice?
 	journal::init();
@@ -281,7 +280,7 @@ int main(int argc, char **argv) {
 			string message = line.substr(mstart + 1);
 
 			string target = fields[2];
-			if(fields[2] == global::vars["bot.nick"].toString())
+			if(fields[2] == global::vars.getString("bot.nick"))
 				target = nick;
 
 			// check for a special hook
@@ -293,8 +292,8 @@ int main(int argc, char **argv) {
 				}
 
 			// TODO: proper environment for triggers
-			global::vars["nick"] = nick;
-			global::vars["text"] = message;
+			global::vars.set("nick", nick);
+			global::vars.set("text", message);
 
 			if(wasHook)
 				entry.etype = journal::ExecuteType::Hook;
@@ -326,8 +325,8 @@ int main(int argc, char **argv) {
 				where = where.substr(1);
 
 			// TODO: proper environment for triggers
-			global::vars["nick"] = nick;
-			global::vars["where"] = where;
+			global::vars.set("nick", nick);
+			global::vars.set("where", where);
 
 			vector<Variable> results = EventSystem::process(EventType::Join);
 			if(results.size() == 1)

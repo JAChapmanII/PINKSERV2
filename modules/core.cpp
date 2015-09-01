@@ -36,7 +36,7 @@ Variable help(vector<Variable> arguments) {
 		string function = arguments.front().toString();
 		if(!contains(global::moduleFunctionList, function))
 			return Variable("error: requested function does not exist", Permissions());
-		return global::vars[function + ".help"];
+		return global::vars.get(function + ".help");
 	}
 	return Variable(join(global::moduleFunctionList, ", "), Permissions());
 }
@@ -115,9 +115,9 @@ Variable type(vector<Variable> arguments) {
 Variable undefined(std::vector<Variable> arguments) {
 	if(arguments.size() != 1)
 		throw (string)"error: undefined takes one argument";
-	if(global::vars.find(arguments.front().toString()) == global::vars.end())
-		return Variable(true, Permissions());
-	return Variable(false, Permissions());
+	if(global::vars.defined(arguments.front().toString()))
+		return Variable(false, Permissions());
+	return Variable(true, Permissions());
 }
 
 // TODO: how to do this partly? Gah... :(
@@ -127,12 +127,12 @@ Variable rm(vector<Variable> arguments) {
 		global::vars.erase(var.toString());
 	}
 	return Variable("erased", Permissions());
-	throw (string)"(not-implemented, bug " + global::vars["bot.owner"].toString() + ")";
+	throw (string)"(not-implemented, bug " + global::vars.getString("bot.owner") + ")";
 }
 
 Variable sleep(vector<Variable>) {
 	// TODO: can we just exit(non-0)?
-	throw (string)"(uh-oh, bug " + global::vars["bot.owner"].toString() + ")";
+	throw (string)"(uh-oh, bug " + global::vars.getString("bot.owner") + ")";
 }
 
 Variable jsize(vector<Variable>) {
