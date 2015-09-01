@@ -42,7 +42,6 @@ static bool db_setup{false};
 map<string, Variable> global::vars;
 map<string, map<string, Variable>> global::lvars;
 
-static ofstream chatFile;
 static unsigned int global_seed = 0;
 
 vector<string> global::ignoreList;
