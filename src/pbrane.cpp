@@ -77,14 +77,6 @@ bool canEvaluate(string message) {
 }
 bool import = false;
 
-struct CrashInformation {
-	bool crashed{false};
-	string last{};
-};
-
-CrashInformation crashed();
-void crashed(bool val, string last = "");
-
 void prettyPrint(string arg);
 void teval(vector<string> args);
 
@@ -243,15 +235,12 @@ int main(int argc, char **argv) {
 	global::secondaryInit(); // TODO: we do this twice?
 	journal::init();
 
-	CrashInformation ci = crashed();
-	if(ci.crashed) {
+	if(global::vars.defined("bot.crashed")) {
 		cerr << "-- looks like I crashed" << endl;
-		send("slashnet", "#jitro", "oh no, " +
-				(ci.last.empty() ? "I crashed?" : ci.last + " made me crash?") +
-				" :(", true);
+		send("slashnet", "#jitro", "oh no, '"
+				+ global::vars.getString("bot.crashed") + "' made me crash?", true);
 	}
-
-	crashed(true, "{startup}");
+	global::vars.erase("bot.crashed");
 
 	// while there is more input coming
 	global::done = false;
@@ -274,7 +263,7 @@ int main(int argc, char **argv) {
 		vector<string> fields = split(line);
 		if(fields[1] == (string)"PRIVMSG") {
 			string nick = fields[0].substr(1, fields[0].find("!") - 1);
-			crashed(true, nick);
+			global::vars.set("bot.crashed", nick);
 
 			size_t mstart = line.find(":", 1);
 			string message = line.substr(mstart + 1);
@@ -344,6 +333,9 @@ int main(int argc, char **argv) {
 	}
 
 	cerr << "pbrane: exited main loop" << endl;
+	global::vars.set("bot.crashed", "{shutdown}");
+
+	// deinit journal
 	journal::deinit();
 
 	// free memory associated with modules
@@ -352,7 +344,7 @@ int main(int argc, char **argv) {
 	// deinit global
 	global::deinit();
 
-	crashed(false, "{shutdown?}");
+	global::vars.erase("bot.crashed");
 
 	return 0;
 }
@@ -450,27 +442,5 @@ bool regexHook(PrivateMessage pmsg) {
 	}
 
 	return false;
-}
-
-CrashInformation crashed() {
-	CrashInformation ci;
-	ifstream in("PINKSERV3.crashed");
-	if(!in.good()) {
-		cerr << "crashed file does not exist" << endl;
-		return ci;
-	}
-	string l;
-	getline(in, l);
-	ci.crashed = (l == "crashed");
-	getline(in, ci.last);
-	return ci;
-}
-void crashed(bool val, string last) {
-	ofstream out("PINKSERV3.crashed");
-	if(val)
-		out << "crashed" << endl;
-	else
-		out << "safe" << endl;
-	out << last << endl;
 }
 
