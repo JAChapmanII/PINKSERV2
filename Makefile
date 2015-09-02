@@ -20,7 +20,7 @@ LDFLAGS=-lboost_regex -lsqlite3
 # -lgmp -lgmpxx
 
 ifndef release
-CXXFLAGS+=-g
+CXXFLAGS+=-g -rdynamic
 else
 CXXFLAGS+=-O3 -Os
 endif
