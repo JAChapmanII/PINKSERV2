@@ -88,6 +88,7 @@ namespace zidcu {
 		int step();
 
 		int getInteger(int idx);
+		sqlite_int64 getLong(int idx);
 		std::string getString(int idx);
 
 		template<typename T> T get(int idx);

@@ -127,6 +127,9 @@ int zidcu::Result::step() { return _rc = sqlite3_step(_statement.getStatement())
 int zidcu::Result::getInteger(int idx) {
 	return sqlite3_column_int(_statement.getStatement(), idx);
 }
+sqlite_int64 zidcu::Result::getLong(int idx) {
+	return sqlite3_column_int64(_statement.getStatement(), idx);
+}
 string zidcu::Result::getString(int idx) {
 	const unsigned char *result = sqlite3_column_text(_statement.getStatement(), idx);
 	return string{(char *)result};
@@ -134,6 +137,9 @@ string zidcu::Result::getString(int idx) {
 namespace zidcu {
 	template<> int Result::get<int>(int idx) {
 		return this->getInteger(idx);
+	}
+	template<> sqlite_int64 Result::get<sqlite_int64>(int idx) {
+		return this->getLong(idx);
 	}
 	template<> string Result::get<string>(int idx) {
 		return this->getString(idx);
