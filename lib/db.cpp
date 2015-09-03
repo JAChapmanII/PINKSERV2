@@ -63,11 +63,6 @@ zidcu::Statement &zidcu::Database::operator[](string sql) {
 	return (*_cache)[sql];
 }
 
-zidcu::Result zidcu::Database::execute(string sql) {
-	auto &statement = (*this)[sql];
-	return statement.execute();
-}
-
 zidcu::Statement::Statement(Database &db, string sql) : _db(db), _sql(sql) {
 	cerr << "Statement::Statement: sql: \"" << _sql << "\"" << endl;
 	const char *leftover{nullptr};

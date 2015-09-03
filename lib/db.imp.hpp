@@ -1,6 +1,13 @@
 #include "err.hpp"
 
 namespace zidcu {
+	template<typename... Ts>
+			Result Database::execute(std::string sql, Ts... args) {
+		auto &statement = (*this)[sql];
+		statement.bindAll(args...);
+		return statement.execute();
+	}
+
 	template<typename T, typename... Ts>
 			std::experimental::optional<T> Database::executeScalar(std::string sql, Ts... args) {
 		auto &statement = (*this)[sql];

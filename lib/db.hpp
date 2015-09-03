@@ -28,7 +28,8 @@ namespace zidcu {
 
 		Statement &operator[](std::string sql);
 
-		Result execute(std::string sql);
+		template<typename... Ts>
+			Result execute(std::string sql, Ts... args);
 		template<typename T, typename... Ts>
 			std::experimental::optional<T> executeScalar(std::string sql, Ts... args);
 		template<typename... Ts>
