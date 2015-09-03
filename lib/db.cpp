@@ -1,5 +1,8 @@
 #include "db.hpp"
 using std::string;
+using std::to_string;
+
+#include "err.hpp"
 
 #include <iostream>
 using std::cerr;
@@ -8,6 +11,7 @@ using std::endl;
 zidcu::Database::Database() { }
 zidcu::Database::Database(string fileName) : _fileName(fileName) { open(_fileName); }
 zidcu::Database::~Database() {
+	if(_cache) { delete _cache; }
 	if(_startTransaction) { delete _startTransaction; }
 	if(_commitTransaction) { delete _commitTransaction; }
 	if(_opened) {
@@ -59,6 +63,11 @@ zidcu::Statement &zidcu::Database::operator[](string sql) {
 	return (*_cache)[sql];
 }
 
+zidcu::Result zidcu::Database::execute(string sql) {
+	auto &statement = (*this)[sql];
+	return statement.execute();
+}
+
 zidcu::Statement::Statement(Database &db, string sql) : _db(db), _sql(sql) {
 	cerr << "Statement::Statement: sql: \"" << _sql << "\"" << endl;
 	const char *leftover{nullptr};
@@ -88,10 +97,27 @@ zidcu::Statement::~Statement() {
 void zidcu::Statement::bind(int idx, int val) {
 	sqlite3_bind_int(_statement, idx, val);
 }
+void zidcu::Statement::bind(int idx, sqlite_int64 val) {
+	sqlite3_bind_int64(_statement, idx, val);
+}
+void zidcu::Statement::bind(int idx, double val) {
+	sqlite3_bind_double(_statement, idx, val);
+}
+void zidcu::Statement::bind(int idx, const char *val) {
+	sqlite3_bind_text(_statement, idx, val, -1, SQLITE_TRANSIENT);
+}
 void zidcu::Statement::bind(int idx, string val) {
 	sqlite3_bind_text(_statement, idx, val.c_str(), val.size(), SQLITE_STATIC);
 }
+
 zidcu::Result zidcu::Statement::execute() { return Result(*this); }
+void zidcu::Statement::executeVoid() {
+	auto result = this->execute();
+	if(result.status() == SQLITE_DONE)
+		return;
+
+	throw make_except("expected done not: " + to_string(result.status()));
+}
 
 string zidcu::Statement::sql() const { return _sql; }
 sqlite3_stmt *zidcu::Statement::getStatement() { return _statement; }
@@ -110,7 +136,14 @@ string zidcu::Result::getString(int idx) {
 	const unsigned char *result = sqlite3_column_text(_statement.getStatement(), idx);
 	return string{(char *)result};
 }
-
+namespace zidcu {
+	template<> int Result::get<int>(int idx) {
+		return this->getInteger(idx);
+	}
+	template<> string Result::get<string>(int idx) {
+		return this->getString(idx);
+	}
+}
 
 zidcu::Transaction::Transaction(Statement &start, Statement &end)
 		: _start(start), _end(end) {

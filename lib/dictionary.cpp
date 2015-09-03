@@ -10,24 +10,24 @@ using std::endl;
 Dictionary::Dictionary(Database &db, string tableName)
 		: _db{db}, _tableName{tableName} { }
 
-string Dictionary::get(sqlite_uint64 key) {
+string Dictionary::get(sqlite_int64 key) {
 	createTable();
-	if(key == (sqlite_uint64)Anchor::Start)
+	if(key == (sqlite_int64)Anchor::Start)
 		return "{^}";
-	if(key == (sqlite_uint64)Anchor::End)
+	if(key == (sqlite_int64)Anchor::End)
 		return "{$}";
 
 	auto &statement = _db["SELECT str FROM " + _tableName + " WHERE code = ?1"];
-	statement.bind(1, key - (sqlite_uint64)Anchor::ReservedCount);
+	statement.bind(1, key - (sqlite_int64)Anchor::ReservedCount);
 	auto result = statement.execute();
 	if(result.status() == SQLITE_DONE) return "";
 	if(result.status() != SQLITE_ROW) {
-		cerr << "Dictionary::get(uint64): sqlite error: " << result.status() << endl;
+		cerr << "Dictionary::get(int64): sqlite error: " << result.status() << endl;
 		throw result.status();
 	}
 	return result.getString(0);
 }
-string Dictionary::operator[](sqlite_uint64 key) {
+string Dictionary::operator[](sqlite_int64 key) {
 	return this->get(key);
 }
 
@@ -41,7 +41,7 @@ void Dictionary::insert(string value) {
 		throw result.status();
 	}
 }
-sqlite_uint64 Dictionary::get(string value) {
+sqlite_int64 Dictionary::get(string value) {
 	createTable();
 	auto &statement = _db["SELECT code FROM " + _tableName + " WHERE str = ?1"];
 	statement.bind(1, value);
@@ -51,14 +51,14 @@ sqlite_uint64 Dictionary::get(string value) {
 		insert(value);
 		return get(value);
 	}
-	return result.getInteger(0) + (sqlite_uint64)Anchor::ReservedCount;
+	return result.getInteger(0) + (sqlite_int64)Anchor::ReservedCount;
 }
-sqlite_uint64 Dictionary::operator[](string value) {
+sqlite_int64 Dictionary::operator[](string value) {
 	return this->get(value);
 }
 
 
-sqlite_uint64 Dictionary::size() {
+sqlite_int64 Dictionary::size() {
 	createTable();
 	auto &statement = _db["SELECT COUNT(1) FROM " + _tableName];
 	auto result = statement.execute();
@@ -69,12 +69,12 @@ sqlite_uint64 Dictionary::size() {
 
 }
 
-bool Dictionary::isAnchor(sqlite_uint64 key) {
-	return key >= 0 && key <= (sqlite_uint64)Anchor::ReservedCount;
+bool Dictionary::isAnchor(sqlite_int64 key) {
+	return key >= 0 && key <= (sqlite_int64)Anchor::ReservedCount;
 }
-bool Dictionary::isInvalidAnchor(sqlite_uint64 key) {
-	return key >= (sqlite_uint64)Anchor::Count
-		&& key <= (sqlite_uint64)Anchor::ReservedCount;
+bool Dictionary::isInvalidAnchor(sqlite_int64 key) {
+	return key >= (sqlite_int64)Anchor::Count
+		&& key <= (sqlite_int64)Anchor::ReservedCount;
 }
 
 void Dictionary::createTable() {

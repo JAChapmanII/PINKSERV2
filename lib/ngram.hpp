@@ -4,10 +4,11 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <sqlite3.h>
 #include "db.hpp"
 
-using word_t = unsigned;
-using count_t = unsigned;
+using word_t = sqlite3_int64;
+using count_t = sqlite3_int64;
 using prefix_t = std::vector<word_t>;
 
 struct ngram_t {

@@ -15,7 +15,7 @@ OBJS:= \
 	$(patsubst ${PDIR}/%.cpp,${ODIR}/%.o,$(wildcard ${PDIR}/*.cpp)) \
 	$(patsubst ${MDIR}/%.cpp,${ODIR}/%.o,$(wildcard ${MDIR}/*.cpp))
 
-CXXFLAGS=-std=c++0x -I${SDIR} -I${LDIR} -I${PDIR} -I${MDIR}
+CXXFLAGS=-std=c++1y -I${SDIR} -I${LDIR} -I${PDIR} -I${MDIR}
 LDFLAGS=-lboost_regex -lsqlite3
 # -lgmp -lgmpxx
 

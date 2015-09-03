@@ -10,16 +10,16 @@ enum class Anchor { Start, End, Count, ReservedCount = 0x100 };
 struct Dictionary {
 	Dictionary(zidcu::Database &db, std::string tableName = "dictionary");
 
-	std::string get(sqlite_uint64 key);
-	std::string operator[](sqlite_uint64 key);
+	std::string get(sqlite_int64 key);
+	std::string operator[](sqlite_int64 key);
 
-	sqlite_uint64 get(std::string value);
-	sqlite_uint64 operator[](std::string value);
+	sqlite_int64 get(std::string value);
+	sqlite_int64 operator[](std::string value);
 
-	sqlite_uint64 size();
+	sqlite_int64 size();
 
-	bool isAnchor(sqlite_uint64 key);
-	bool isInvalidAnchor(sqlite_uint64 key);
+	bool isAnchor(sqlite_int64 key);
+	bool isInvalidAnchor(sqlite_int64 key);
 
 	void createTable();
 
