@@ -18,10 +18,9 @@ zidcu::Database::~Database() {
 		if(_db) {
 			int rc = sqlite3_close(_db);
 			if(rc != SQLITE_OK) {
-				cerr << "Database::~Database: error closing db "
-					<< "\"" << _fileName << "\": "
-					<< "error: " << sqlite3_errmsg(_db) << endl;
-				throw rc;
+				throw make_except(string{"Database::~Database: error closing db "}
+					+ "\"" + _fileName + "\": error: "
+					+ string{sqlite3_errmsg(_db)} + ": " + to_string(rc));
 			}
 		} else {
 			cerr << "Database::~Database: db open but null" << endl;
@@ -43,17 +42,15 @@ zidcu::Transaction zidcu::Database::transaction() {
 void zidcu::Database::open(string fileName) {
 	if(_opened) {
 		if(fileName == _fileName) return;
-		cerr << "zidcu::Database::open: tried to open new db" << endl;
-		throw -1;
+		throw make_except("zidcu::Database::open: tried to open new db");
 	}
 	_fileName = fileName;
 
 	int rc = sqlite3_open(_fileName.c_str(), &_db);
 	if(rc != SQLITE_OK) {
-		cerr << "Database::Database: error opening db "
-			<< "\"" << _fileName << "\": "
-			<< "error: " << sqlite3_errmsg(_db) << endl;
-		throw rc;
+		throw make_except(string{"zidcu::Database::Database: error opening db "}
+			+ "\"" + _fileName + "\": error: "
+			+ sqlite3_errmsg(_db) + ": " + to_string(rc));
 	}
 }
 
@@ -64,27 +61,22 @@ zidcu::Statement &zidcu::Database::operator[](string sql) {
 }
 
 zidcu::Statement::Statement(Database &db, string sql) : _db(db), _sql(sql) {
-	cerr << "Statement::Statement: sql: \"" << _sql << "\"" << endl;
 	const char *leftover{nullptr};
 	int rc = sqlite3_prepare_v2(_db.getDB(), _sql.c_str(), _sql.size(),
 			&_statement, &leftover);
 	if(rc != SQLITE_OK) {
-		cerr << "Statement::Statement: error preparing statement: "
-			<< "\"" << _sql << "\"" << endl
-			<< "    " << rc << endl;
-		throw rc;
+		throw make_except(string{"zidcu::Statement::Statement: "}
+				+ "error preparing statement: \"" + _sql + "\": " + to_string(rc));
 	}
-	if(*leftover != '\0') {
-		cerr << "Statement::Statement: leftover: " << leftover << endl;
-	}
+	if(*leftover != '\0')
+		throw make_except("zidcu::Statement::Statement: leftover: " + string{leftover});
 }
 zidcu::Statement::~Statement() {
 	if(_statement) {
 		int rc = sqlite3_finalize(_statement);
 		if(rc != SQLITE_OK) {
-			cerr << "Statement::~Statement: error finalizing statement: "
-				<< rc << endl;
-			throw rc;
+			throw make_except("zidcu::Statement::~Statement: error finalizing statement: "
+					+ to_string(rc));
 		}
 	}
 }
@@ -148,14 +140,10 @@ namespace zidcu {
 
 zidcu::Transaction::Transaction(Statement &start, Statement &end)
 		: _start(start), _end(end) {
-	auto result = _start.execute();
-	int rc = result.status();
-	if(rc != SQLITE_DONE) { throw rc; }
+	_start.executeVoid();
 }
 zidcu::Transaction::~Transaction() {
-	auto result = _end.execute();
-	int rc = result.status();
-	if(rc != SQLITE_DONE) { throw rc; }
+	_end.executeVoid();
 }
 
 zidcu::StatementCache::StatementCache(Database &db) : _db{db}, _cache{} { }
