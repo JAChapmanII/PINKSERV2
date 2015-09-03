@@ -1,6 +1,7 @@
 #include "eventsystem.hpp"
 using std::vector;
 using std::string;
+using std::to_string;
 
 #include "expression.hpp"
 #include "parser.hpp"
@@ -14,100 +15,39 @@ using std::cerr;
 using std::endl;
 
 static string table = "events";
-static Statement *_createTable{nullptr};
-static Statement *_eventTypeCount{nullptr};
-static Statement *_getEvent{nullptr};
-static Statement *_getEvents{nullptr};
-static Statement *_removeEvent{nullptr};
-static Statement *_insertStatement{nullptr};
 static bool _tableCreated{false};
 static Database &_db = global::db;
 
 static void makeTable() {
 	if(_tableCreated) return;
-	if(!_createTable) {
-		_createTable = new Statement{_db,
-			"CREATE TABLE IF NOT EXISTS " + table
-			+ " (id integer primary key, type integer, body text)"};
-	}
 	auto tran = _db.transaction();
-	auto result = _createTable->execute();
-	if(result.status() != SQLITE_DONE) {
-		cerr << "EventSystem::makeTable: sqlite error: " << result.status() << endl;
-		throw result.status();
-	}
+	_db.executeVoid("CREATE TABLE IF NOT EXISTS " + table
+			+ " (id integer primary key, type integer, body text)");
 	_tableCreated = true;
 }
-static Statement &eventTypeCount() {
-	makeTable();
-	if(!_eventTypeCount) {
-		_eventTypeCount = new Statement{_db,
-			"SELECT COUNT(1) FROM " + table + " WHERE type = ?1"};
-	}
-	return *_eventTypeCount;
-}
-static Statement &getEvent() {
-	makeTable();
-	if(!_getEvent) {
-		_getEvent = new Statement{_db,
-			"SELECT * FROM " + table + " WHERE id = ?1"};
-	}
-	return *_getEvent;
-}
-static Statement &getEvents() {
-	makeTable();
-	if(!_getEvents) {
-		_getEvents = new Statement{_db,
-			"SELECT * FROM " + table + " ORDER BY body"};
-	}
-	return *_getEvents;
-}
-static Statement &removeEvent() {
-	makeTable();
-	if(!_removeEvent) {
-		_removeEvent = new Statement{_db,
-			"DELETE FROM " + table + " WHERE id = ?1"};
-	}
-	return *_removeEvent;
-}
-static Statement &insertEvent() {
-	makeTable();
-	if(!_insertStatement) {
-		_insertStatement = new Statement{_db,
-			"INSERT INTO " + table + "(type, body) VALUES(?1, ?2)"};
-	}
-	return *_insertStatement;
-}
-
 
 void EventSystem::push(EventType etype, Event e) {
-	auto &statement = insertEvent();
+	makeTable();
 	auto tran = _db.transaction();
-	statement.bind(1, (int)etype);
-	statement.bind(2, e);
-	auto result = statement.execute();
-	if(result.status() != SQLITE_DONE) {
-		cerr << "EventSystem::push: sqlite error: " << result.status() << endl;
-		throw result.status();
-	}
+	_db.executeVoid("INSERT INTO " + table + "(type, body) VALUES(?1, ?2)",
+			(int)etype, e);
 }
 
 vector<string> getEventBodies(EventType etype);
 vector<string> getEventBodies(EventType etype) {
+	makeTable();
 	vector<string> bodies;
-	auto &statement = getEvents();
 	auto tran = _db.transaction();
-	statement.bind(1, (int)etype);
-	auto result = statement.execute();
+	auto result = _db.execute("SELECT * FROM " + table + " WHERE type = ?1",
+			(int)etype);
 	while(result.status() == SQLITE_ROW) {
 		string body = result.getString(2);
 		bodies.push_back(body);
 		result.step();
 	}
 	if(result.status() != SQLITE_DONE) {
-		cerr << "EventSystem::process(" << (int)etype << "): sqlite error: "
-			<< result.status() << endl;
-		throw result.status();
+		throw make_except("expected result set of " + to_string((int)etype)
+				+ ", got: " + to_string(result.status()));
 	}
 	return bodies;
 }
@@ -138,40 +78,25 @@ vector<Variable> EventSystem::process(EventType etype) {
 }
 
 int EventSystem::eventsSize(EventType etype) {
-	auto &statement = eventTypeCount();
-	auto tran = _db.transaction();
-	statement.bind(1, (int)etype);
-	auto result = statement.execute();
-	if(result.status() != SQLITE_ROW) {
-		cerr << "EventSystem::eventsSize: sqlite error: " << result.status() << endl;
-		throw result.status();
-	}
-	return result.getInteger(0);
+	makeTable();
+	auto count = _db.executeScalar<int>(
+			"SELECT COUNT(1) FROM " + table + " WHERE type = ?1",
+			(int)etype);
+	return (count ? *count : 0);
 }
 Event EventSystem::getEvent(int id) {
-	auto &statement = ::getEvent();
-	auto tran = _db.transaction();
-	statement.bind(1, id);
-	auto result = statement.execute();
-	if(result.status() == SQLITE_DONE) { return ""; }
-	if(result.status() != SQLITE_ROW) {
-		cerr << "EventSystem::getEvent: sqlite error: " << result.status() << endl;
-		throw result.status();
-	}
-	return result.getString(2);
+	makeTable();
+	auto body = _db.executeScalar<string>(
+			"SELECT body FROM " + table + " WHERE id = ?1",
+			id);
+	return (body ? *body : "");
 }
 void EventSystem::deleteEvent(int id) {
+	makeTable();
 	cerr << "EventSystem::deleteEvent(" << id << "): deleting \""
 		<< getEvent(id) << "\"" << endl;
 
-	auto &statement = removeEvent();
 	auto tran = _db.transaction();
-	statement.bind(1, id);
-	auto result = statement.execute();
-	if(result.status() != SQLITE_DONE) {
-		cerr << "EventSystem::deleteEvent: sqlite error: " << result.status() << endl;
-		throw result.status();
-	}
-	return;
+	_db.executeVoid("DELETE FROM " + table + " WHERE id = ?1", id);
 }
 
