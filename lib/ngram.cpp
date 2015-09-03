@@ -58,10 +58,6 @@ bool ngramStore::exists(ngram_t ngram) {
 	return (count ? *count > 0 : false);
 }
 word_t ngramStore::random(prefix_t prefix) {
-	cerr << "ngramStore::random: ";
-	for(word_t &w : prefix) cerr << global::dictionary[w] << " ";
-	cerr << endl;
-
 	createTable(prefix.size());
 	int total = 0;
 	{
@@ -93,9 +89,9 @@ word_t ngramStore::random(prefix_t prefix) {
 			result.step();
 		}
 	}
-	cerr << "ngramStore::random: " << prefix.size() << " order ran off edge" << endl
-		<< "    rows: " << rowCount << ", total: " << total << endl;
-	throw -1;
+	throw make_except(string{"ngramStore::random: "} + to_string(prefix.size())
+			+ " order ran off edge\n    rows: " + to_string(rowCount)
+			+ ", total: " + to_string(total));
 }
 
 void ngramStore::bind(Statement &statement, ngram_t &ngram) {
