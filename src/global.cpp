@@ -73,20 +73,12 @@ bool global::init(unsigned int seed) {
 	}
 
 	db.open(config::databaseFileName);
-	zidcu::Statement p1{db, "PRAGMA cache_size = 10000;"};
-	auto r1 = p1.execute(); if(r1.status() != SQLITE_DONE) { throw r1.status(); }
 
-	zidcu::Statement p2{db, "PRAGMA page_size = 8192;"};
-	auto r2 = p2.execute(); if(r2.status() != SQLITE_DONE) { throw r2.status(); }
-
-	zidcu::Statement p3{db, "PRAGMA temp_store = MEMORY;"};
-	auto r3 = p3.execute(); if(r3.status() != SQLITE_DONE) { throw r3.status(); }
-
-	zidcu::Statement p4{db, "PRAGMA journal_mode = WAL;"};
-	auto r4 = p4.execute(); if(r4.status() != SQLITE_ROW) { throw r4.status(); }
-
-	zidcu::Statement p5{db, "PRAGMA synchronous = NORMAL;"};
-	auto r5 = p5.execute(); if(r5.status() != SQLITE_DONE) { throw r5.status(); }
+	db.executeVoid("PRAGMA cache_size = 10000;");
+	db.executeVoid("PRAGMA page_size = 8192;");
+	db.executeVoid("PRAGMA temp_store = MEMORY;");
+	db.executeScalar<string>("PRAGMA journal_mode = WAL;");
+	db.executeVoid("PRAGMA synchronous = NORMAL;");
 
 	if(global::debugSQL)
 		void* res = sqlite3_trace(db.getDB(), sqlTrace, nullptr);
