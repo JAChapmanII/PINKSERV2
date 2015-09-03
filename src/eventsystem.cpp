@@ -7,6 +7,7 @@ using std::to_string;
 #include "parser.hpp"
 #include "db.hpp"
 #include "global.hpp"
+#include "err.hpp"
 using zidcu::Database;
 using zidcu::Statement;
 

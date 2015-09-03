@@ -11,6 +11,7 @@ using std::uniform_int_distribution;
 
 #include "util.hpp"
 #include "global.hpp"
+#include "err.hpp"
 
 #include <iostream>
 using std::cerr;
@@ -33,51 +34,28 @@ chain_t ngramStore::fetch(ngram_t ngram) {
 	createTable(ngram.order());
 	auto &statement = _db[_builder.ngramFetch(ngram.order())];
 	bind(statement, ngram);
-
-	chain_t chain{ngram};
-	auto result = statement.execute();
-	auto rc = result.status();
-
-	if(rc == SQLITE_DONE) { return ngram; }
-	if(rc != SQLITE_ROW) { throw rc; }
-
-	chain.count = result.getInteger(0);
-	return chain;
+	auto count = statement.executeScalar<sqlite_int64>();
+	return chain_t{ngram, count ? *count : 0};
 }
 void ngramStore::increment(ngram_t ngram) {
 	createTable(ngram.order());
 	{
 		auto &statement = _db[_builder.ngramInsert(ngram.order())];
 		bind(statement, ngram);
-		auto result = statement.execute();
-		if(result.status() != SQLITE_DONE) {
-			cerr << "ngramStore::increment: error: " << result.status() << endl;
-			throw result.status();
-		}
+		statement.executeVoid();
 	}
 	{
 		auto &statement = _db[_builder.ngramIncrement(ngram.order())];
 		bind(statement, ngram);
-		auto result = statement.execute();
-		if(result.status() != SQLITE_DONE) {
-			cerr << "ngramStore::increment: error: " << result.status() << endl;
-			throw result.status();
-		}
+		statement.executeVoid();
 	}
 }
 bool ngramStore::exists(ngram_t ngram) {
 	createTable(ngram.order());
 	auto &statement = _db[_builder.ngramExists(ngram.order())];
 	bind(statement, ngram);
-
-	auto result = statement.execute();
-	int rc = result.status();
-	if(rc != SQLITE_ROW) {
-		cerr << "ngramStore::exists: error: " << rc << endl;
-		throw rc;
-	}
-
-	return (result.getInteger(0) > 0);
+	auto count = statement.executeScalar<int>();
+	return (count ? *count > 0 : false);
 }
 word_t ngramStore::random(prefix_t prefix) {
 	cerr << "ngramStore::random: ";
@@ -89,9 +67,8 @@ word_t ngramStore::random(prefix_t prefix) {
 	{
 		auto &statement = _db[_builder.prefixCount(prefix.size())];
 		bind(statement, prefix);
-		auto result = statement.execute();
-		if(result.status() != SQLITE_ROW) { throw result.status(); }
-		total = result.getInteger(0);
+		auto count = statement.executeScalar<int>();
+		total = (count ? *count : 0);
 	}
 
 	uniform_int_distribution<> uid(0, total);
@@ -104,8 +81,7 @@ word_t ngramStore::random(prefix_t prefix) {
 		auto result = statement.execute();
 		if(result.status() == SQLITE_DONE) return -1;
 		if(result.status() != SQLITE_ROW) {
-			cerr << "ngramStore::random: prefixFetch failed: " << result.status() << endl;
-			throw result.status();
+			throw make_except("ngramStore::random: prefixFetch failed: " + to_string(result.status()));
 		}
 		while(result.status() == SQLITE_ROW) {
 			rowCount++;
@@ -229,22 +205,11 @@ void ngramStore::createTable(int order) {
 	if(_tableCache[order])
 		return;
 
-	{
-		auto &statement = _db[_builder.createTable(order)];
-		auto result = statement.execute();
-		if(result.status() != SQLITE_DONE) { throw result.status(); }
-	}
-	{
-		auto &statement = _db[_builder.createIndex1(order)];
-		auto result = statement.execute();
-		if(result.status() != SQLITE_DONE) { throw result.status(); }
-	}
+	_db.executeVoid(_builder.createTable(order));
+	_db.executeVoid(_builder.createIndex1(order));
 
-	if(order > 0) {
-		auto &statement = _db[_builder.createIndex2(order)];
-		auto result = statement.execute();
-		if(result.status() != SQLITE_DONE) { throw result.status(); }
-	}
+	if(order > 0)
+		_db.executeVoid(_builder.createIndex2(order));
 
 	_tableCache[order] = true;
 }
