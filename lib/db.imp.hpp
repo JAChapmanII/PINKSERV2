@@ -21,6 +21,10 @@ namespace zidcu {
 		statement.executeVoid();
 	}
 
+	template<typename T> void Statement::bind(int idx, T val) {
+		throw make_except("unexpected type");
+	}
+
 	template<typename... T> void Statement::bindAll(T... args) {
 		this->bindAll<0>(args...);
 	}

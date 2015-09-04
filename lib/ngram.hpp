@@ -59,9 +59,6 @@ struct ngramStore {
 	word_t random(prefix_t prefix);
 
 	private:
-		void bind(zidcu::Statement &statement, ngram_t &ngram);
-		void bind(zidcu::Statement &statement, prefix_t &prefix);
-
 		void createTable(int order);
 
 	private:
@@ -71,5 +68,8 @@ struct ngramStore {
 		ngramStoreStatementBuilder _builder;
 		std::vector<bool> _tableCache{};
 };
+
+void bind(zidcu::Statement &statement, ngram_t &ngram);
+void bind(zidcu::Statement &statement, prefix_t &prefix);
 
 #endif // NGRAM_HPP

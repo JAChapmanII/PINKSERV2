@@ -17,6 +17,24 @@ using std::uniform_int_distribution;
 using std::cerr;
 using std::endl;
 
+
+void bind(Statement &statement, ngram_t &ngram) {
+	for(int i = 0; i < ngram.order(); ++i)
+		statement.bind(i + 1, ngram.prefix[i]);
+	statement.bind(ngram.order() + 1, ngram.atom);
+}
+void bind(Statement &statement, prefix_t &prefix) {
+	for(int i = 0; i < (int)prefix.size(); ++i)
+		statement.bind(i + 1, prefix[i]);
+}
+
+namespace zidcu {
+	template<> void Statement::bind<ngram_t>(int, ngram_t val)
+		{ ::bind(*this, val); }
+	template<> void Statement::bind<prefix_t>(int, prefix_t val)
+		{ ::bind(*this, val); }
+}
+
 ngram_t::ngram_t(prefix_t iprefix, word_t iatom)
 		: prefix(iprefix), atom(iatom) { }
 
@@ -32,76 +50,51 @@ ngramStore::ngramStore(Database &db, std::string baseTableName)
 
 chain_t ngramStore::fetch(ngram_t ngram) {
 	createTable(ngram.order());
-	auto &statement = _db[_builder.ngramFetch(ngram.order())];
-	bind(statement, ngram);
-	auto count = statement.executeScalar<sqlite_int64>();
+	auto count = _db.executeScalar<sqlite_int64>(
+			_builder.ngramFetch(ngram.order()),
+			ngram);
 	return chain_t{ngram, count ? *count : 0};
 }
 void ngramStore::increment(ngram_t ngram) {
 	createTable(ngram.order());
-	{
-		auto &statement = _db[_builder.ngramInsert(ngram.order())];
-		bind(statement, ngram);
-		statement.executeVoid();
-	}
-	{
-		auto &statement = _db[_builder.ngramIncrement(ngram.order())];
-		bind(statement, ngram);
-		statement.executeVoid();
-	}
+	_db.executeVoid(_builder.ngramInsert(ngram.order()), ngram);
+	_db.executeVoid(_builder.ngramIncrement(ngram.order()), ngram);
 }
 bool ngramStore::exists(ngram_t ngram) {
 	createTable(ngram.order());
-	auto &statement = _db[_builder.ngramExists(ngram.order())];
-	bind(statement, ngram);
-	auto count = statement.executeScalar<int>();
+	auto count = _db.executeScalar<int>(
+			_builder.ngramExists(ngram.order()),
+			ngram);
 	return (count ? *count > 0 : false);
 }
 word_t ngramStore::random(prefix_t prefix) {
 	createTable(prefix.size());
-	int total = 0;
-	{
-		auto &statement = _db[_builder.prefixCount(prefix.size())];
-		bind(statement, prefix);
-		auto count = statement.executeScalar<int>();
-		total = (count ? *count : 0);
-	}
+	auto countRes = _db.executeScalar<int>(_builder.prefixCount(prefix.size()),
+			prefix);
+	int total = (countRes ? *countRes : 0);
 
 	uniform_int_distribution<> uid(0, total);
 	total = uid(global::rengine);
 
 	long rowCount = 0;
 	{
-		auto &statement = _db[_builder.prefixFetch(prefix.size())];
-		bind(statement, prefix);
-		auto result = statement.execute();
+		auto result = _db.execute(_builder.prefixFetch(prefix.size()), prefix);
 		if(result.status() == SQLITE_DONE) return -1;
 		if(result.status() != SQLITE_ROW) {
 			throw make_except("ngramStore::random: prefixFetch failed: " + to_string(result.status()));
 		}
 		while(result.status() == SQLITE_ROW) {
 			rowCount++;
-			total -= result.getInteger(prefix.size() + 1);
-			if(total <= 0) {
-				cerr << "ngramStore::random: rowCount: " << rowCount << endl;
+			total -= result.getInteger(prefix.size() + 1)
+					* result.getInteger(prefix.size() + 1);
+			if(total <= 0)
 				return result.getInteger(prefix.size());
-			}
 			result.step();
 		}
 	}
 	throw make_except(string{"ngramStore::random: "} + to_string(prefix.size())
 			+ " order ran off edge\n    rows: " + to_string(rowCount)
 			+ ", total: " + to_string(total));
-}
-
-void ngramStore::bind(Statement &statement, ngram_t &ngram) {
-	for(int i = 0; i < ngram.order(); ++i)
-		statement.bind(i + 1, ngram.prefix[i]);
-	statement.bind(ngram.order() + 1, ngram.atom);
-}
-void ngramStore::bind(Statement &statement, prefix_t &prefix) {
-	for(int i = 0; i < (int)prefix.size(); ++i)
-		statement.bind(i + 1, prefix[i]);
 }
 
 

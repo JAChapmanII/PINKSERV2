@@ -53,6 +53,7 @@ namespace zidcu {
 		void bind(int idx, double val);
 		void bind(int idx, const char *val);
 		void bind(int idx, std::string val);
+		template<typename T> void bind(int idx, T val);
 
 		template<typename... T> void bindAll(T... args);
 
