@@ -7,7 +7,6 @@
 namespace config {
 	extern std::string startupFile;
 	extern std::string logFileName;
-	extern std::string errFileName;
 	extern std::string todoFileName;
 	extern std::string journalFileName;
 	extern std::string databaseFileName;

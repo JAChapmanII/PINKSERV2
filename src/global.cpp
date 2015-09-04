@@ -32,7 +32,6 @@ using util::fromString;
 
 bool global::done;
 ofstream global::log;
-ofstream global::err;
 mt19937_64 global::rengine;
 vector<string> global::moduleFunctionList;
 
@@ -64,11 +63,6 @@ bool global::init(unsigned int seed) {
 	log.open(config::logFileName, fstream::app);
 	if(!log.good()) {
 		cerr << "global::init: could not open log file!" << endl;
-		return false;
-	}
-	err.open(config::errFileName, fstream::app);
-	if(!err.good()) {
-		cerr << "global::init: could not open error file!" << endl;
 		return false;
 	}
 
@@ -127,7 +121,6 @@ bool global::secondaryInit() {
 
 bool global::deinit() {
 	log.close();
-	err.close();
 	return true;
 }
 
