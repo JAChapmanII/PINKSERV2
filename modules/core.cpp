@@ -28,6 +28,8 @@ using util::join;
 
 #include "config.hpp"
 
+journal::Entry regexRandomEntry(string regex);
+
 Variable help(vector<Variable> arguments) {
 	if(arguments.size() > 1)
 		return Variable("error: help can only take a max of one function name",

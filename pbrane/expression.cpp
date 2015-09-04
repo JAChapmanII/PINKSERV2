@@ -55,7 +55,7 @@ string Expression::toString() const {
 	}
 	if(this->type == "!") {
 		string res = this->type + this->args[0]->toString();
-		for(int i = 1; i < this->args.size(); ++i)
+		for(int i = 1; i < (int)this->args.size(); ++i)
 			res += " " + this->args[i]->toString();
 		return res;
 	}
@@ -71,7 +71,7 @@ string Expression::toString() const {
 		return "{" + this->args[0]->toString() + "}";
 	if(this->type == ";") {
 		string result;
-		for(int i = 0; i < this->args.size(); ++i) {
+		for(int i = 0; i < (int)this->args.size(); ++i) {
 			if(i > 0)
 				result += "; ";
 			if(this->args[i])
@@ -145,7 +145,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 	if(this->type == ";") {
 		// first might have side effects
 		Variable result;
-		for(int i = 0; i < this->args.size(); ++i)
+		for(int i = 0; i < (int)this->args.size(); ++i)
 			if(this->args[i])
 				result = this->args[i]->evaluate(who);
 		return result;
@@ -253,21 +253,21 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 	// TODO: regex is reinterpreting the argument escapes?
 	// TODO: $text =~ ':o/|\o:' behaves like ':o/|o:'
 	if(this->type == "=~" || this->type == "~") {
-		string text = this->args[0]->evaluate(who).toString(), result;
+		string result, rtext = this->args[0]->evaluate(who).toString();
 		// TODO: may throw, wrap into StackTrace
 		try {
 			Regex r(this->args[1]->evaluate(who).toString());
 
 			// if match equals, just return if we match
 			if(this->type == "=~")
-				return Variable(r.matches(text), Permissions());
+				return Variable(r.matches(rtext), Permissions());
 
 			// wanted a replacement, but that's not the type of regex we have
 			if(r.type() != RegexType::Replace)
 				context.except("cannot attempt replace without result text");
 
 			// TODO: group variables, r0, r1, etc
-			bool matches = r.execute(text, result);
+			bool matches = r.execute(rtext, result);
 			return global::vars.set("r_", result); // TODO: read-only
 		} catch(string &e) {
 			context.except(e);

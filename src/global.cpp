@@ -36,7 +36,6 @@ mt19937_64 global::rengine;
 vector<string> global::moduleFunctionList;
 
 zidcu::Database global::db;
-static bool db_setup{false};
 
 VarStore global::vars{global::db, "vars", "var_perms" };
 map<string, map<string, Variable>> global::lvars;
@@ -47,7 +46,7 @@ vector<string> global::ignoreList;
 unsigned global::minSpeakTime = 0;
 
 void sqlTrace(void *a, const char *b);
-void sqlTrace(void *a, const char *b) { cerr << "sqlTrace: " << b << endl; }
+void sqlTrace(void *, const char *b) { cerr << "sqlTrace: " << b << endl; }
 
 bool global::debugSQL{false};
 bool global::debugEventSystem{false};
