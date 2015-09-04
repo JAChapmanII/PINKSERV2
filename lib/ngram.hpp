@@ -36,8 +36,6 @@ struct ngramStoreStatementBuilder {
 	std::string qmarks(int order) const;
 
 	std::string createTable(int order) const;
-	std::string createIndex1(int order) const;
-	std::string createIndex2(int order) const;
 	std::string ngramExists(int order) const;
 	std::string ngramFetch(int order) const;
 	std::string ngramInsert(int order) const;
