@@ -212,7 +212,6 @@ int main(int argc, char **argv) {
 	cerr << "----- " << global::vars.getString("bot.nick") << " started -----" << endl;
 
 	global::secondaryInit(); // TODO: we do this twice?
-	journal::init();
 
 	if(global::vars.defined("bot.crashed")) {
 		cerr << "-- looks like I crashed" << endl;
@@ -237,7 +236,8 @@ int main(int argc, char **argv) {
 		if(line.find_first_not_of(" \t\r\n") == string::npos)
 			continue;
 
-		journal::Entry entry(line);
+		Entry entry{global::now(), network, line};
+		global::journal.upsert(entry);
 
 		vector<string> fields = split(line);
 		if(fields[1] == (string)"PRIVMSG") {
@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
 			global::vars.set("text", message);
 
 			if(wasHook)
-				entry.etype = journal::ExecuteType::Hook;
+				entry.etype = ExecuteType::Hook;
 			// if the line is a ! command, run it
 			else if(message[0] == '!' && message.length() > 1) {
 				// it might be a !: to force intepretation line
@@ -272,14 +272,14 @@ int main(int argc, char **argv) {
 					process(network, message.substr(2), nick, target);
 				else
 					process(network, message, nick, target);
-				entry.etype = journal::ExecuteType::Function;
+				entry.etype = ExecuteType::Function;
 			} else if(message.substr(0, 2) == (string)"${" && message.back() == '}') {
 				process(network, message, nick, target);
-				entry.etype = journal::ExecuteType::Function;
+				entry.etype = ExecuteType::Function;
 			}
 			// otherwise, run on text triggers
 			else {
-				entry.etype = journal::ExecuteType::None;
+				entry.etype = ExecuteType::None;
 
 				vector<Variable> results = EventSystem::process(EventType::Text);
 				if(results.size() == 1)
@@ -307,15 +307,11 @@ int main(int argc, char **argv) {
 			;// run leave triggers
 		}
 
-		journal::push(entry);
-		global::log << entry.format() << endl;
+		global::journal.upsert(entry);
 	}
 
 	cerr << "pbrane: exited main loop" << endl;
 	global::vars.set("bot.crashed", "{shutdown}");
-
-	// deinit journal
-	journal::deinit();
 
 	// free memory associated with modules
 	modules::deinit();
@@ -393,16 +389,17 @@ bool regexHook(PrivateMessage pmsg) {
 
 	try {
 		Regex r(pmsg.message.substr(1));
-		auto entries = journal::search(r.match(), [=](journal::Entry &e) {
-			// only replace on non-executed things
-			if(e.etype == journal::ExecuteType::Hook
-					|| e.etype == journal::ExecuteType::Function)
-				return false;
-			// if a nick was specified as a flag and it's not who said it, continue
-			if(!r.flags().empty() && r.flags() != e.nick())
-				return false;
-			return true;
-				}, 1);
+		auto entries = global::journal.fetch(AndPredicate{
+			[=](Entry &e) {
+				// only replace on non-executed things
+				if(e.etype == ExecuteType::Hook || e.etype == ExecuteType::Function
+						|| e.etype == ExecuteType::Unknown)
+					return false;
+				// if a nick was specified as a flag and it's not who said it, skip
+				if(!r.flags().empty() && r.flags() != e.nick())
+					return false;
+				return true;
+			}, RegexPredicate{r.match()}}, 1);
 
 		if(entries.empty())
 			return true;
@@ -410,7 +407,7 @@ bool regexHook(PrivateMessage pmsg) {
 
 		string result;
 		r.execute(e.arguments, result);
-		if(e.etype == journal::ExecuteType::None)
+		if(e.etype == ExecuteType::None)
 			send(pmsg.network, pmsg.target, "<" + e.nick() + "> " + result, true);
 		else
 			send(pmsg.network, pmsg.target, result, true);

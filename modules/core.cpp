@@ -28,7 +28,7 @@ using util::join;
 
 #include "config.hpp"
 
-journal::Entry regexRandomEntry(string regex);
+Entry regexRandomEntry(string regex);
 
 Variable help(vector<Variable> arguments) {
 	if(arguments.size() > 1)
@@ -138,11 +138,11 @@ Variable sleep(vector<Variable>) {
 }
 
 Variable jsize(vector<Variable>) {
-	return Variable((long)journal::size(), Permissions());
+	return Variable((long)global::journal.size(), Permissions());
 }
 
-journal::Entry regexRandomEntry(string regex) {
-	vector<journal::Entry> lines = journal::search(regex);
+Entry regexRandomEntry(string regex) {
+	vector<Entry> lines = global::journal.fetch(RegexPredicate{regex});
 	if(lines.size() < 1)
 		throw (string)"no matches";
 

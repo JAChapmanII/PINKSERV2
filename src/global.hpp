@@ -11,6 +11,7 @@
 #include "eventsystem.hpp"
 #include "db.hpp"
 #include "varstore.hpp"
+#include "journal.hpp"
 
 namespace global {
 	extern bool done;
@@ -20,6 +21,7 @@ namespace global {
 	extern std::vector<std::string> moduleFunctionList;
 
 	extern zidcu::Database db;
+	extern Journal journal;
 
 	// variable, function map
 	extern VarStore vars;

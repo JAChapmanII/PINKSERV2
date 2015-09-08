@@ -4,52 +4,83 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include "global.hpp"
+#include <sqlite3.h>
+#include "db.hpp"
 
-namespace journal {
-	enum class EntryType { Text, Join, Quit, Part, Invalid };
-	enum class ExecuteType { None, Hook, Function, Unknown };
+enum class EntryType { Text, Join, Quit, Part, Invalid };
+enum class ExecuteType { None, Hook, Function, Sent, Unknown };
+enum class SentType { Recieved, Sent, Invalid };
 
-	struct Entry {
-		long long timestamp{global::now()};
-		std::string contents{};
-		std::string who{}, where{}, command{}, arguments{};
-		EntryType type{EntryType::Invalid};
-		ExecuteType etype{ExecuteType::Unknown};
+struct Entry {
+	sqlite_int64 id{-1};
+	sqlite_int64 timestamp{0}; // timestamp line occurred
+	SentType sent{SentType::Recieved}; // whether we sent or recieved it
+	ExecuteType etype{ExecuteType::Unknown}; // reason we executed it
+	std::string network{};
+	std::string contents{}; // full IRC-raw line
 
-		Entry() = default;
-		Entry(std::string icontents);
-		Entry(long long itimestamp, std::string icontents);
+	// inferred properties after parsing
+	std::string who{}, where{}, command{}, arguments{};
+	EntryType type{EntryType::Invalid};
 
-		static Entry fromLog(std::string line);
+	Entry(sqlite_int64 itimestamp, std::string inetwork, std::string icontents);
+	Entry(sqlite_int64 iid, sqlite_int64 itimestamp, SentType isent,
+			ExecuteType ietype, std::string inetwork, std::string icontents);
 
-		// parse contents to determine type, w^3, arguments
-		void parse();
+	// parse contents to determine type, w^3, arguments
+	void parse();
 
-		// determines if this is a message addressed to us
-		bool toUs();
-		// formats this object as a printable string
-		std::string toString() const;
-		// formats this object for writing to a journal file
-		std::string format() const;
+	// determines if this is a message addressed to us
+	//bool toUs();
+	// formats this object as a printable string
+	//std::string toString() const;
 
-		// returns the nick portion of who
-		std::string nick() const;
-	};
+	// returns the nick portion of who
+	std::string nick() const;
+};
 
-	using SecondaryPredicate = std::function<bool(Entry &)>;
-	bool NoopPredicate(Entry &e);
 
-	bool init();
-	bool deinit();
+// predicate types for searching through journal
+using EntryPredicate = std::function<bool(Entry &)>;
 
-	void push(Entry nentry);
-	std::vector<Entry> search(std::string regex,
-			SecondaryPredicate predicate = NoopPredicate, int limit = -1);
-	unsigned size();
+bool NoopPredicate(Entry &e);
 
-	std::vector<Entry>::iterator jbegin();
-	std::vector<Entry>::iterator jend();
-}
+struct RegexPredicate {
+	RegexPredicate(std::string regex);
+
+	bool operator()(Entry &e);
+
+	private:
+		std::string _regex;
+};
+
+struct AndPredicate {
+	AndPredicate(EntryPredicate p1, EntryPredicate p2);
+
+	bool operator()(Entry &e);
+
+	private:
+		EntryPredicate _p1;
+		EntryPredicate _p2;
+};
+
+struct Journal {
+	Journal(zidcu::Database &db, std::string table = "irc_journal");
+
+	sqlite_int64 upsert(Entry &entry);
+
+	std::vector<Entry> fetch(EntryPredicate predicate = NoopPredicate,
+			int limit = -1);
+
+	sqlite_int64 size();
+
+	private:
+		void createTable();
+
+	private:
+		zidcu::Database &_db;
+		std::string _table;
+		bool _tableCreated{false};
+};
 
 #endif // JOURNAL_HPP

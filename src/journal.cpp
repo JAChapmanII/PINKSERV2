@@ -1,116 +1,30 @@
 #include "journal.hpp"
 using std::string;
+using std::to_string;
 using std::vector;
+using zidcu::Database;
 
-using journal::Entry;
-using journal::EntryType;
-
-#include <fstream>
-using std::ofstream;
-using std::ifstream;
-using std::endl;
-#include <iostream>
-using std::cerr;
 #include <exception>
 using std::exception;
 
 #include <boost/regex.hpp>
+
 #include "util.hpp"
-using util::fromString;
-using util::asString;
 using util::split;
 using util::join;
-#include "config.hpp"
 #include "global.hpp"
+#include "err.hpp"
 
-vector<Entry> journal_entries;
-ofstream journal_file;
-bool journal_init = false;
+#include <iostream>
+using std::cerr;
+using std::endl;
 
-bool journal_tryCreate();
-bool journal_tryCreate() {
-	journal_file.open(config::journalFileName, std::ios_base::app);
-	return journal_file.good();
-}
-
-// TODO: if journal doesn't exist, doesn't open for append
-bool journal::init() {
-	if(journal_init)
-		return true;
-	
-	ifstream jin(config::journalFileName);
-	if(!jin.good()) {
-		return journal_tryCreate();
-	}
-
-	string line;
-	while(!jin.eof() && jin.good()) {
-		getline(jin, line);
-		if(line.empty())
-			continue;
-		journal_entries.push_back(Entry::fromLog(line));
-	}
-	
-	journal_file.open(config::journalFileName, std::ios_base::app);
-	cerr << "opened journal file: " << config::journalFileName << endl;
-
-	return true;
-}
-
-bool journal::deinit() {
-	journal_file.close();
-	return false;
-}
-
-void journal::push(Entry nentry) {
-	journal_entries.push_back(nentry);
-	journal_file << nentry.format() << endl;
-}
-
-bool journal::NoopPredicate(Entry &) { return true; }
-std::vector<Entry> journal::search(string regex, SecondaryPredicate predicate, int limit) {
-	vector<Entry> matches;
-	if(limit == 0)
-		return matches;
-	boost::regex r(regex, boost::regex::perl);
-
-	for(auto it = journal_entries.rbegin(); it != journal_entries.rend(); ++it) {
-		auto i = *it;
-		if(i.type != EntryType::Text)
-			continue;
-		try {
-			if(predicate(i)
-					&& boost::regex_search(i.arguments, r, boost::match_default))
-				matches.push_back(i);
-			if(limit > 0 && (int)matches.size() > limit)
-				break;
-		} catch(exception &e) {
-			cerr << "journal::search: regex exception: " << e.what() << endl;
-		}
-	}
-	return matches;
-}
-
-unsigned journal::size() {
-	return journal_entries.size();
-}
-
-
-Entry::Entry(string icontents) :
-		contents(icontents) { this->parse(); }
-Entry::Entry(long long itimestamp, string icontents) :
-		timestamp(itimestamp), contents(icontents) { this->parse(); }
-
-Entry Entry::fromLog(string line) {
-	size_t firstPipe = line.find("|"),
-			secondPipe = line.find("|", firstPipe + 1);
-	auto timestamp = fromString<long long>(line.substr(0, firstPipe));
-	auto contents = line.substr(secondPipe + 1);
-	Entry e{timestamp, contents};
-	e.etype = (ExecuteType)fromString<int>(
-			line.substr(firstPipe + 1, secondPipe));
-	return e;
-}
+Entry::Entry(sqlite_int64 itimestamp, string inetwork, string icontents)
+	: timestamp{itimestamp}, network{inetwork}, contents{icontents} { this->parse(); }
+Entry::Entry(sqlite_int64 iid, sqlite_int64 itimestamp, SentType isent,
+		ExecuteType ietype, string inetwork, string icontents)
+	: id{iid}, timestamp{itimestamp}, sent{isent}, etype{ietype},
+		network{inetwork}, contents{icontents} { this->parse(); }
 
 void Entry::parse() {
 	auto parts = split(this->contents, " ");
@@ -132,19 +46,85 @@ void Entry::parse() {
 	}
 }
 
-string Entry::format() const {
-	return asString(this->timestamp) + "|" + asString((int)this->etype) + "|" +
-		this->contents;
-}
-
 string Entry::nick() const {
 	return this->who.substr(1, this->who.find("!") - 1);
 }
 
-vector<Entry>::iterator journal::jbegin() {
-	return journal_entries.begin();
+bool NoopPredicate(Entry &) { return true; }
+
+RegexPredicate::RegexPredicate(string regex) : _regex{regex} { }
+
+bool RegexPredicate::operator()(Entry &e) {
+	boost::regex r{_regex, boost::regex::perl};
+
+	if(e.type != EntryType::Text)
+		return false;
+
+	try {
+		return boost::regex_search(e.arguments, r, boost::match_default);
+	} catch(exception &ex) {
+		throw make_except(string{"regex exception: "} + ex.what());
+	}
 }
-vector<Entry>::iterator journal::jend() {
-	return journal_entries.end();
+
+AndPredicate::AndPredicate(EntryPredicate p1, EntryPredicate p2)
+	: _p1{p1}, _p2{p2} { }
+
+bool AndPredicate::operator()(Entry &e) { return _p1(e) && _p2(e); }
+
+Journal::Journal(Database &db, string table) : _db{db}, _table{table} { }
+
+sqlite_int64 Journal::upsert(Entry &entry) {
+	createTable();
+	if(entry.id == -1) {
+		_db.executeVoid("INSERT INTO " + _table + "(ts, sent, etype, network, contents)"
+				+ " VALUES(?1, ?2, ?3, ?4, ?5)", entry.timestamp, (int)entry.sent,
+				(int)entry.etype, entry.network, entry.contents);
+		entry.id = sqlite3_last_insert_rowid(_db.getDB());
+	} else {
+		_db.executeVoid("UPDATE " + _table
+				+ " SET ts = ?1, sent = ?2, etype = ?3, network = ?4, contents = ?5"
+				+ " WHERE id = ?6", entry.timestamp, (int)entry.sent,
+				(int)entry.etype, entry.network, entry.contents, entry.id);
+	}
+	return entry.id;
+}
+
+vector<Entry> Journal::fetch(EntryPredicate predicate, int limit) {
+	createTable();
+	vector<Entry> results;
+	if(limit == 0) return results;
+
+	auto row = _db.execute("SELECT * FROM " + _table + " ORDER BY ts DESC");
+	while((limit >= 0 ? (int)results.size() < limit : true)
+			&& row.status() == SQLITE_ROW) {
+		Entry e{row.getLong(0), row.getLong(1), (SentType)row.getInteger(2),
+			(ExecuteType)row.getInteger(3), row.getString(4), row.getString(5)};
+
+		if(predicate(e))
+			results.push_back(e);
+		row.step();
+	}
+	if(row.status() == SQLITE_DONE) return results;
+	if(row.status() != SQLITE_ROW)
+		throw make_except("sqite error: " + to_string(row.status()));
+	return results;
+}
+
+sqlite_int64 Journal::size() {
+	createTable();
+	return _db
+		.executeScalar<sqlite_int64>("SELECT COUNT(1) FROM " + _table)
+		.value_or(0);
+}
+
+void Journal::createTable() {
+	if(_tableCreated) return;
+
+	_db.executeVoid("CREATE TABLE IF NOT EXISTS " + _table
+			+ " (id integer primary key, ts integer, "
+			+ "  sent integer, etype integer, network string, contents string)");
+
+	_tableCreated = true;
 }
 

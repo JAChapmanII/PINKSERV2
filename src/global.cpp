@@ -36,6 +36,7 @@ mt19937_64 global::rengine;
 vector<string> global::moduleFunctionList;
 
 zidcu::Database global::db;
+Journal global::journal{global::db};
 
 VarStore global::vars{global::db, "vars", "var_perms" };
 map<string, map<string, Variable>> global::lvars;
@@ -163,10 +164,11 @@ void global::send(string network, string target, string line, bool send) {
 		log << "\t(didn't really send it, we're being quiet)" << endl;
 	else {
 		cout << network << " PRIVMSG " << target << " :" << line << endl;
-		// TODO: this looks like pbrane is predicting the result in the journal...
-		journal::push(journal::Entry(":" +
-					global::vars.get("bot.nick").toString() + "!~self@localhost " +
-					"PRIVMSG " + target + " :" + line));
+
+		auto us = global::vars.get("bot.nick").toString() + "!~self@localhost";
+		Entry e{-1, global::now(), SentType::Sent, ExecuteType::Sent, network,
+			":" + us + " PRIVMSG " + target + " :" + line};
+		global::journal.upsert(e);
 	}
 }
 
