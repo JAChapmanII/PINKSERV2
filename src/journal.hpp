@@ -9,7 +9,7 @@
 
 enum class EntryType { Text, Join, Quit, Part, Invalid };
 enum class ExecuteType { None, Hook, Function, Sent, Unknown };
-enum class SentType { Recieved, Sent, Invalid };
+enum class SentType { Recieved, Sent, Log, Invalid };
 
 struct Entry {
 	sqlite_int64 id{-1};
@@ -68,6 +68,7 @@ struct Journal {
 	Journal(zidcu::Database &db, std::string table = "irc_journal");
 
 	sqlite_int64 upsert(Entry &entry);
+	void log(sqlite_int64 ts, std::string msg);
 
 	std::vector<Entry> fetch(EntryPredicate predicate = NoopPredicate,
 			int limit = -1);

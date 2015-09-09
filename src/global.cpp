@@ -1,9 +1,7 @@
 #include "global.hpp"
-using std::ofstream;
-using std::ifstream;
 using std::string;
+using std::to_string;
 using std::vector;
-using std::fstream;
 using std::map;
 using std::mt19937_64;
 
@@ -12,26 +10,19 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::smatch;
-using boost::regex_match;
-using boost::match_extra;
+#include <fstream>
+using std::ifstream;
 
 #include <ctime>
 
 #include "config.hpp"
-#include "modules.hpp"
 #include "util.hpp"
 using util::contains;
-using util::split;
 using util::fromString;
-#include "journal.hpp"
 #include "expression.hpp"
 #include "parser.hpp"
 
 bool global::done;
-ofstream global::log;
 mt19937_64 global::rengine;
 vector<string> global::moduleFunctionList;
 
@@ -60,12 +51,6 @@ bool global::init(unsigned int seed) {
 	global_seed = seed;
 	rengine.seed(seed);
 
-	log.open(config::logFileName, fstream::app);
-	if(!log.good()) {
-		cerr << "global::init: could not open log file!" << endl;
-		return false;
-	}
-
 	db.open(config::databaseFileName);
 
 	db.executeVoid("PRAGMA cache_size = 10000;");
@@ -88,7 +73,8 @@ bool global::init(unsigned int seed) {
 bool global::secondaryInit() {
 	ifstream startup(config::startupFile);
 	if(startup.good()) {
-		log << "reading startup file: " << config::startupFile << endl;
+		journal.log(now(), "reading startup file: " + config::startupFile);
+
 		string line;
 		while(startup.good() && !startup.eof()) {
 			// TODO: make fake logitem?
@@ -97,31 +83,24 @@ bool global::secondaryInit() {
 				break;
 			if(line.empty())
 				continue;
-			log << "\t" << line << endl;
+
+			journal.log(now(), "startup line: " + line);
 			try {
 				auto expr = Parser::parse(line);
 				string result = expr->evaluate(
 						global::vars.getString("bot.owner")).toString();
 			// TODO: more exception types
 			} catch(ParseException e) {
-				cerr << "parse exception" << endl;
-				log << "startup error: " << e.pretty() << endl;
+				journal.log(now(), "parse exception: " + e.pretty());
 			} catch(StackTrace e) {
-				cerr << "stack trace exception" << endl;
-				log << "startup error: " << e.toString() << endl;
+				journal.log(now(), "stack trace exception: " + e.toString());
 			} catch(string &e) {
-				cerr << "string exception" << endl;
-				log << "startup error: " << e << endl;
+				journal.log(now(), "string exception: " + e);
 			}
 		}
 		return true;
 	}
 	return false;
-}
-
-bool global::deinit() {
-	log.close();
-	return true;
 }
 
 string escapeForPMSG(string str);
@@ -150,26 +129,24 @@ bool allSpaces(string str) {
 }
 
 void global::send(string network, string target, string line, bool send) {
+	if(!send) return;
+
 	line = escapeForPMSG(line); // TODO
-	if(allSpaces(line))
-		return;
-	log << " -> " << target << " :" << line << endl;
+
 	unsigned maxLineLength =
 		fromString<unsigned>(global::vars.getString("bot.maxLineLength"));
-	if(line.length() > maxLineLength) {
+	if(line.length() > maxLineLength)
 		line = line.substr(0, maxLineLength);
-		log << "\t(line had to be shortened)" << endl;;
-	}
-	if(!send)
-		log << "\t(didn't really send it, we're being quiet)" << endl;
-	else {
-		cout << network << " PRIVMSG " << target << " :" << line << endl;
 
-		auto us = global::vars.get("bot.nick").toString() + "!~self@localhost";
-		Entry e{-1, global::now(), SentType::Sent, ExecuteType::Sent, network,
-			":" + us + " PRIVMSG " + target + " :" + line};
-		global::journal.upsert(e);
-	}
+	if(allSpaces(line))
+		return;
+
+	cout << network << " PRIVMSG " << target << " :" << line << endl;
+
+	auto us = global::vars.get("bot.nick").toString() + "!~self@localhost";
+	Entry e{-1, global::now(), SentType::Sent, ExecuteType::Sent, network,
+		":" + us + " PRIVMSG " + target + " :" + line};
+	global::journal.upsert(e);
 }
 
 bool global::isOwner(std::string nick) {

@@ -18,7 +18,6 @@ namespace modules {
 	extern std::vector<Module> modules;
 
 	bool init();
-	bool deinit();
 }
 
 #endif // MODULES_HPP

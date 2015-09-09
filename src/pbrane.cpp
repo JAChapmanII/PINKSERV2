@@ -105,9 +105,6 @@ void teval(vector<string> args) {
 				cout << "\t: " << s << endl;
 			}
 		}
-
-		// free memory associated with modules
-		modules::deinit();
 		return;
 	}
 
@@ -140,9 +137,6 @@ void teval(vector<string> args) {
 			cout << nick + ": error: " + s << endl;
 		}
 	}
-
-	// free memory associated with modules
-	modules::deinit();
 }
 
 int main(int argc, char **argv) {
@@ -206,12 +200,6 @@ int main(int argc, char **argv) {
 		cerr << "pbrane: global::secondaryInit failed" << endl;
 		// TODO: this should fail out completely?
 	}
-
-
-	global::log << "----- " << global::vars.getString("bot.nick") << " started -----" << endl;
-	cerr << "----- " << global::vars.getString("bot.nick") << " started -----" << endl;
-
-	global::secondaryInit(); // TODO: we do this twice?
 
 	if(global::vars.defined("bot.crashed")) {
 		cerr << "-- looks like I crashed" << endl;
@@ -311,14 +299,6 @@ int main(int argc, char **argv) {
 	}
 
 	cerr << "pbrane: exited main loop" << endl;
-	global::vars.set("bot.crashed", "{shutdown}");
-
-	// free memory associated with modules
-	modules::deinit();
-
-	// deinit global
-	global::deinit();
-
 	global::vars.erase("bot.crashed");
 
 	return 0;

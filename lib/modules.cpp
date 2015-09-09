@@ -36,20 +36,9 @@ bool modules::init() {
 	cerr << "moudles::init: " << endl;
 	defineModules();
 
-	//cerr << "\tread dictionary, size is: " << global::dictionary.size() << endl; TODO
-	//cerr << "\treading modules:" << endl; TODO: generic module init/deinit?
+	cerr << "    dictionary size: " << global::dictionary.size() << endl;
 
 	setupFunctions();
-	return true;
-}
-
-bool modules::deinit() {
-	cerr << "modules::deinit: " << endl;
-
-	// TODO: uhhh....
-	//cerr << "\twrote dictionary, size is: " << global::dictionary.size() << endl;
-	// TODO: module de-init?
-
 	return true;
 }
 

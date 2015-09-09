@@ -27,6 +27,8 @@ Entry::Entry(sqlite_int64 iid, sqlite_int64 itimestamp, SentType isent,
 		network{inetwork}, contents{icontents} { this->parse(); }
 
 void Entry::parse() {
+	if(this->sent == SentType::Log)
+		return;
 	auto parts = split(this->contents, " ");
 	if(parts.size() < 3) {
 		cerr << "Entry::parse: strange parts in \"" << this->contents << "\"" << endl;
@@ -88,6 +90,11 @@ sqlite_int64 Journal::upsert(Entry &entry) {
 				(int)entry.etype, entry.network, entry.contents, entry.id);
 	}
 	return entry.id;
+}
+void Journal::log(sqlite_int64 ts, string msg) {
+	cerr << ts << ":==log==: " << msg << endl;
+	Entry e{-1, ts, SentType::Log, ExecuteType::None, "{log}", msg};
+	this->upsert(e);
 }
 
 vector<Entry> Journal::fetch(EntryPredicate predicate, int limit) {

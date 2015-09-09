@@ -1,21 +1,18 @@
 #ifndef GLOBAL_HPP
 #define GLOBAL_HPP
 
-#include <fstream>
 #include <string>
 #include <vector>
 #include <map>
 #include <random>
 #include "dictionary.hpp"
 #include "variable.hpp"
-#include "eventsystem.hpp"
 #include "db.hpp"
 #include "varstore.hpp"
 #include "journal.hpp"
 
 namespace global {
 	extern bool done;
-	extern std::ofstream log;
 	extern std::mt19937_64 rengine;
 	extern Dictionary dictionary;
 	extern std::vector<std::string> moduleFunctionList;
@@ -31,7 +28,6 @@ namespace global {
 
 	bool init(unsigned int seed);
 	bool secondaryInit();
-	bool deinit();
 
 	extern std::vector<std::string> ignoreList;
 	extern unsigned minSpeakTime;
