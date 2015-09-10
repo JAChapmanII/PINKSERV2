@@ -17,7 +17,6 @@ using util::contains;
 
 #include "regex.hpp"
 
-#include "global.hpp"
 #include "modules.hpp"
 
 #include "parser.hpp"
@@ -117,9 +116,9 @@ void StackTrace::except(string err) {
 	throw *this;
 }
 
-Variable Expression::evaluate(string who) const {
-	StackTrace st;
-	return evaluate(who, st);
+Variable Expression::evaluate(Pvm &vm, string who) const {
+	StackTrace st; st.owner = who;
+	return evaluate(vm, st);
 }
 
 // TODO: ability to tag ExpressionTree as various types. string, int,
@@ -129,7 +128,7 @@ Variable Expression::evaluate(string who) const {
 
 // TODO: better timing control
 // TODO: max recursion depth? Just run in thread and abort after x time?
-Variable Expression::evaluate(string who, StackTrace &context) const {
+Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 	if(this == nullptr) // TODO: something probably went wrong.... empty expression?
 		context.except("this == nullptr");
 	context.frames.push_back(this->type);
@@ -139,7 +138,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 
 	// simple wrappers
 	if(this->type == "${}" || this->type == "()" || this->type == "{}")
-		return this->args[0]->evaluate(who);
+		return this->args[0]->evaluate(vm, context);
 
 	// multiple expressions
 	if(this->type == ";") {
@@ -147,28 +146,28 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 		Variable result;
 		for(int i = 0; i < (int)this->args.size(); ++i)
 			if(this->args[i])
-				result = this->args[i]->evaluate(who);
+				result = this->args[i]->evaluate(vm, context);
 		return result;
 	}
 
 	// ? and ? : operators
 	if(this->type == "?") {
-		Variable cond = this->args[0]->evaluate(who);
+		Variable cond = this->args[0]->evaluate(vm, context);
 
 		// if we have a ? : operator
 		if(this->args[1]->type == ":") {
 			// TODO: only evaluates one side...
 			if(cond.isFalse())
-				return this->args[1]->args[1]->evaluate(who);
+				return this->args[1]->args[1]->evaluate(vm, context);
 			else
-				return this->args[1]->args[0]->evaluate(who);
+				return this->args[1]->args[0]->evaluate(vm, context);
 		}
 
 		// just ?, no false branch
 		if(cond.isFalse())
 			return Variable("", Permissions());
 
-		return this->args[1]->evaluate(who);
+		return this->args[1]->evaluate(vm, context);
 	}
 
 	if(this->type == "=") {
@@ -177,14 +176,14 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 
 		// get var name and the contents
 		// note: we don't actually evaluate the $, but it's argument
-		string var = this->args[0]->args[0]->evaluate(who).toString();
-		Variable result = this->args[1]->evaluate(who);
+		string var = this->args[0]->args[0]->evaluate(vm, context).toString();
+		Variable result = this->args[1]->evaluate(vm, context);
 
 		// if assigning to null, don't really assign
 		if(var == "null")
 			return result;
 
-		return global::vars.set(var, result); // TODO: perms?
+		return vm.vars.set(var, result); // TODO: perms?
 	}
 
 	// see = implementation above for comments
@@ -192,32 +191,32 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 		if(this->args[0]->type != "var")
 			context.except("lhs of => is not a variable");
 
-		string func = this->args[0]->args[0]->evaluate(who).toString(),
+		string func = this->args[0]->args[0]->evaluate(vm, context).toString(),
 			body = this->args[1]->toString(); // TODO: requires Expression::toString
 
 		if(func == "null")
 			return Variable(body, Permissions());
 
-		return global::vars.set(func, body);
+		return vm.vars.set(func, body);
 	}
 
 	// function calls, special :D
 	if(this->type == "!") {
 		if(this->args[0]->type != "var")
 			context.except("rhs of ! is not a variable");
-		string func = this->args[0]->args[0]->evaluate(who).toString();
-		if(!global::vars.defined(func) && !contains(modules::hfmap, func))
+		string func = this->args[0]->args[0]->evaluate(vm, context).toString();
+		if(!vm.vars.defined(func) && !contains(modules::hfmap, func))
 			context.except(func + " does not exist as a callable function");
-		string body = global::vars.getString(func);
+		string body = vm.vars.getString(func);
 
-		if(global::debugFunctionBody)
+		if(vm.debugFunctionBodies)
 			cerr << "! body: " << body << endl;
-		ensurePermission(Permission::Execute, who, func);
+		ensurePermission(Permission::Execute, context.owner, func);
 
 		// figure out the result of the arguments
 		vector<Variable> argVars;
 		for(unsigned i = 1; i < args.size(); ++i)
-			argVars.push_back(args[i]->evaluate(who));
+			argVars.push_back(args[i]->evaluate(vm, context));
 
 		string argsstr;
 		for(auto arg : argVars)
@@ -225,13 +224,13 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 
 		// clear out argument variables
 		for(int i = 0; i < 10; ++i)
-			global::vars.set("$" + asString(i + 1), "");
+			vm.vars.set("$" + asString(i + 1), "");
 
 		// set the argument values
-		global::vars.set("args", argsstr);
-		global::vars.set("$0", func);
+		vm.vars.set("args", argsstr);
+		vm.vars.set("$0", func);
 		for(unsigned i = 0; i < args.size() - 1; ++i)
-			global::vars.set("$" + asString(i + 1), argVars[i]);
+			vm.vars.set("$" + asString(i + 1), argVars[i]);
 
 		// a module function
 		if(contains(modules::hfmap, func)) {
@@ -242,7 +241,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 		try {
 			unique_ptr<Expression> expr = Parser::parseCanonical(body);
 			context.frames.push_back(func);
-			return expr->evaluate(who, context);
+			return expr->evaluate(vm, context);
 		} catch(ParseException e) {
 			context.except(e.msg + " @" + asString(e.idx));
 		}
@@ -253,10 +252,10 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 	// TODO: regex is reinterpreting the argument escapes?
 	// TODO: $text =~ ':o/|\o:' behaves like ':o/|o:'
 	if(this->type == "=~" || this->type == "~") {
-		string result, rtext = this->args[0]->evaluate(who).toString();
+		string result, rtext = this->args[0]->evaluate(vm, context).toString();
 		// TODO: may throw, wrap into StackTrace
 		try {
-			Regex r(this->args[1]->evaluate(who).toString());
+			Regex r(this->args[1]->evaluate(vm, context).toString());
 
 			// if match equals, just return if we match
 			if(this->type == "=~")
@@ -268,7 +267,7 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 
 			// TODO: group variables, r0, r1, etc
 			bool matches = r.execute(rtext, result);
-			return global::vars.set("r_", result); // TODO: read-only
+			return vm.vars.set("r_", result); // TODO: read-only
 		} catch(string &e) {
 			context.except(e);
 		}
@@ -285,52 +284,52 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 	if(this->type == "'" || this->type == "\"" || this->type == "strcat") {
 		string result;
 		for(auto &i : this->args)
-			result += i->evaluate(who).toString();
+			result += i->evaluate(vm, context).toString();
 		return Variable(result, Permissions());
 	}
 
 	// variable access
 	if(this->type == "var") {
-		string var = this->args[0]->evaluate(who).toString();
+		string var = this->args[0]->evaluate(vm, context).toString();
 		if(var == "true")
 			return Variable::parse("true");
 		if(var == "false")
 			return Variable::parse("false");
-		if(!global::vars.defined(var))
-			return global::vars.set(var, "0");
-		return global::vars.get(var);
+		if(!vm.vars.defined(var))
+			return vm.vars.set(var, "0");
+		return vm.vars.get(var);
 	}
 
 	// TODO: de-int this. double? Only when "appropriate"?
 	/*
 	if(this->fragment.isSpecial("^")) {
-		return asString(pow(fromString<long>(this->child->evaluate(who)),
-				fromString<long>(this->rchild->evaluate(who))));
+		return asString(pow(fromString<long>(this->child->evaluate(vm, context)),
+				fromString<long>(this->rchild->evaluate(vm, context))));
 	}
 	*/
 
 	if(this->type == "+")
-		return this->args[0]->evaluate(who) + this->args[1]->evaluate(who);
+		return this->args[0]->evaluate(vm, context) + this->args[1]->evaluate(vm, context);
 	if(this->type == "-")
-		return this->args[0]->evaluate(who) - this->args[1]->evaluate(who);
+		return this->args[0]->evaluate(vm, context) - this->args[1]->evaluate(vm, context);
 	if(this->type == "*")
-		return this->args[0]->evaluate(who) * this->args[1]->evaluate(who);
+		return this->args[0]->evaluate(vm, context) * this->args[1]->evaluate(vm, context);
 	if(this->type == "/")
-		return this->args[0]->evaluate(who) / this->args[1]->evaluate(who);
+		return this->args[0]->evaluate(vm, context) / this->args[1]->evaluate(vm, context);
 	if(this->type == "%")
-		return this->args[0]->evaluate(who) % this->args[1]->evaluate(who);
+		return this->args[0]->evaluate(vm, context) % this->args[1]->evaluate(vm, context);
 
 	vector<string> comparisons = { "==", "!=", "<=", ">=", "<", ">" };
 	for(auto c : comparisons)
 		if(this->type == c)
-			return this->args[0]->evaluate(who).compare(
-					this->args[1]->evaluate(who), c);
+			return this->args[0]->evaluate(vm, context).compare(
+					this->args[1]->evaluate(vm, context), c);
 
 	// TODO: un-double this? Also, unstring for == and ~=
 	if(this->type == "&&")
-		return this->args[0]->evaluate(who) & this->args[1]->evaluate(who);
+		return this->args[0]->evaluate(vm, context) & this->args[1]->evaluate(vm, context);
 	if(this->type == "||")
-		return this->args[0]->evaluate(who) | this->args[1]->evaluate(who);
+		return this->args[0]->evaluate(vm, context) | this->args[1]->evaluate(vm, context);
 
 	vector<string> compoundOpAssigns = { "+", "-", "*", "/", "%", "^", "~" };
 	for(auto op : compoundOpAssigns) {
@@ -341,17 +340,17 @@ Variable Expression::evaluate(string who, StackTrace &context) const {
 				opExpr.args.push_back(
 						unique_ptr<Expression>(new Expression(*this->args[i].get())));
 
-			Variable result = opExpr.evaluate(who);
+			Variable result = opExpr.evaluate(vm, context);
 
 			// steal args from opExpr to avoid a copy, since we don't need opExpr
 			// anymore anyway
 			Expression assign("=", opExpr.args);
 			assign.args[1] = unique_ptr<Expression>(new Expression("str", result.toString()));
-			return assign.evaluate(who);
+			return assign.evaluate(vm, context);
 		}
 	}
 
 	context.except("unknown node " + this->type + " -- bug " +
-			global::vars.getString("bot.owner") + " to fix");
+			vm.vars.getString("bot.owner") + " to fix");
 }
 

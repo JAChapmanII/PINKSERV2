@@ -65,7 +65,7 @@ struct AndPredicate {
 };
 
 struct Journal {
-	Journal(zidcu::Database &db, std::string table = "irc_journal");
+	Journal(zidcu::Database &db, std::string table = "journal");
 
 	sqlite_int64 upsert(Entry &entry);
 	void log(sqlite_int64 ts, std::string msg);

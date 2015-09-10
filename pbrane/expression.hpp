@@ -5,11 +5,13 @@
 #include <vector>
 #include <memory>
 #include "variable.hpp"
+#include "pvm.hpp"
 
 // may be thrown during Expression::evaluate
 struct StackTrace {
 	std::vector<std::string> frames{};
 	std::string error{};
+	std::string owner{};
 
 	std::string toString() const;
 	void except(std::string err);
@@ -44,10 +46,10 @@ struct Expression {
 
 	// return the result of evaluating the expression
 	// note: may throw StackTrace if there's an error
-	Variable evaluate(std::string who) const;
+	Variable evaluate(Pvm &vm, std::string who) const;
 
 	private:
-		Variable evaluate(std::string who, StackTrace &context) const;
+		Variable evaluate(Pvm &vm, StackTrace &context) const;
 };
 
 #endif // EXPRESSION_HPP

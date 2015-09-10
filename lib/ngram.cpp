@@ -10,7 +10,6 @@ using zidcu::Statement;
 using std::uniform_int_distribution;
 
 #include "util.hpp"
-#include "global.hpp"
 #include "err.hpp"
 
 #include <iostream>
@@ -68,14 +67,15 @@ bool ngramStore::exists(ngram_t ngram) {
 			ngram);
 	return (count ? *count > 0 : false);
 }
-word_t ngramStore::random(prefix_t prefix) {
+template<typename Generator>
+word_t ngramStore::random(prefix_t prefix, Generator &g) {
 	createTable(prefix.size());
 	auto countRes = _db.executeScalar<int>(_builder.prefixCount(prefix.size()),
 			prefix);
 	int total = (countRes ? *countRes : 0);
 
 	uniform_int_distribution<> uid(0, total);
-	total = uid(global::rengine);
+	total = uid(g);
 
 	long rowCount = 0;
 	{

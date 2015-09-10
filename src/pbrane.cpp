@@ -19,8 +19,6 @@ using std::ifstream;
 using std::ofstream;
 
 #include "global.hpp"
-using global::isOwner;
-using global::send;
 #include "config.hpp"
 #include "journal.hpp"
 #include "modules.hpp"
@@ -31,21 +29,23 @@ using util::asString;
 using util::split;
 using util::startsWith;
 using util::trim;
-#include "markov.hpp"
 #include "eventsystem.hpp"
 #include "expression.hpp"
 #include "parser.hpp"
-#include "events.hpp"
 #include "regex.hpp"
+#include "db.hpp"
+using zidcu::Database;
+#include "bot.hpp"
 
-void process(string network, string script, string nick, string target);
-string evaluate(string script, string nick);
+void process(Bot &bot, string network, string script, string nick, string target);
+string evaluate(Bot &bot, string script, string nick);
 
 struct PrivateMessage {
-	string network;
-	string message;
-	string nick;
-	string target;
+	string network{};
+	string message{};
+	string nick{};
+	string target{};
+	Bot &bot;
 };
 typedef bool (*hook)(PrivateMessage pmsg);
 
@@ -70,15 +70,22 @@ void prettyPrint(string arg) {
 }
 
 void teval(vector<string> args) {
-	global::vars.set("bot.owner", "jac");
-	global::vars.set("bot.admins", "jac");
+	random_device randomDevice;
+	auto seed = randomDevice();
+
+	Database db{config::databaseFileName};
+	Options opts{};
+	opts.seed = seed;
+	Bot pbrane{db, opts, Clock{}};
+
+	pbrane.set("bot.owner", "jac");
+	pbrane.set("bot.admins", "jac");
 
 	// initialize modules
 	modules::init();
 
-	random_device randomDevice;
-	unsigned int seed = randomDevice();
-	global::init(seed);
+	VarStore vars{db};
+	Pvm vm{vars};
 
 	if(!args.empty()) {
 		for(auto &arg : args) {
@@ -95,7 +102,7 @@ void teval(vector<string> args) {
 				cout << expr->pretty() << endl;
 				cout << "stringify: " << expr->toString() << endl;
 
-				cout << "result: " << expr->evaluate("jac").toString() << endl;
+				cout << "result: " << expr->evaluate(vm, "jac").toString() << endl;
 				// TODO: other exception types...
 			} catch(ParseException e) {
 				cout << e.pretty() << endl;
@@ -123,7 +130,7 @@ void teval(vector<string> args) {
 			cerr << expr->pretty() << endl;
 			cerr << "stringify: " << expr->toString() << endl;
 
-			string res = expr->evaluate(nick).toString();
+			string res = expr->evaluate(vm, nick).toString();
 			cerr << "result: " << res << endl;
 			cout << nick + ": " << res << endl;
 
@@ -144,7 +151,7 @@ int main(int argc, char **argv) {
 	for(int i = 1; i < argc; ++i)
 		args.push_back(argv[i]);
 
-	unsigned int seed = 0;
+	Options opts{};
 	for(auto &arg : args) {
 		if (arg == "--teval") {
 			teval(args);
@@ -161,56 +168,54 @@ int main(int argc, char **argv) {
 			import = true;
 			cerr << "pbrane: import mode enabled" << endl;
 		} else if(arg == "--debugSQL") {
-			global::debugSQL = true;
+			opts.debugSQL = true;
 			cerr << "pbrane: debug sql enabled" << endl;
 		} else if(arg == "--debugEventSystem") {
-			global::debugEventSystem = true;
+			opts.debugEventSystem = true;
 			cerr << "pbrane: debug event system enabled" << endl;
-		} else if(arg == "--debugFunctionBody") {
-			global::debugFunctionBody = true;
-			cerr << "pbrane: debug function body enabled" << endl;
+		} else if(arg == "--debugFunctionBodies") {
+			opts.debugFunctionBodies = true;
+			cerr << "pbrane: debug function bodies enabled" << endl;
 		} else {
-			seed = fromString<unsigned int>(argv[1]);
+			opts.seed = fromString<unsigned int>(argv[1]);
 		}
 	}
 
 	if(args.empty()) {
 		random_device randomDevice;
-		seed = randomDevice();
+		opts.seed = randomDevice();
 	}
 
-	if(!global::init(seed)) {
-		cerr << "pbrane: global::init failed" << endl;
-		return -1;
-	}
+	Database db{config::databaseFileName};
+	Bot pbrane{db, opts, Clock{}};
+
 	modules::init();
 
 	// TODO: don't hard-code these. These should be set in the startup file?
-	evaluate("${(!undefined 'bot.owner')? { bot.owner = 'jac'; }}", "jac");
-	evaluate("${(!undefined 'bot.nick')? { bot.nick = 'PINKSERV3'; }}",
-			global::vars.getString("bot.owner"));
-	evaluate("${(!undefined 'bot.maxLineLength')? { bot.maxLineLength = 256; }}",
-			global::vars.getString("bot.owner"));
+	evaluate(pbrane, "${(!undefined 'bot.owner')? { bot.owner = 'jac'; }}", "jac");
+	evaluate(pbrane, "${(!undefined 'bot.nick')? { bot.nick = 'PINKSERV3'; }}",
+			pbrane.get("bot.owner"));
+	evaluate(pbrane, "${(!undefined 'bot.maxLineLength')? { bot.maxLineLength = 256; }}",
+			pbrane.get("bot.owner"));
 	if(import) {
-		evaluate("${!on \"text\" (null => !ngobserve text)}",
-				global::vars.getString("bot.owner"));
+		evaluate(pbrane, "${!on \"text\" (null => !ngobserve text)}",
+				pbrane.get("bot.owner"));
 	}
 
-	if(!global::secondaryInit()) {
-		cerr << "pbrane: global::secondaryInit failed" << endl;
+	if(!pbrane.secondaryInit(config::startupFile)) {
+		cerr << "pbrane: secondaryInit failed" << endl;
 		// TODO: this should fail out completely?
 	}
 
-	if(global::vars.defined("bot.crashed")) {
+	if(pbrane.defined("bot.crashed")) {
 		cerr << "-- looks like I crashed" << endl;
-		send("slashnet", "#jitro", "oh no, '"
-				+ global::vars.getString("bot.crashed") + "' made me crash?", true);
+		pbrane.send("slashnet", "#jitro", "oh no, '"
+				+ pbrane.get("bot.crashed") + "' made me crash?", true);
 	}
-	global::vars.erase("bot.crashed");
+	pbrane.erase("bot.crashed");
 
 	// while there is more input coming
-	global::done = false;
-	while(!cin.eof() && !global::done) {
+	while(!cin.eof() && !pbrane.done()) {
 		// read the current line of input
 		string line;
 		getline(cin, line);
@@ -224,32 +229,32 @@ int main(int argc, char **argv) {
 		if(line.find_first_not_of(" \t\r\n") == string::npos)
 			continue;
 
-		Entry entry{global::now(), network, line};
-		global::journal.upsert(entry);
+		Entry entry{Clock{}.now(), network, line};
+		pbrane.upsert(entry);
 
 		vector<string> fields = split(line);
 		if(fields[1] == (string)"PRIVMSG") {
 			string nick = fields[0].substr(1, fields[0].find("!") - 1);
-			global::vars.set("bot.crashed", nick);
+			pbrane.set("bot.crashed", nick);
 
 			size_t mstart = line.find(":", 1);
 			string message = line.substr(mstart + 1);
 
 			string target = fields[2];
-			if(fields[2] == global::vars.getString("bot.nick"))
+			if(fields[2] == pbrane.get("bot.nick"))
 				target = nick;
 
 			// check for a special hook
 			bool wasHook = false;
 			for(auto h : hooks)
-				if((*h)({ network, message, nick, target })) {
+				if((*h)({ network, message, nick, target, pbrane })) {
 					wasHook = true;
 					break;
 				}
 
 			// TODO: proper environment for triggers
-			global::vars.set("nick", nick);
-			global::vars.set("text", message);
+			pbrane.set("nick", nick);
+			pbrane.set("text", message);
 
 			if(wasHook)
 				entry.etype = ExecuteType::Hook;
@@ -257,21 +262,21 @@ int main(int argc, char **argv) {
 			else if(message[0] == '!' && message.length() > 1) {
 				// it might be a !: to force intepretation line
 				if(message.size() > 1 && message[1] == ':')
-					process(network, message.substr(2), nick, target);
+					process(pbrane, network, message.substr(2), nick, target);
 				else
-					process(network, message, nick, target);
+					process(pbrane, network, message, nick, target);
 				entry.etype = ExecuteType::Function;
 			} else if(message.substr(0, 2) == (string)"${" && message.back() == '}') {
-				process(network, message, nick, target);
+				process(pbrane, network, message, nick, target);
 				entry.etype = ExecuteType::Function;
 			}
 			// otherwise, run on text triggers
 			else {
 				entry.etype = ExecuteType::None;
 
-				vector<Variable> results = EventSystem::process(EventType::Text);
+				vector<Variable> results = pbrane.process(EventType::Text);
 				if(results.size() == 1)
-					send(network, target, results.front().toString(), true);
+					pbrane.send(network, target, results.front().toString(), true);
 			}
 		}
 		if(fields[1] == (string)"JOIN") {
@@ -281,12 +286,12 @@ int main(int argc, char **argv) {
 				where = where.substr(1);
 
 			// TODO: proper environment for triggers
-			global::vars.set("nick", nick);
-			global::vars.set("where", where);
+			pbrane.set("nick", nick);
+			pbrane.set("where", where);
 
-			vector<Variable> results = EventSystem::process(EventType::Join);
+			vector<Variable> results = pbrane.process(EventType::Join);
 			if(results.size() == 1)
-				send(network, where, results.front().toString(), true);
+				pbrane.send(network, where, results.front().toString(), true);
 		}
 		if(fields[1] == (string)"NICK") {
 			;// run nick triggers
@@ -295,16 +300,16 @@ int main(int argc, char **argv) {
 			;// run leave triggers
 		}
 
-		global::journal.upsert(entry);
+		pbrane.upsert(entry);
 	}
 
 	cerr << "pbrane: exited main loop" << endl;
-	global::vars.erase("bot.crashed");
+	pbrane.erase("bot.crashed");
 
 	return 0;
 }
 
-void process(string network, string script, string nick, string target) {
+void process(Bot &bot, string network, string script, string nick, string target) {
 	if(import)
 		return;
 	script = trim(script);
@@ -316,21 +321,21 @@ void process(string network, string script, string nick, string target) {
 	if(script[0] == '!')
 		plainFunction = true, plainFName = script.substr(1, script.find(" ") - 1);
 	string noF = plainFName + " does not exist as a callable function [stacktrace: !]";
-	string result = evaluate(script, nick);
+	string result = evaluate(bot, script, nick);
 	if(plainFunction && result == noF) {
 		cerr << "simple call to nonexistante function error supressed" << endl;
 		return;
 	}
 	// assume we can run the script
-	send(network, target, result, true);
+	bot.send(network, target, result, true);
 }
-string evaluate(string script, string nick) {
+string evaluate(Bot &bot, string script, string nick) {
 	try {
 		cerr << "evaluate: " << script << endl;
 		auto expr = Parser::parse(script);
 		if(!expr)
 			cerr << "expr is null" << endl;
-		string res = expr->evaluate(nick).toString();
+		string res = expr->evaluate(bot.vm(), nick).toString();
 		cerr << "res: " << res << endl;
 		return res;
 	} catch(ParseException e) {
@@ -351,10 +356,10 @@ bool powerHook(PrivateMessage pmsg) {
 		return false;
 	if(pmsg.message[0] == ':') // ignore starting colon
 		pmsg.message = pmsg.message.substr(1);
-	if(pmsg.message == (string)"!restart" && isOwner(pmsg.nick))
-		return global::done = true;
+	if(pmsg.message == (string)"!restart" && pmsg.bot.isOwner(pmsg.nick))
+		return pmsg.bot.done(true), true;
 	if(pmsg.message == (string)"!save")
-		return global::done = true;
+		return pmsg.bot.done(true), true;
 	return false;
 }
 bool regexHook(PrivateMessage pmsg) {
@@ -369,7 +374,7 @@ bool regexHook(PrivateMessage pmsg) {
 
 	try {
 		Regex r(pmsg.message.substr(1));
-		auto entries = global::journal.fetch(AndPredicate{
+		auto entries = pmsg.bot.fetch(AndPredicate{
 			[=](Entry &e) {
 				// only replace on non-executed things
 				if(e.etype == ExecuteType::Hook || e.etype == ExecuteType::Function
@@ -388,13 +393,13 @@ bool regexHook(PrivateMessage pmsg) {
 		string result;
 		r.execute(e.arguments, result);
 		if(e.etype == ExecuteType::None)
-			send(pmsg.network, pmsg.target, "<" + e.nick() + "> " + result, true);
+			pmsg.bot.send(pmsg.network, pmsg.target, "<" + e.nick() + "> " + result, true);
 		else
-			send(pmsg.network, pmsg.target, result, true);
+			pmsg.bot.send(pmsg.network, pmsg.target, result, true);
 
 		return true;
 	} catch(string e) {
-		send(pmsg.network, pmsg.target, e, true);
+		pmsg.bot.send(pmsg.network, pmsg.target, e, true);
 	}
 
 	return false;

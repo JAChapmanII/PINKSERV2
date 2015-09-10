@@ -8,7 +8,8 @@
 #include "permission.hpp"
 
 struct VarStore {
-	VarStore(zidcu::Database &db, std::string varTableName, std::string permTableName);
+	VarStore(zidcu::Database &db, std::string varTableName = "vars",
+			std::string permTableName = "var_perms");
 
 	Variable get(std::string name);
 	std::string getString(std::string name);

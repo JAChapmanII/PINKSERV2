@@ -2,44 +2,41 @@
 using std::vector;
 using std::string;
 using std::to_string;
+using zidcu::Database;
 
 #include "expression.hpp"
 #include "parser.hpp"
 #include "db.hpp"
-#include "global.hpp"
 #include "err.hpp"
-using zidcu::Database;
-using zidcu::Statement;
 
 #include <iostream>
 using std::cerr;
 using std::endl;
 
-static string table = "events";
-static bool _tableCreated{false};
-static Database &_db = global::db;
 
-static void makeTable() {
-	if(_tableCreated) return;
+EventSystem::EventSystem(Database &db, bool debug, string table)
+	: _db{db}, _table{table}, _debug{debug} { }
+
+void EventSystem::createTables() {
+	if(_tablesCreated) return;
 	auto tran = _db.transaction();
-	_db.executeVoid("CREATE TABLE IF NOT EXISTS " + table
+	_db.executeVoid("CREATE TABLE IF NOT EXISTS " + _table
 			+ " (id integer primary key, type integer, body text)");
-	_tableCreated = true;
+	_tablesCreated = true;
 }
 
 void EventSystem::push(EventType etype, Event e) {
-	makeTable();
+	this->createTables();
 	auto tran = _db.transaction();
-	_db.executeVoid("INSERT INTO " + table + "(type, body) VALUES(?1, ?2)",
+	_db.executeVoid("INSERT INTO " + _table + "(type, body) VALUES(?1, ?2)",
 			(int)etype, e);
 }
 
-vector<string> getEventBodies(EventType etype);
-vector<string> getEventBodies(EventType etype) {
-	makeTable();
+vector<string> EventSystem::getBodies(EventType etype) {
+	this->createTables();
 	vector<string> bodies;
 	auto tran = _db.transaction();
-	auto result = _db.execute("SELECT * FROM " + table + " WHERE type = ?1",
+	auto result = _db.execute("SELECT * FROM " + _table + " WHERE type = ?1",
 			(int)etype);
 	while(result.status() == SQLITE_ROW) {
 		string body = result.getString(2);
@@ -53,16 +50,16 @@ vector<string> getEventBodies(EventType etype) {
 	return bodies;
 }
 
-vector<Variable> EventSystem::process(EventType etype) {
+vector<Variable> EventSystem::process(EventType etype, Pvm &vm) {
 	vector<Variable> output;
-	auto bodies = getEventBodies(etype);
+	auto bodies = this->getBodies(etype);
 	for(auto &body : bodies) {
 		try {
-			if(global::debugEventSystem)
+			if(_debug)
 				cerr << "EventSystem::process: body: \"" << body << "\"" << endl;
 
 			auto expr = Parser::parseCanonical(body);
-			Variable res = expr->evaluate("");
+			Variable res = expr->evaluate(vm, "");
 			// TODO: hack
 			if(res.type == Type::String && !res.value.s.empty())
 				output.push_back(res);
@@ -79,25 +76,23 @@ vector<Variable> EventSystem::process(EventType etype) {
 }
 
 int EventSystem::eventsSize(EventType etype) {
-	makeTable();
-	auto count = _db.executeScalar<int>(
-			"SELECT COUNT(1) FROM " + table + " WHERE type = ?1",
-			(int)etype);
-	return (count ? *count : 0);
+	this->createTables();
+	return _db.executeScalar<int>(
+			"SELECT COUNT(1) FROM " + _table + " WHERE type = ?1", (int)etype)
+		.value_or(0);
 }
 Event EventSystem::getEvent(int id) {
-	makeTable();
-	auto body = _db.executeScalar<string>(
-			"SELECT body FROM " + table + " WHERE id = ?1",
-			id);
-	return (body ? *body : "");
+	this->createTables();
+	return _db.executeScalar<string>(
+			"SELECT body FROM " + _table + " WHERE id = ?1", id)
+		.value_or("");
 }
 void EventSystem::deleteEvent(int id) {
-	makeTable();
+	this->createTables();
 	cerr << "EventSystem::deleteEvent(" << id << "): deleting \""
 		<< getEvent(id) << "\"" << endl;
 
 	auto tran = _db.transaction();
-	_db.executeVoid("DELETE FROM " + table + " WHERE id = ?1", id);
+	_db.executeVoid("DELETE FROM " + _table + " WHERE id = ?1", id);
 }
 

@@ -54,7 +54,8 @@ struct ngramStore {
 	void increment(ngram_t ngram);
 	bool exists(ngram_t ngram);
 
-	word_t random(prefix_t prefix);
+	template<typename Generator>
+	word_t random(prefix_t prefix, Generator &g);
 
 	private:
 		void createTable(int order);
