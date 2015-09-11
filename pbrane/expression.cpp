@@ -234,8 +234,7 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 
 		// a module function
 		if(contains(modules::hfmap, func)) {
-			modules::Function mfunc = modules::hfmap[func];
-			return mfunc(argVars);
+			return modules::hfmap[func](argVars);
 		}
 
 		try {

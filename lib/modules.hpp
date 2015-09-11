@@ -4,20 +4,36 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <functional>
 #include "variable.hpp"
+#include "pvm.hpp"
 
 namespace modules {
-	typedef Variable (*Function)(std::vector<Variable>);
 	struct Module {
 		std::string name;
 		std::string desc;
 		bool loaded;
 	};
 
-	extern std::map<std::string, Function> hfmap;
+	template<typename Ret, typename... Args>
+	struct IFWrapper {
+		IFWrapper(std::function<Ret(Args...)> func);
+
+		Variable operator()(std::vector<Variable> args);
+
+		private:
+			std::function<Ret(Args...)> _func;
+	};
+
+	template<typename Ret, typename... Args>
+			IFWrapper<Ret, Args...> make_wrapper(Ret (*func)(Args...));
+
+	extern std::map<std::string, InjectedFunction> hfmap;
 	extern std::vector<Module> modules;
 
 	bool init();
 }
+
+#include "modules.inc.hpp"
 
 #endif // MODULES_HPP
