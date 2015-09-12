@@ -48,7 +48,7 @@ struct ngramStoreStatementBuilder {
 };
 
 struct ngramStore {
-	ngramStore(zidcu::Database &db, std::string baseTableName);
+	ngramStore(zidcu::Database &db, std::string baseTableName = "ngrams");
 
 	chain_t fetch(ngram_t ngram);
 	void increment(ngram_t ngram);

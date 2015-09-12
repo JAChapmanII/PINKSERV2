@@ -8,6 +8,7 @@ using zidcu::Statement;
 
 #include <random>
 using std::uniform_int_distribution;
+using std::mt19937_64;
 
 #include "util.hpp"
 #include "err.hpp"
@@ -98,6 +99,7 @@ word_t ngramStore::random(prefix_t prefix, Generator &g) {
 			+ ", total: " + to_string(total));
 }
 
+template word_t ngramStore::random<mt19937_64>(prefix_t prefix, mt19937_64 &g);
 
 ngramStoreStatementBuilder::ngramStoreStatementBuilder(string baseTableName)
 		: _baseTableName(baseTableName) { }
