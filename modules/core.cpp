@@ -28,7 +28,7 @@ using util::join;
 
 #include "config.hpp"
 
-Entry regexRandomEntry(string regex);
+Entry regexRandomEntry(Bot &bot, string regex);
 
 string help(Bot *bot, string function) {
 	if(!function.empty()) {
@@ -86,41 +86,30 @@ bool undefined(Bot *bot, string name) { return !bot->vars.defined(name); }
 // TODO: we need to know the caller for this to work... (perms)
 void rm(Bot *bot, string name) { bot->vars.erase(name); }
 
-/*
-Variable sleep(vector<Variable>) {
-	// TODO: can we just exit(non-0)?
-	throw (string)"(uh-oh, bug " + global::vars.getString("bot.owner") + ")";
-}
+void sleep(Bot *bot) { bot->done = true; }
 
-Variable jsize(vector<Variable>) {
-	return Variable((long)global::journal.size(), Permissions());
-}
+long jsize(Bot *bot) { return bot->journal.size(); }
 
-Entry regexRandomEntry(string regex) {
-	vector<Entry> lines = global::journal.fetch(RegexPredicate{regex});
+Entry regexRandomEntry(Bot &bot, string regex) {
+	auto lines = bot.journal.fetch(RegexPredicate{regex});
 	if(lines.size() < 1)
 		throw (string)"no matches";
 
 	uniform_int_distribution<> uid(0, lines.size() - 1);
-	unsigned target = uid(global::rengine);
-
+	unsigned target = uid(bot.rengine);
 	return lines[target];
 }
 
-Variable rgrep(vector<Variable> arguments) {
-	string regex = arguments.front().toString();
-	auto line = regexRandomEntry(regex);
-	return Variable(line.arguments, Permissions());
+string rgrep(Bot *bot, string regex) {
+	return regexRandomEntry(*bot, regex).arguments;
 }
 
-Variable rline(vector<Variable> arguments) {
-	string regex = arguments.front().toString();
-	auto line = regexRandomEntry(regex);
-	return Variable("<" + line.nick() + "> " + line.arguments, Permissions());
+string rline(Bot *bot, string regex) {
+	auto line = regexRandomEntry(*bot, regex);
+	return "<" + line.nick() + "> " + line.arguments;
 }
 
-Variable debug(vector<Variable> arguments) {
-	string text = join(arguments, " ");
+string debug(string text) {
 	cerr << "debug: \"" << text << "\"" << endl;
 	try {
 		auto expr = Parser::parse(text);
@@ -135,38 +124,32 @@ Variable debug(vector<Variable> arguments) {
 	} catch(string &s) {
 		cerr << "string type error: " << s << endl;
 	}
-	return Variable(true, Permissions());
+	return "see cerr";
 }
 
-Variable todo(std::vector<Variable> arguments) {
-	string text = join(arguments, " ");
+string todo(string text) {
+	// TODO: db
 	ofstream out(config::todoFileName, std::ios::app);
 	if(!out.good())
-		return Variable("error: couldn't save to TODO file", Permissions());
+		return "error: couldn't save to TODO file";
 	out << text << endl;
-	return Variable("saved!", Permissions());
+	return "saved!";
 }
 
-Variable toint(vector<Variable> arguments) {
-	if(arguments.size() != 1)
-		return Variable("error: toint takes one argument", Permissions());
-	return arguments.front().asInteger();
-}
+Variable toint(Variable var) { return var.asInteger(); }
 
-Variable bmess(vector<Variable> arguments) {
+// TODO: vector of long
+string bmess(vector<Variable> arguments) {
 	if(arguments.size() < 1)
-		return Variable("error: bmess takes a list of bytes", Permissions());
+		return "error: bmess takes a list of bytes";
 	string res = "bmess: ";
 	for(auto &v : arguments)
 		res += (char)(v.asInteger().value.l & 0xFF);
-	return Variable(res, Permissions());
+	return res;
 }
 
-Variable pol(vector<Variable> arguments) {
-	if(arguments.size() != 1)
-		return Variable("error: pol takes one argument", Permissions());
-	auto e = Parser::parse("${ " + arguments.front().toString() + " }");
-	return Variable(e->prettyOneLine(), Permissions());
+string pol(string body) {
+	auto e = Parser::parse("${ " + body + " }");
+	return e->prettyOneLine();
 }
-*/
 

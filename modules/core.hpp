@@ -34,31 +34,31 @@ bool undefined(Bot *bot, std::string name);
 // #f: rm: wipe a variable form existence
 void rm(Bot *bot, std::string name);
 
-// #z: sleep: stop being awake
-Variable sleep(std::vector<Variable> arguments);
+// #f: sleep: stop being awake
+void sleep(Bot *bot);
 
-// #z: jsize: returns size of journal
-Variable jsize(std::vector<Variable> arguments);
+// #f: jsize: returns size of journal
+long jsize(Bot *bot);
 
-// #z: rgrep: returns a random line from the journal
-Variable rgrep(std::vector<Variable> arguments);
+// #f: rgrep: returns a random line from the journal
+std::string rgrep(Bot *bot, std::string regex);
 
-// #z: rline: returns a random line (with nick info) from the journal
-Variable rline(std::vector<Variable> arguments);
+// #f: rline: returns a random line (with nick info) from the journal
+std::string rline(Bot *bot, std::string regex);
 
-// #z: debug: prints result of parsing argument to cerr
-Variable debug(std::vector<Variable> arguments);
+// #f: debug: prints result of parsing argument to cerr
+std::string debug(std::string text);
 
-// #z: todo: add a todo for jac to implement
-Variable todo(std::vector<Variable> arguments);
+// #f: todo: add a todo for jac to implement
+std::string todo(std::string text);
 
-// #z: toint: force a result to be an integer
-Variable toint(std::vector<Variable> arguments);
+// #f: toint: force a result to be an integer
+Variable toint(Variable arg);
 
-// #z: bmess: fuck with bots
-Variable bmess(std::vector<Variable> arguments);
+// #f: bmess: fuck with bots
+std::string bmess(std::vector<Variable> arguments);
 
-// #z: pol: pretty one line
-Variable pol(std::vector<Variable> arguments);
+// #f: pol: pretty one line
+std::string pol(std::string body);
 
 #endif // MODULES_CORE_HPP
