@@ -78,8 +78,8 @@ void teval(vector<string> args) {
 	opts.seed = seed;
 	Bot pbrane{db, opts, Clock{}};
 
-	pbrane.set("bot.owner", "jac");
-	pbrane.set("bot.admins", "jac");
+	pbrane.vars.set("bot.owner", "jac");
+	pbrane.vars.set("bot.admins", "jac");
 
 	// initialize modules
 	modules::init(&pbrane);
@@ -194,12 +194,12 @@ int main(int argc, char **argv) {
 	// TODO: don't hard-code these. These should be set in the startup file?
 	evaluate(pbrane, "${(!undefined 'bot.owner')? { bot.owner = 'jac'; }}", "jac");
 	evaluate(pbrane, "${(!undefined 'bot.nick')? { bot.nick = 'PINKSERV3'; }}",
-			pbrane.get("bot.owner"));
+			pbrane.vars.getString("bot.owner"));
 	evaluate(pbrane, "${(!undefined 'bot.maxLineLength')? { bot.maxLineLength = 256; }}",
-			pbrane.get("bot.owner"));
+			pbrane.vars.getString("bot.owner"));
 	if(import) {
 		evaluate(pbrane, "${!on \"text\" (null => !ngobserve text)}",
-				pbrane.get("bot.owner"));
+				pbrane.vars.getString("bot.owner"));
 	}
 
 	if(!pbrane.secondaryInit(config::startupFile)) {
@@ -207,15 +207,15 @@ int main(int argc, char **argv) {
 		// TODO: this should fail out completely?
 	}
 
-	if(pbrane.defined("bot.crashed")) {
+	if(pbrane.vars.defined("bot.crashed")) {
 		cerr << "-- looks like I crashed" << endl;
 		pbrane.send("slashnet", "#jitro", "oh no, '"
-				+ pbrane.get("bot.crashed") + "' made me crash?", true);
+				+ pbrane.vars.getString("bot.crashed") + "' made me crash?", true);
 	}
-	pbrane.erase("bot.crashed");
+	pbrane.vars.erase("bot.crashed");
 
 	// while there is more input coming
-	while(!cin.eof() && !pbrane.done()) {
+	while(!cin.eof() && !pbrane.done) {
 		// read the current line of input
 		string line;
 		getline(cin, line);
@@ -230,18 +230,18 @@ int main(int argc, char **argv) {
 			continue;
 
 		Entry entry{Clock{}.now(), network, line};
-		pbrane.upsert(entry);
+		pbrane.journal.upsert(entry);
 
 		vector<string> fields = split(line);
 		if(fields[1] == (string)"PRIVMSG") {
 			string nick = fields[0].substr(1, fields[0].find("!") - 1);
-			pbrane.set("bot.crashed", nick);
+			pbrane.vars.set("bot.crashed", nick);
 
 			size_t mstart = line.find(":", 1);
 			string message = line.substr(mstart + 1);
 
 			string target = fields[2];
-			if(fields[2] == pbrane.get("bot.nick"))
+			if(fields[2] == pbrane.vars.getString("bot.nick"))
 				target = nick;
 
 			// check for a special hook
@@ -253,8 +253,8 @@ int main(int argc, char **argv) {
 				}
 
 			// TODO: proper environment for triggers
-			pbrane.set("nick", nick);
-			pbrane.set("text", message);
+			pbrane.vars.set("nick", nick);
+			pbrane.vars.set("text", message);
 
 			if(wasHook)
 				entry.etype = ExecuteType::Hook;
@@ -274,7 +274,7 @@ int main(int argc, char **argv) {
 			else {
 				entry.etype = ExecuteType::None;
 
-				vector<Variable> results = pbrane.process(EventType::Text);
+				vector<Variable> results = pbrane.events.process(EventType::Text, pbrane.vm);
 				if(results.size() == 1)
 					pbrane.send(network, target, results.front().toString(), true);
 			}
@@ -286,10 +286,10 @@ int main(int argc, char **argv) {
 				where = where.substr(1);
 
 			// TODO: proper environment for triggers
-			pbrane.set("nick", nick);
-			pbrane.set("where", where);
+			pbrane.vars.set("nick", nick);
+			pbrane.vars.set("where", where);
 
-			vector<Variable> results = pbrane.process(EventType::Join);
+			vector<Variable> results = pbrane.events.process(EventType::Join, pbrane.vm);
 			if(results.size() == 1)
 				pbrane.send(network, where, results.front().toString(), true);
 		}
@@ -300,11 +300,11 @@ int main(int argc, char **argv) {
 			;// run leave triggers
 		}
 
-		pbrane.upsert(entry);
+		pbrane.journal.upsert(entry);
 	}
 
 	cerr << "pbrane: exited main loop" << endl;
-	pbrane.erase("bot.crashed");
+	pbrane.vars.erase("bot.crashed");
 
 	return 0;
 }
@@ -335,7 +335,7 @@ string evaluate(Bot &bot, string script, string nick) {
 		auto expr = Parser::parse(script);
 		if(!expr)
 			cerr << "expr is null" << endl;
-		string res = expr->evaluate(bot.vm(), nick).toString();
+		string res = expr->evaluate(bot.vm, nick).toString();
 		cerr << "res: " << res << endl;
 		return res;
 	} catch(ParseException e) {
@@ -357,9 +357,9 @@ bool powerHook(PrivateMessage pmsg) {
 	if(pmsg.message[0] == ':') // ignore starting colon
 		pmsg.message = pmsg.message.substr(1);
 	if(pmsg.message == (string)"!restart" && pmsg.bot.isOwner(pmsg.nick))
-		return pmsg.bot.done(true), true;
+		return pmsg.bot.done = true;
 	if(pmsg.message == (string)"!save")
-		return pmsg.bot.done(true), true;
+		return pmsg.bot.done = true;
 	return false;
 }
 bool regexHook(PrivateMessage pmsg) {
@@ -374,7 +374,7 @@ bool regexHook(PrivateMessage pmsg) {
 
 	try {
 		Regex r(pmsg.message.substr(1));
-		auto entries = pmsg.bot.fetch(AndPredicate{
+		auto entries = pmsg.bot.journal.fetch(AndPredicate{
 			[=](Entry &e) {
 				// only replace on non-executed things
 				if(e.etype == ExecuteType::Hook || e.etype == ExecuteType::Function

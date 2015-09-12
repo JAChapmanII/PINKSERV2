@@ -53,18 +53,18 @@ sqlite_int64 Clock::now() {
 	return time(NULL);
 }
 
-Bot::Bot(Database &db, Options opts, Clock clock) : _db{db}, _opts{opts},
-		_clock{clock}, _journal{_db}, _events{_db, opts.debugEventSystem},
-		_dictionary{_db}, _vars{_db}, _vm{_vars}, rengine{} {
-	rengine.seed(_opts.seed);
+Bot::Bot(Database &db, Options opts, Clock clock) : db{db}, opts{opts},
+		clock{clock}, journal{db}, events{db, opts.debugEventSystem},
+		dictionary{db}, vars{db}, vm{vars}, rengine{} {
+	rengine.seed(opts.seed);
 
-	_db.executeVoid("PRAGMA cache_size = 10000;");
-	_db.executeVoid("PRAGMA page_size = 8192;");
-	_db.executeVoid("PRAGMA temp_store = MEMORY;");
-	_db.executeScalar<string>("PRAGMA journal_mode = WAL;");
-	_db.executeVoid("PRAGMA synchronous = NORMAL;");
+	db.executeVoid("PRAGMA cache_size = 10000;");
+	db.executeVoid("PRAGMA page_size = 8192;");
+	db.executeVoid("PRAGMA temp_store = MEMORY;");
+	db.executeScalar<string>("PRAGMA journal_mode = WAL;");
+	db.executeVoid("PRAGMA synchronous = NORMAL;");
 
-	if(_opts.debugSQL)
+	if(opts.debugSQL)
 		void* res = sqlite3_trace(db.getDB(), sqlTrace, nullptr);
 
 	// TODO: these
@@ -74,14 +74,10 @@ Bot::Bot(Database &db, Options opts, Clock clock) : _db{db}, _opts{opts},
 }
 
 
-
-bool Bot::done() const { return _done; }
-void Bot::done(bool ndone) { _done = ndone; }
-
 bool Bot::secondaryInit(string startupFile) {
 	ifstream startup(startupFile);
 	if(startup.good()) {
-		_journal.log(_clock.now(), "reading startup file: " + startupFile);
+		journal.log(clock.now(), "reading startup file: " + startupFile);
 
 		string line;
 		while(startup.good() && !startup.eof()) {
@@ -92,18 +88,18 @@ bool Bot::secondaryInit(string startupFile) {
 			if(line.empty())
 				continue;
 
-			_journal.log(_clock.now(), "startup line: " + line);
+			journal.log(clock.now(), "startup line: " + line);
 			try {
 				auto expr = Parser::parse(line);
-				string result = expr->evaluate(_vm,
-						_vars.getString("bot.owner")).toString();
+				string result = expr->evaluate(vm,
+						vars.getString("bot.owner")).toString();
 			// TODO: more exception types
 			} catch(ParseException e) {
-				_journal.log(_clock.now(), "parse exception: " + e.pretty());
+				journal.log(clock.now(), "parse exception: " + e.pretty());
 			} catch(StackTrace e) {
-				_journal.log(_clock.now(), "stack trace exception: " + e.toString());
+				journal.log(clock.now(), "stack trace exception: " + e.toString());
 			} catch(string &e) {
-				_journal.log(_clock.now(), "string exception: " + e);
+				journal.log(clock.now(), "string exception: " + e);
 			}
 		}
 		return true;
@@ -117,7 +113,7 @@ void Bot::send(string network, string target, string line, bool send) {
 	line = escapeForPMSG(line); // TODO
 
 	auto maxLineLength = util::fromString<unsigned>(
-			_vars.getString("bot.maxLineLength"));
+			vars.getString("bot.maxLineLength"));
 	if(line.length() > maxLineLength)
 		line = line.substr(0, maxLineLength);
 
@@ -126,42 +122,16 @@ void Bot::send(string network, string target, string line, bool send) {
 
 	cout << network << " PRIVMSG " << target << " :" << line << endl;
 
-	auto us = _vars.get("bot.nick").toString() + "!~self@localhost";
-	Entry e{-1, _clock.now(), SentType::Sent, ExecuteType::Sent, network,
+	auto us = vars.get("bot.nick").toString() + "!~self@localhost";
+	Entry e{-1, clock.now(), SentType::Sent, ExecuteType::Sent, network,
 		":" + us + " PRIVMSG " + target + " :" + line};
-	_journal.upsert(e);
+	journal.upsert(e);
 }
 
 bool Bot::isOwner(std::string nick) {
-	return (nick == _vars.getString("bot.owner"));
+	return (nick == vars.getString("bot.owner"));
 }
 bool Bot::isAdmin(std::string nick) {
-	return util::contains(_vars.getString("bot.admins"), " " + nick + " ");
+	return util::contains(vars.getString("bot.admins"), " " + nick + " ");
 }
-
-string Bot::set(string name, string val) {
-	return _vars.set(name, val).toString();
-}
-string Bot::get(string name) {
-	return _vars.getString(name);
-}
-bool Bot::defined(string name) {
-	return _vars.defined(name);
-}
-void Bot::erase(string name) {
-	_vars.erase(name);
-}
-
-sqlite_int64 Bot::upsert(Entry &entry) {
-	return _journal.upsert(entry);
-}
-vector<Entry> Bot::fetch(EntryPredicate predicate, int limit) {
-	return _journal.fetch(predicate, limit);
-}
-
-vector<Variable> Bot::process(EventType etype) {
-	return _events.process(etype, _vm);
-}
-
-Pvm &Bot::vm() { return _vm; }
 

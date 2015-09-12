@@ -25,9 +25,6 @@ struct Clock {
 struct Bot {
 	Bot(zidcu::Database &db, Options opts, Clock clock);
 
-	bool done() const;
-	void done(bool ndone);
-
 	bool secondaryInit(std::string startupFile);
 
 	void send(std::string network, std::string target, std::string line,
@@ -36,32 +33,18 @@ struct Bot {
 	bool isOwner(std::string nick);
 	bool isAdmin(std::string nick);
 
-	std::string set(std::string name, std::string val);
-	std::string get(std::string name);
-	bool defined(std::string name);
-	void erase(std::string name);
-
-	sqlite_int64 upsert(Entry &entry);
-	std::vector<Entry> fetch(EntryPredicate predicate = NoopPredicate,
-			int limit = -1);
-
-	std::vector<Variable> process(EventType etype);
-
-	Pvm &vm();
-
-	private:
-		bool _done{false};
-		zidcu::Database &_db;
-		Options _opts;
-		Clock _clock;
-
-		Journal _journal;
-		EventSystem _events;
-		Dictionary _dictionary;
-		VarStore _vars;
-		Pvm _vm;
-
 	public:
+		bool done{false};
+		zidcu::Database &db;
+		Options opts;
+		Clock clock;
+
+		Journal journal;
+		EventSystem events;
+		Dictionary dictionary;
+		VarStore vars;
+		Pvm vm;
+
 		std::mt19937_64 rengine;
 };
 

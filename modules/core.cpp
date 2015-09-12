@@ -34,7 +34,7 @@ string help(Bot *bot, string function) {
 	if(!function.empty()) {
 		if(!contains(global::moduleFunctionList, function))
 			return "error: requested function does not exist";
-		return bot->get(function + ".help");
+		return bot->vars.getString(function + ".help");
 	}
 	return join(global::moduleFunctionList, ", ");
 }
@@ -81,10 +81,10 @@ string type(vector<Variable> arguments) {
 	return res;
 }
 
-bool undefined(Bot *bot, string name) { return !bot->defined(name); }
+bool undefined(Bot *bot, string name) { return !bot->vars.defined(name); }
 
 // TODO: we need to know the caller for this to work... (perms)
-void rm(Bot *bot, string name) { bot->erase(name); }
+void rm(Bot *bot, string name) { bot->vars.erase(name); }
 
 /*
 Variable sleep(vector<Variable>) {
