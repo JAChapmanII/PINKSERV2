@@ -30,6 +30,7 @@ namespace modules {
 			throw make_except("unexpected coerce type");
 		}
 		template<> std::string coerce(std::vector<Variable> &vars);
+		template<> Word coerce(std::vector<Variable> &vars);
 		template<> long coerce(std::vector<Variable> &vars);
 		template<> double coerce(std::vector<Variable> &vars);
 		template<> std::vector<Variable> coerce(std::vector<Variable> &vars);

@@ -29,6 +29,13 @@ namespace modules {
 			vars.clear();
 			return res;
 		}
+		template<> Word coerce(vector<Variable> &vars) {
+			if(vars.empty())
+				throw string{"coerce: wanted word but has nothing"};
+			string res = vars.front().toString();
+			vars.erase(vars.begin());
+			return Word{res.begin(), res.end()};
+		}
 		template<> long coerce(vector<Variable> &vars) {
 			if(vars.empty())
 				throw string{"coerce: wanted int but has nothing"};

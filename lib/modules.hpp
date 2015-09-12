@@ -10,6 +10,8 @@
 #include "bot.hpp"
 
 namespace modules {
+	struct Word : std::string { using std::string::string; };
+
 	struct Module {
 		std::string name;
 		std::string desc;
