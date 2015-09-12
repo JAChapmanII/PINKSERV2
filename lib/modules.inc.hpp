@@ -33,6 +33,7 @@ namespace modules {
 		template<> long coerce(std::vector<Variable> &vars);
 		template<> double coerce(std::vector<Variable> &vars);
 		template<> std::vector<Variable> coerce(std::vector<Variable> &vars);
+		template<> Variable coerce(std::vector<Variable> &vars);
 
 		template<typename Ret> Variable makeVariable(Ret ret) {
 			return Variable(ret, Permissions());

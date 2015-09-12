@@ -22,23 +22,23 @@ void setupFunctions(Bot *bot);
 
 namespace modules {
 	namespace IFHelper {
-		template<> std::string coerce(std::vector<Variable> &vars) {
+		template<> string coerce(vector<Variable> &vars) {
 			//if(vars.empty())
-				//throw std::string{"coerce: wanted string but has nothing"};
-			std::string res = util::join(vars, " ");
+				//throw string{"coerce: wanted string but has nothing"};
+			string res = util::join(vars, " ");
 			vars.clear();
 			return res;
 		}
-		template<> long coerce(std::vector<Variable> &vars) {
+		template<> long coerce(vector<Variable> &vars) {
 			if(vars.empty())
-				throw std::string{"coerce: wanted int but has nothing"};
+				throw string{"coerce: wanted int but has nothing"};
 			long var = vars.front().asInteger().value.l;
 			vars.erase(vars.begin());
 			return var;
 		}
-		template<> double coerce(std::vector<Variable> &vars) {
+		template<> double coerce(vector<Variable> &vars) {
 			if(vars.empty())
-				throw std::string{"coerce: wanted int but has nothing"};
+				throw string{"coerce: wanted int but has nothing"};
 			double var = vars.front().asDouble().value.d;
 			vars.erase(vars.begin());
 			return var;
@@ -48,11 +48,18 @@ namespace modules {
 			vars.clear();
 			return copy;
 		}
+		template<> Variable coerce(vector<Variable> &vars) {
+			if(vars.empty())
+				throw string{"coerce: wanted Variable but has nothing"};
+			Variable var = vars.front();
+			vars.erase(vars.begin());
+			return var;
+		}
 		template<> Variable makeVariable(Variable var) { return var; }
 	}
 }
 
-Module findModule(std::string mname) {
+Module findModule(string mname) {
 	for(auto mod : modules::modules)
 		if(mod.name == mname)
 			return mod;
