@@ -32,6 +32,8 @@ void Dictionary::insert(string value) {
 	_db.executeVoid("INSERT INTO " + _tableName + " (str) VALUES (?1)", value);
 }
 sqlite_int64 Dictionary::get(string value) {
+	if(value.empty() || value.find_first_not_of(" \t\r\n") == string::npos)
+		throw make_except("dictionary cannot into space");
 	createTable();
 	auto code = _db.executeScalar<sqlite_int64>(
 			"SELECT code FROM " + _tableName + " WHERE str = ?1",
