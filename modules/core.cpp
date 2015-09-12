@@ -30,20 +30,14 @@ using util::join;
 
 Entry regexRandomEntry(string regex);
 
-/*
-Variable help(vector<Variable> arguments) {
-	if(arguments.size() > 1)
-		return Variable("error: help can only take a max of one function name",
-				Permissions());
-	if(arguments.size() == 1) {
-		string function = arguments.front().toString();
+string help(Bot *bot, string function) {
+	if(!function.empty()) {
 		if(!contains(global::moduleFunctionList, function))
-			return Variable("error: requested function does not exist", Permissions());
-		return global::vars.get(function + ".help");
+			return "error: requested function does not exist";
+		return bot->get(function + ".help");
 	}
-	return Variable(join(global::moduleFunctionList, ", "), Permissions());
+	return join(global::moduleFunctionList, ", ");
 }
-*/
 
 void irc(string command) { cout << command << endl; }
 

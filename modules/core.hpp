@@ -7,8 +7,8 @@
 
 // #m: core: core functions
 
-// #z: help: returns a list of builtin functions, or the help text
-//std::string help(std::optional<std::string> func);
+// #f: help: returns a list of builtin functions, or the help text
+std::string help(Bot *bot, std::string function);
 
 // #f: irc: issues an IRC command
 void irc(std::string command);
