@@ -18,7 +18,7 @@ static bool modules_inited = false;
 Module findModule(string mname);
 
 void defineModules();
-void setupFunctions();
+void setupFunctions(Bot *bot);
 
 namespace modules {
 	namespace IFHelper {
@@ -59,7 +59,7 @@ Module findModule(std::string mname) {
 	throw (string)"module " + mname + " nonexistant";
 }
 
-bool modules::init() {
+bool modules::init(Bot *bot) {
 	if(modules_inited)
 		return true;
 
@@ -68,7 +68,7 @@ bool modules::init() {
 
 	//cerr << "    dictionary size: " << global::dictionary.size() << endl;
 
-	setupFunctions();
+	setupFunctions(bot);
 	return true;
 }
 

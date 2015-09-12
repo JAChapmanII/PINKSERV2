@@ -8,7 +8,7 @@ OUTF="./lib/modules.cpp.gen"
 
 echo -e "void defineModules() {" >> mods
 
-echo -e "void setupFunctions() {" >> mfuncs
+echo -e "void setupFunctions(Bot *bot) {" >> mfuncs
 echo -e "\tcerr << \"discovered functions: \" << endl;" >> mfuncs;
 
 for f in modules/*.hpp; do
@@ -40,7 +40,7 @@ for f in modules/*.hpp; do
 
 		# save the function information to a file
 		echo -e "\tcerr << \"$pfname \";" >> mfuncs;
-		echo -e "\tmodules::hfmap[\"$pfname\"] = modules::make_wrapper($fname);" >> mfuncs
+		echo -e "\tmodules::hfmap[\"$pfname\"] = modules::make_wrapper(bot, $fname);" >> mfuncs
 		# echo -e "\tglobal::vars.set(\"${pfname}\", \"{ hard coded }\");" >> mfuncs
 		# echo -e "\tglobal::vars.set(\"${pfname}.help\", \"$fdesc\");" >> mfuncs
 		echo -e "\tglobal::moduleFunctionList.push_back(\"${pfname}\");" >> mfuncs

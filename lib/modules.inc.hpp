@@ -82,8 +82,14 @@ namespace modules {
 	}
 
 	template<typename Ret, typename... Args> IFWrapper<Ret, Args...>
-			make_wrapper(Ret (*func)(Args...)) {
+			make_wrapper(Bot *, Ret (*func)(Args...)) {
 		return IFWrapper<Ret, Args...>{func};
+	}
+	template<typename Ret, typename... Args> IFWrapper<Ret, Args...>
+			make_wrapper(Bot *bot, Ret (*func)(Bot *, Args...)) {
+		auto binder = IFHelper::ArityBinder<sizeof...(Args) + 1>{};
+		auto fNext = binder(func, bot);
+		return IFWrapper<Ret, Args...>{fNext};
 	}
 }
 

@@ -82,7 +82,7 @@ void teval(vector<string> args) {
 	pbrane.set("bot.admins", "jac");
 
 	// initialize modules
-	modules::init();
+	modules::init(&pbrane);
 
 	VarStore vars{db};
 	Pvm vm{vars};
@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
 	Database db{config::databaseFileName};
 	Bot pbrane{db, opts, Clock{}};
 
-	modules::init();
+	modules::init(&pbrane);
 
 	// TODO: don't hard-code these. These should be set in the startup file?
 	evaluate(pbrane, "${(!undefined 'bot.owner')? { bot.owner = 'jac'; }}", "jac");

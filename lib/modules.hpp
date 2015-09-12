@@ -7,6 +7,7 @@
 #include <functional>
 #include "variable.hpp"
 #include "pvm.hpp"
+#include "bot.hpp"
 
 namespace modules {
 	struct Module {
@@ -36,12 +37,14 @@ namespace modules {
 
 
 	template<typename Ret, typename... Args>
-			IFWrapper<Ret, Args...> make_wrapper(Ret (*func)(Args...));
+			IFWrapper<Ret, Args...> make_wrapper(Bot *bot, Ret (*func)(Args...));
+	template<typename Ret, typename... Args>
+			IFWrapper<Ret, Args...> make_wrapper(Bot *bot, Ret (*func)(Bot &, Args...));
 
 	extern std::map<std::string, InjectedFunction> hfmap;
 	extern std::vector<Module> modules;
 
-	bool init();
+	bool init(Bot *bot);
 }
 
 #include "modules.inc.hpp"
