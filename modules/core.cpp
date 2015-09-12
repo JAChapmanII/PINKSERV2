@@ -43,13 +43,11 @@ void irc(string command) { cout << command << endl; }
 
 string echo(string args) { return args; }
 
-/*
-Variable core_or(vector<Variable> arguments) {
+Variable core_or(Bot *bot, vector<Variable> arguments) {
 	uniform_int_distribution<> uid(0, arguments.size() - 1);
-	unsigned target = uid(global::rengine);
+	unsigned target = uid(bot->rengine);
 	return arguments[target];
 }
-*/
 
 long rand(Bot *bot, long low, long high) {
 	if(low > high)
@@ -67,8 +65,7 @@ double drand(Bot *bot, double low, double high) {
 	return lrng(bot->rengine);
 }
 
-/*
-Variable type(vector<Variable> arguments) {
+string type(vector<Variable> arguments) {
 	string res;
 	for(auto arg : arguments) {
 		switch(arg.type) {
@@ -81,27 +78,15 @@ Variable type(vector<Variable> arguments) {
 		res += " ";
 	}
 	res.pop_back();
-	return Variable(res, Permissions());
+	return res;
 }
 
-Variable undefined(std::vector<Variable> arguments) {
-	if(arguments.size() != 1)
-		throw (string)"error: undefined takes one argument";
-	if(global::vars.defined(arguments.front().toString()))
-		return Variable(false, Permissions());
-	return Variable(true, Permissions());
-}
+bool undefined(Bot *bot, string name) { return !bot->defined(name); }
 
-// TODO: how to do this partly? Gah... :(
-Variable rm(vector<Variable> arguments) {
-	// TODO: we need to know the caller for this to work... (perms)
-	for(auto var : arguments) {
-		global::vars.erase(var.toString());
-	}
-	return Variable("erased", Permissions());
-	throw (string)"(not-implemented, bug " + global::vars.getString("bot.owner") + ")";
-}
+// TODO: we need to know the caller for this to work... (perms)
+void rm(Bot *bot, string name) { bot->erase(name); }
 
+/*
 Variable sleep(vector<Variable>) {
 	// TODO: can we just exit(non-0)?
 	throw (string)"(uh-oh, bug " + global::vars.getString("bot.owner") + ")";

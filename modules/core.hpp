@@ -16,8 +16,8 @@ void irc(std::string command);
 // #f: echo: displays it's arguments
 std::string echo(std::string args);
 
-// #z: core_or = or: returns a random argument
-Variable core_or(std::vector<Variable> arguments);
+// #f: core_or = or: returns a random argument
+Variable core_or(Bot *bot, std::vector<Variable> arguments);
 
 // #f: rand: returns a random integer in a given range
 long rand(Bot *bot, long low, long high);
@@ -25,14 +25,14 @@ long rand(Bot *bot, long low, long high);
 // #f: drand: return a random double in a given range
 double drand(Bot *bot, double low, double high);
 
-// #z: type: return a string representation of the variable(s) type(s)
-Variable type(std::vector<Variable> arguments);
+// #f: type: return a string representation of the variable(s) type(s)
+std::string type(std::vector<Variable> arguments);
 
-// #z: undefined: returns true if a variable is unbound
-Variable undefined(std::vector<Variable> arguments);
+// #f: undefined: returns true if a variable is unbound
+bool undefined(Bot *bot, std::string name);
 
-// #z: rm: wipe a variable form existence
-Variable rm(std::vector<Variable> arguments);
+// #f: rm: wipe a variable form existence
+void rm(Bot *bot, std::string name);
 
 // #z: sleep: stop being awake
 Variable sleep(std::vector<Variable> arguments);
