@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "variable.hpp"
+#include "bot.hpp"
 
 // #m: core: core functions
 
@@ -18,11 +19,11 @@ std::string echo(std::string args);
 // #z: core_or = or: returns a random argument
 Variable core_or(std::vector<Variable> arguments);
 
-// #z: rand: returns a random integer in a given range
-Variable rand(std::vector<Variable> arguments);
+// #f: rand: returns a random integer in a given range
+long rand(Bot *bot, long low, long high);
 
-// #z: drand: return a random double in a given range
-Variable drand(std::vector<Variable> arguments);
+// #f: drand: return a random double in a given range
+double drand(Bot *bot, double low, double high);
 
 // #z: type: return a string representation of the variable(s) type(s)
 Variable type(std::vector<Variable> arguments);

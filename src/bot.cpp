@@ -53,11 +53,10 @@ sqlite_int64 Clock::now() {
 	return time(NULL);
 }
 
-
 Bot::Bot(Database &db, Options opts, Clock clock) : _db{db}, _opts{opts},
 		_clock{clock}, _journal{_db}, _events{_db, opts.debugEventSystem},
-		_dictionary{_db}, _vars{_db}, _vm{_vars}, _rengine{} {
-	_rengine.seed(_opts.seed);
+		_dictionary{_db}, _vars{_db}, _vm{_vars}, rengine{} {
+	rengine.seed(_opts.seed);
 
 	_db.executeVoid("PRAGMA cache_size = 10000;");
 	_db.executeVoid("PRAGMA page_size = 8192;");

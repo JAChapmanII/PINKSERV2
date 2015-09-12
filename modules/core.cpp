@@ -55,31 +55,25 @@ Variable core_or(vector<Variable> arguments) {
 	unsigned target = uid(global::rengine);
 	return arguments[target];
 }
+*/
 
-Variable rand(vector<Variable> arguments) {
-	if(arguments.size() != 2)
-		throw (string)"rand takes two parameters; the bounds";
-	long low = fromString<long>(arguments[0].toString()),
-		high = fromString<long>(arguments[1].toString());
+long rand(Bot *bot, long low, long high) {
 	if(low > high)
 		throw (string)"rand's second parameter must be larger";
 	if(low == high)
-		return Variable(low, Permissions());
+		return low;
 	uniform_int_distribution<long> lrng(low, high);
-	return Variable(lrng(global::rengine), Permissions());
+	return lrng(bot->rengine);
 }
 
-Variable drand(vector<Variable> arguments) {
-	if(arguments.size() != 2)
-		throw (string)"drand takes two parameters; the bounds";
-	double low = fromString<double>(arguments[0].toString()),
-			high = fromString<double>(arguments[1].toString());
+double drand(Bot *bot, double low, double high) {
 	if(low > high)
 		throw (string)"drand's second parameter must be larger";
 	uniform_real_distribution<double> lrng(low, high);
-	return Variable(lrng(global::rengine), Permissions());
+	return lrng(bot->rengine);
 }
 
+/*
 Variable type(vector<Variable> arguments) {
 	string res;
 	for(auto arg : arguments) {

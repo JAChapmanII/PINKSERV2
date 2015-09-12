@@ -61,7 +61,8 @@ struct Bot {
 		VarStore _vars;
 		Pvm _vm;
 
-		std::mt19937_64 _rengine;
+	public:
+		std::mt19937_64 rengine;
 };
 
 #endif // BOT_HPP
