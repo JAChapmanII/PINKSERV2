@@ -24,6 +24,16 @@ namespace modules {
 		private:
 			std::function<Ret(Args...)> _func;
 	};
+	template<typename... Args>
+	struct IFWrapper<void, Args...> {
+		IFWrapper(std::function<void(Args...)> func);
+
+		Variable operator()(std::vector<Variable> args);
+
+		private:
+			std::function<void(Args...)> _func;
+	};
+
 
 	template<typename Ret, typename... Args>
 			IFWrapper<Ret, Args...> make_wrapper(Ret (*func)(Args...));

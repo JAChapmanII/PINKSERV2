@@ -32,6 +32,12 @@ namespace modules {
 		template<> std::string coerce(std::vector<Variable> &vars);
 		template<> long coerce(std::vector<Variable> &vars);
 		template<> double coerce(std::vector<Variable> &vars);
+		template<> std::vector<Variable> coerce(std::vector<Variable> &vars);
+
+		template<typename Ret> Variable makeVariable(Ret ret) {
+			return Variable(ret, Permissions());
+		}
+		template<> Variable makeVariable(Variable var);
 
 		template<typename F>
 				decltype(auto) if_bind(F func, std::vector<Variable> &pargs) {
@@ -57,12 +63,22 @@ namespace modules {
 	template<typename Ret, typename... Args>
 			IFWrapper<Ret, Args...>::IFWrapper(std::function<Ret(Args...)> func)
 				: _func{func} { }
-
 	template<typename Ret, typename... Args>
 			Variable IFWrapper<Ret, Args...>::operator()(std::vector<Variable> args) {
 		auto f = IFHelper::bind(_func, args);
 		auto ret = f();
-		return Variable(ret, Permissions());
+		return IFHelper::makeVariable(ret);
+	}
+
+
+	template<typename... Args>
+			IFWrapper<void, Args...>::IFWrapper(std::function<void(Args...)> func)
+				: _func{func} { }
+	template<typename... Args>
+			Variable IFWrapper<void, Args...>::operator()(std::vector<Variable> args) {
+		auto f = IFHelper::bind(_func, args);
+		f();
+		return IFHelper::makeVariable("");
 	}
 
 	template<typename Ret, typename... Args> IFWrapper<Ret, Args...>

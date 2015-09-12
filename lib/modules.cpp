@@ -43,6 +43,12 @@ namespace modules {
 			vars.erase(vars.begin());
 			return var;
 		}
+		template<> vector<Variable> coerce(vector<Variable> &vars) {
+			auto copy = vars;
+			vars.clear();
+			return copy;
+		}
+		template<> Variable makeVariable(Variable var) { return var; }
 	}
 }
 
