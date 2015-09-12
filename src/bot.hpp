@@ -9,6 +9,7 @@
 #include "journal.hpp"
 #include "pvm.hpp"
 #include "eventsystem.hpp"
+#include "ngram.hpp"
 
 struct Options {
 	bool debugSQL{false};
@@ -44,6 +45,7 @@ struct Bot {
 		Dictionary dictionary;
 		VarStore vars;
 		Pvm vm;
+		ngramStore ngStore;
 
 		std::mt19937_64 rengine;
 };

@@ -55,7 +55,7 @@ sqlite_int64 Clock::now() {
 
 Bot::Bot(Database &db, Options opts, Clock clock) : db{db}, opts{opts},
 		clock{clock}, journal{db}, events{db, opts.debugEventSystem},
-		dictionary{db}, vars{db}, vm{vars}, rengine{} {
+		dictionary{db}, vars{db}, vm{vars}, ngStore{db}, rengine{} {
 	rengine.seed(opts.seed);
 
 	db.executeVoid("PRAGMA cache_size = 10000;");

@@ -3,17 +3,19 @@
 
 #include <vector>
 #include "variable.hpp"
+#include "bot.hpp"
 
 // #m: markov: markov functions
 
 // #f: ngobserve: observes a line and adds it into the ngram model
-Variable ngobserve(std::vector<Variable> arguments);
+void ngobserve(Bot *bot, std::string text);
 
 // #f: ngrandom: return a random word given a prefix
-Variable ngrandom(std::vector<Variable> arguments);
+std::string ngrandom(Bot *bot, std::string text);
 
 // #f: ngmarkov: return a random string given a seed
-Variable ngmarkov(std::vector<Variable> arguments);
+std::string ngmarkov(Bot *bot, std::string text);
+
 
 // #f: chainCount: count the number of times a chain occurs
 Variable chainCount(std::vector<Variable> arguments);

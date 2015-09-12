@@ -14,43 +14,31 @@ using std::endl;
 using util::split;
 using util::join;
 
-#include "dictionary.hpp"
-#include "global.hpp"
-using global::dictionary;
-
-
-#include "ngram.hpp"
-#include "db.hpp"
-const string ng_tableName = "ngrams";
-static ngramStore ng_store{global::db, ng_tableName};
 // TODO: turn into pbrane variable
 static int ngObserveMaxOrder = 4;
 static unsigned long long totalIncrements = 0;
 static long long ng_timestamp = 0;
-
 static string lastNGObserve = "";
 
 
-
-Variable ngobserve(std::vector<Variable> arguments) {
-	string now = join(arguments, " ") + "\n",
-		toObserve = /*lastNGObserve + " " +*/ now;
+void ngobserve(Bot *bot, string text) {
+	auto toObserve = text;
 
 	vector<string> words_s = util::split(toObserve);
 	vector<word_t> words; words.reserve(words_s.size());
 	words.push_back((word_t)Anchor::Start);
-	for(auto &word : words_s) words.push_back(global::dictionary[word]);
+	for(auto &word : words_s) words.push_back(bot->dictionary[word]);
 	words.push_back((word_t)Anchor::End);
 
 	{
-		auto tran = global::db.transaction();
+		auto tran = bot->db.transaction();
 
 		for(int i = 0; i < (int)words.size(); ++i) {
 			vector<word_t> prefix;
 			ngram_t ngram{prefix, words[i]};
 			if(ngram.atom != (word_t)Anchor::Start
 					&& ngram.atom != (word_t)Anchor::End)
-				ng_store.increment(ngram);
+				bot->ngStore.increment(ngram);
 			totalIncrements++;
 
 			for(int j = i + 1; j < (int)words.size(); ++j) {
@@ -58,39 +46,41 @@ Variable ngobserve(std::vector<Variable> arguments) {
 				ngram.atom = words[j];
 				if(ngram.order() > ngObserveMaxOrder)
 					break;
-				ng_store.increment(ngram);
+				bot->ngStore.increment(ngram);
 				totalIncrements++;
 			}
 		}
 	}
 
-	if(global::now() > ng_timestamp + 10) {
+	if(bot->clock.now() > ng_timestamp + 10) {
 		cerr << "totalIncrements: " << totalIncrements << endl;
-		ng_timestamp = global::now();
+		ng_timestamp = bot->clock.now();
 		cerr << "checkpointing..." << endl;
-		sqlite3_wal_checkpoint(global::db.getDB(), nullptr);
+		sqlite3_wal_checkpoint(bot->db.getDB(), nullptr);
 		cerr << "    done" << endl;
 	}
 
 	//lastNGObserve = now;
-	return Variable(true, Permissions());
 }
-Variable ngrandom(vector<Variable> arguments) {
+
+string ngrandom(Bot *bot, string text) {
+	auto arguments = util::split(text);
 	prefix_t words; words.reserve(arguments.size());
 	for(auto &word : arguments)
-		words.push_back(global::dictionary[word.toString()]);
+		words.push_back(bot->dictionary[word]);
 
-	word_t res = ng_store.random(words);
-	return Variable(global::dictionary[res], Permissions());
+	word_t res = bot->ngStore.random(words, bot->rengine);
+	return bot->dictionary[res];
 }
-Variable ngmarkov(vector<Variable> arguments) {
+string ngmarkov(Bot *bot, string text) {
 	// TODO: newlines, respond
+	auto arguments = util::split(text);
 
 	prefix_t words, result;
 	words.reserve(arguments.size());
 	result.reserve(arguments.size() * 3);
 	for(auto &word : arguments) {
-		word_t w = global::dictionary[word.toString()];
+		word_t w = bot->dictionary[word];
 		words.push_back(w);
 		result.push_back(w);
 	}
@@ -100,7 +90,7 @@ Variable ngmarkov(vector<Variable> arguments) {
 		double prob = 0.999;
 
 		int rc = -1;
-		while((rc = ng_store.random(words)) == -1) {
+		while((rc = bot->ngStore.random(words, bot->rengine)) == -1) {
 			if(words.empty())
 				break;
 			cerr << "stepping down from: " << words.size() << endl;
@@ -120,24 +110,22 @@ Variable ngmarkov(vector<Variable> arguments) {
 		if(result.size() >= 25)
 			prob /= 10;
 
-		string nexts = global::dictionary[rc];
+		string nexts = bot->dictionary[rc];
 		// if we're currently ending with a punctuation, greatly increase the
 		// chance of ending and sounding somewhat coherent
 		if(((string)".?!;").find(nexts.back()) != string::npos)
 			prob /= 1.85;
 
 		// if a random num in [0, 1] is above our probability of ending, end
-		if(generate_canonical<double, 16>(global::rengine) > prob)
+		if(generate_canonical<double, 16>(bot->rengine) > prob)
 			break;
 	}
 
 	// return the generated string
 	string rs;
-	for(auto &word : result) {
-		rs += global::dictionary[word] + " ";
-	}
-
-	return Variable(rs, Permissions());
+	for(auto &word : result)
+		rs += bot->dictionary[word] + " ";
+	return rs;
 }
 
 
