@@ -1,25 +1,28 @@
 #ifndef MODULES_EVENTS_HPP
 #define MODULES_EVENTS_HPP
 
+#include <string>
 #include <vector>
 #include "variable.hpp"
+#include "bot.hpp"
+#include "modules.hpp"
 
 // #m: events: event functions
 
 // #f: on: adds an event based trigger
-Variable on(std::vector<Variable> arguments);
+std::string on(Bot *bot, modules::Word type, std::string body);
 
 // #f: in: adds a time based trigger
-Variable in(std::vector<Variable> arguments);
+Variable in(Bot *bot, std::vector<Variable> arguments);
 
 // #f: eventCount: return the number of on text events
-Variable eventCount(std::vector<Variable> arguments);
+long eventCount(Bot *bot);
 
 // #f: getEvent: return a specific text event
-Variable getEvent(std::vector<Variable> arguments);
+std::string getEvent(Bot *bot, long id);
 
 // #f: eraseEvent: delete a specific text event
-Variable eraseEvent(std::vector<Variable> arguments);
+long eraseEvent(Bot *bot, long id);
 
 
 #endif // MODULES_EVENTS_HPP
