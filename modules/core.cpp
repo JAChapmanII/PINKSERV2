@@ -30,6 +30,7 @@ using util::join;
 
 Entry regexRandomEntry(string regex);
 
+/*
 Variable help(vector<Variable> arguments) {
 	if(arguments.size() > 1)
 		return Variable("error: help can only take a max of one function name",
@@ -42,32 +43,13 @@ Variable help(vector<Variable> arguments) {
 	}
 	return Variable(join(global::moduleFunctionList, ", "), Permissions());
 }
+*/
 
-Variable irc(vector<Variable> arguments) {
-	string out;
-	for(auto arg : arguments)
-		out += arg.toString() + " ";
-	out.pop_back();
-	cout << out << endl;
-	return Variable("", Permissions());
-}
+void irc(string command) { cout << command << endl; }
 
-Variable echo(vector<Variable> arguments) {
-	string res;
-	for(auto a : arguments) {
-		string arg = a.toString();
-		// TODO: old semantics of echo?
-		if(!res.empty() && (!isspace(res.back()) && !isspace(arg[0])))
-			res += " ";
-		res += arg;
-	}
-	// TODO: this should really just append to some other real return
-	// TODO: this is broken now >_>
-	//if(this->next && all)
-		//return argsstr + this->next->evaluate(nick);
-	return Variable(res, Permissions());
-}
+string echo(string args) { return args; }
 
+/*
 Variable core_or(vector<Variable> arguments) {
 	uniform_int_distribution<> uid(0, arguments.size() - 1);
 	unsigned target = uid(global::rengine);
@@ -213,4 +195,5 @@ Variable pol(vector<Variable> arguments) {
 	auto e = Parser::parse("${ " + arguments.front().toString() + " }");
 	return Variable(e->prettyOneLine(), Permissions());
 }
+*/
 
