@@ -232,7 +232,9 @@ int main(int argc, char **argv) {
 		Entry entry{Clock{}.now(), network, line};
 		pbrane.journal.upsert(entry);
 
-		vector<string> fields = split(line);
+		auto fields = split(line);
+		if(fields.empty()) continue;
+
 		if(fields[1] == (string)"PRIVMSG") {
 			string nick = fields[0].substr(1, fields[0].find("!") - 1);
 			pbrane.vars.set("bot.crashed", nick);
