@@ -4,7 +4,6 @@ using std::vector;
 
 namespace config {
 	string nick = "PINKSERV3";
-	string startupFile = nick + ".startup";
 	string todoFileName = nick + ".todo";
 	string databaseFileName = nick + ".db";
 
