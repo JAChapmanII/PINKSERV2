@@ -28,6 +28,9 @@ double drand(Bot *bot, double low, double high);
 // #f: type: return a string representation of the variable(s) type(s)
 std::string type(std::vector<Variable> arguments);
 
+// #f: defined: returns true if a variable is bound
+bool defined(Bot *bot, std::string name);
+
 // #f: undefined: returns true if a variable is unbound
 bool undefined(Bot *bot, std::string name);
 

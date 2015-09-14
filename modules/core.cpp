@@ -81,6 +81,7 @@ string type(vector<Variable> arguments) {
 	return res;
 }
 
+bool defined(Bot *bot, string name) { return bot->vars.defined(name); }
 bool undefined(Bot *bot, string name) { return !bot->vars.defined(name); }
 
 // TODO: we need to know the caller for this to work... (perms)
