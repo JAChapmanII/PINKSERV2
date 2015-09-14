@@ -1,6 +1,4 @@
 #include "core.hpp"
-using std::ostream;
-using std::istream;
 using std::vector;
 using std::string;
 
@@ -18,13 +16,10 @@ using std::ofstream;
 
 #include "global.hpp"
 #include "util.hpp"
-using util::fromString;
-using util::asString;
 using util::contains;
 using util::join;
-#include "journal.hpp"
-#include "expression.hpp"
 #include "parser.hpp"
+#include "expression.hpp"
 
 #include "config.hpp"
 

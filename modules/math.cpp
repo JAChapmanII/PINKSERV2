@@ -1,12 +1,13 @@
 #include "math.hpp"
-using std::vector;
+
+#include <string>
 using std::string;
 
 #include <cmath>
 
 long math_pow(long base, long exp) {
 	if(exp > 1024 * 32)
-		throw (string)"wow, that's quite the exponent you have there";
+		throw string{"wow, that's quite the exponent you have there"};
 
 	long result = 1;
 	for(long i = 0; i < exp; ++i)

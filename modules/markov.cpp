@@ -9,10 +9,8 @@ using std::generate_canonical;
 using std::cerr;
 using std::endl;
 
-#include "config.hpp"
 #include "util.hpp"
-using util::split;
-using util::join;
+
 
 // TODO: turn into pbrane variable
 static int ngObserveMaxOrder = 4;

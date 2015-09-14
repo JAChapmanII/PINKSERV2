@@ -2,7 +2,6 @@
 using std::vector;
 using std::string;
 
-#include "permission.hpp"
 #include "eventsystem.hpp"
 
 string on(Bot *bot, modules::Word type, string body) {

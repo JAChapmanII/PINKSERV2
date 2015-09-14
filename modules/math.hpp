@@ -1,7 +1,6 @@
 #ifndef MODULES_MATH_HPP
 #define MODULES_MATH_HPP
 
-#include <vector>
 #include "variable.hpp"
 
 // #m: math: math functions
