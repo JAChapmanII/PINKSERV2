@@ -14,6 +14,10 @@ string on(Bot *bot, modules::Word type, string body) {
 		bot->events.push(EventType::Leave, Event{body});
 	} else if((string)type == (string)"nick") {
 		bot->events.push(EventType::Nick, Event{body});
+	} else if((string)type == (string)"startup") {
+		bot->events.push(EventType::BotStartup, Event{body});
+	} else if((string)type == (string)"shutdown") {
+		bot->events.push(EventType::BotShutdown, Event{body});
 	} else
 		throw (string)"invalid trigger type";
 	return "success";

@@ -7,7 +7,7 @@
 #include "variable.hpp"
 #include "pvm.hpp"
 
-enum class EventType { Text, Join, Leave, Nick };
+enum class EventType { Text, Join, Leave, Nick, BotStartup, BotShutdown };
 using Event = std::string;
 
 // TODO: timed events
