@@ -1,6 +1,7 @@
 #ifndef BOT_HPP
 #define BOT_HPP
 
+#include <functional>
 #include <random>
 #include <string>
 #include <vector>
@@ -23,10 +24,12 @@ struct Clock {
 	sqlite_int64 now();
 };
 
-struct Bot {
-	Bot(zidcu::Database &db, Options opts, Clock clock);
+struct Bot;
+using ExtraSetup = std::function<void(Bot *)>;
 
-	bool secondaryInit(std::string startupFile);
+struct Bot {
+	Bot(zidcu::Database &db, Options opts, Clock clock, ExtraSetup setup);
+	~Bot();
 
 	void send(std::string network, std::string target, std::string line,
 			bool send = true);

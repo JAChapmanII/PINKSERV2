@@ -1,0 +1,14 @@
+${ (!undefined 'bot.hversion')? { bot.hversion = 0; } }
+${ (!undefined 'warn')? { warn => !irc 'slashnet PRIVMSG #jitro :' + $1 } }
+${ (!undefined 'bot.owner')? { bot.owner = 'jac'; } }
+${ (!undefined 'bot.nick')? { bot.nick = 'PINKSERV3'; } }
+${ (!undefined 'bot.maxLineLength')? { bot.maxLineLength = 256; } }
+${ (!undefined 'bot.hversion')? { bot.hversion = 0; } }
+
+${ (bot.hversion < 1)? { !on 'startup' (null => (!defined 'bot.crashed')? { !warn 'oh no, ' + bot.crashed + ' made me crash?' } ) } }
+${ (bot.hversion < 1)? { !on 'startup' (null => !rm 'bot.crashed') } }
+${ (bot.hversion < 1)? { !on 'text' (null => (bot.crashed = nick; "")) } }
+${ (bot.hversion < 1)? { !on 'text' (null => !observe text) } }
+${ (bot.hversion < 1)? { !on 'shutdown' (null => !rm 'bot.crashed') } }
+${ bot.hversion = 1; }
+

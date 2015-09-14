@@ -53,8 +53,8 @@ sqlite_int64 Clock::now() {
 	return time(NULL);
 }
 
-Bot::Bot(Database &db, Options opts, Clock clock) : db{db}, opts{opts},
-		clock{clock}, journal{db}, events{db, opts.debugEventSystem},
+Bot::Bot(Database &db, Options opts, Clock clock, ExtraSetup setup) : db{db},
+		opts{opts}, clock{clock}, journal{db}, events{db, opts.debugEventSystem},
 		dictionary{db}, vars{db}, vm{vars}, ngStore{db}, rengine{} {
 	rengine.seed(opts.seed);
 
@@ -67,45 +67,13 @@ Bot::Bot(Database &db, Options opts, Clock clock) : db{db}, opts{opts},
 	if(opts.debugSQL)
 		void* res = sqlite3_trace(db.getDB(), sqlTrace, nullptr);
 
-	// TODO: these
-	// variable, function map
-	// local variable map
-	// variable permission map
+	setup(this);
+	events.process(EventType::BotStartup, vm);
+
+	// TODO: local variables?
+	// TODO: variable permissions?
 }
-
-
-bool Bot::secondaryInit(string startupFile) {
-	ifstream startup(startupFile);
-	if(startup.good()) {
-		journal.log(clock.now(), "reading startup file: " + startupFile);
-
-		string line;
-		while(startup.good() && !startup.eof()) {
-			// TODO: make fake logitem?
-			getline(startup, line);
-			if(startup.eof())
-				break;
-			if(line.empty())
-				continue;
-
-			journal.log(clock.now(), "startup line: " + line);
-			try {
-				auto expr = Parser::parse(line);
-				string result = expr->evaluate(vm,
-						vars.getString("bot.owner")).toString();
-			// TODO: more exception types
-			} catch(ParseException e) {
-				journal.log(clock.now(), "parse exception: " + e.pretty());
-			} catch(StackTrace e) {
-				journal.log(clock.now(), "stack trace exception: " + e.toString());
-			} catch(string &e) {
-				journal.log(clock.now(), "string exception: " + e);
-			}
-		}
-		return true;
-	}
-	return false;
-}
+Bot::~Bot() { events.process(EventType::BotShutdown, vm); }
 
 void Bot::send(string network, string target, string line, bool send) {
 	if(!send) return;

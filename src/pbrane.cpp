@@ -76,16 +76,10 @@ void teval(vector<string> args) {
 	Database db{config::databaseFileName};
 	Options opts{};
 	opts.seed = seed;
-	Bot pbrane{db, opts, Clock{}};
+	Bot pbrane{db, opts, Clock{}, modules::init};
 
 	pbrane.vars.set("bot.owner", "jac");
 	pbrane.vars.set("bot.admins", "jac");
-
-	// initialize modules
-	modules::init(&pbrane);
-
-	VarStore vars{db};
-	Pvm vm{vars};
 
 	if(!args.empty()) {
 		for(auto &arg : args) {
@@ -102,7 +96,7 @@ void teval(vector<string> args) {
 				cout << expr->pretty() << endl;
 				cout << "stringify: " << expr->toString() << endl;
 
-				cout << "result: " << expr->evaluate(vm, "jac").toString() << endl;
+				cout << "result: " << expr->evaluate(pbrane.vm, "jac").toString() << endl;
 				// TODO: other exception types...
 			} catch(ParseException e) {
 				cout << e.pretty() << endl;
@@ -130,7 +124,7 @@ void teval(vector<string> args) {
 			cerr << expr->pretty() << endl;
 			cerr << "stringify: " << expr->toString() << endl;
 
-			string res = expr->evaluate(vm, nick).toString();
+			string res = expr->evaluate(pbrane.vm, nick).toString();
 			cerr << "result: " << res << endl;
 			cout << nick + ": " << res << endl;
 
@@ -187,32 +181,14 @@ int main(int argc, char **argv) {
 	}
 
 	Database db{config::databaseFileName};
-	Bot pbrane{db, opts, Clock{}};
-
-	modules::init(&pbrane);
+	Bot pbrane{db, opts, Clock{}, modules::init};
 
 	// TODO: don't hard-code these. These should be set in the startup file?
-	evaluate(pbrane, "${(!undefined 'bot.owner')? { bot.owner = 'jac'; }}", "jac");
-	evaluate(pbrane, "${(!undefined 'bot.nick')? { bot.nick = 'PINKSERV3'; }}",
-			pbrane.vars.getString("bot.owner"));
-	evaluate(pbrane, "${(!undefined 'bot.maxLineLength')? { bot.maxLineLength = 256; }}",
-			pbrane.vars.getString("bot.owner"));
 	if(import) {
 		evaluate(pbrane, "${!on \"text\" (null => !ngobserve text)}",
 				pbrane.vars.getString("bot.owner"));
 	}
 
-	if(!pbrane.secondaryInit(config::startupFile)) {
-		cerr << "pbrane: secondaryInit failed" << endl;
-		// TODO: this should fail out completely?
-	}
-
-	if(pbrane.vars.defined("bot.crashed")) {
-		cerr << "-- looks like I crashed" << endl;
-		pbrane.send("slashnet", "#jitro", "oh no, '"
-				+ pbrane.vars.getString("bot.crashed") + "' made me crash?", true);
-	}
-	pbrane.vars.erase("bot.crashed");
 
 	// while there is more input coming
 	while(!cin.eof() && !pbrane.done) {
@@ -237,7 +213,6 @@ int main(int argc, char **argv) {
 
 		if(fields[1] == (string)"PRIVMSG") {
 			string nick = fields[0].substr(1, fields[0].find("!") - 1);
-			pbrane.vars.set("bot.crashed", nick);
 
 			size_t mstart = line.find(":", 1);
 			string message = line.substr(mstart + 1);
@@ -306,8 +281,6 @@ int main(int argc, char **argv) {
 	}
 
 	cerr << "pbrane: exited main loop" << endl;
-	pbrane.vars.erase("bot.crashed");
-
 	return 0;
 }
 
