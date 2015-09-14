@@ -21,7 +21,7 @@ static long long ng_timestamp = 0;
 static string lastNGObserve = "";
 
 
-void ngobserve(Bot *bot, string text) {
+void observe(Bot *bot, string text) {
 	auto toObserve = text;
 
 	vector<string> words_s = util::split(toObserve);
@@ -72,7 +72,7 @@ string ngrandom(Bot *bot, string text) {
 	word_t res = bot->ngStore.random(words, bot->rengine);
 	return bot->dictionary[res];
 }
-string ngmarkov(Bot *bot, string text) {
+string markov(Bot *bot, string text) {
 	// TODO: newlines, respond
 	auto arguments = util::split(text);
 

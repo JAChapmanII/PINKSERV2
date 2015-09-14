@@ -7,14 +7,14 @@
 
 // #m: markov: markov functions
 
-// #f: ngobserve: observes a line and adds it into the ngram model
-void ngobserve(Bot *bot, std::string text);
+// #f: observe: observes a line and adds it into the ngram model
+void observe(Bot *bot, std::string text);
 
 // #f: ngrandom: return a random word given a prefix
 std::string ngrandom(Bot *bot, std::string text);
 
-// #f: ngmarkov: return a random string given a seed
-std::string ngmarkov(Bot *bot, std::string text);
+// #f: markov: return a random string given a seed
+std::string markov(Bot *bot, std::string text);
 
 
 // #f: chainCount: count the number of times a chain occurs
