@@ -103,3 +103,25 @@ bool Bot::isAdmin(std::string nick) {
 	return util::contains(vars.getString("bot.admins"), " " + nick + " ");
 }
 
+string Bot::evaluate(string script, string nick) {
+	try {
+		auto expr = Parser::parse(script);
+		if(!expr) {
+			cerr << "Bot::evaluate: \"" << script << "\" is null expr" << endl;
+			return "";
+		}
+		auto res = expr->evaluate(vm, nick).toString();
+		return res;
+	} catch(ParseException e) {
+		cerr << e.pretty() << endl;
+		return e.msg + " @" + util::asString(e.idx);
+	} catch(StackTrace e) {
+		cerr << e.toString() << endl;
+		return e.toString();
+	} catch(string &s) {
+		cerr << "string type error: " << s << endl;
+		return s;
+	}
+}
+
+

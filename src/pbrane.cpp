@@ -37,7 +37,6 @@ using zidcu::Database;
 #include "bot.hpp"
 
 void process(Bot &bot, string network, string script, string nick, string target);
-string evaluate(Bot &bot, string script, string nick);
 
 struct PrivateMessage {
 	string network{};
@@ -182,13 +181,6 @@ int main(int argc, char **argv) {
 	Database db{config::databaseFileName};
 	Bot pbrane{db, opts, Clock{}, modules::init};
 
-	// TODO: don't hard-code these. These should be set in the startup file?
-	if(import) {
-		evaluate(pbrane, "${!on \"text\" (null => !ngobserve text)}",
-				pbrane.vars.getString("bot.owner"));
-	}
-
-
 	// while there is more input coming
 	while(!cin.eof() && !pbrane.done) {
 		// read the current line of input
@@ -327,7 +319,7 @@ void process(Bot &bot, string network, string script, string nick, string target
 		contextMap[context] = "";
 	}
 
-	string result = evaluate(bot, script, nick);
+	string result = bot.evaluate(script, nick);
 	if(plainFunction && result == noF) {
 		cerr << "simple call to nonexistant function error supressed" << endl;
 		return;
@@ -335,27 +327,6 @@ void process(Bot &bot, string network, string script, string nick, string target
 	// assume we can run the script
 	bot.send(network, target, result, true);
 }
-string evaluate(Bot &bot, string script, string nick) {
-	try {
-		cerr << "evaluate: " << script << endl;
-		auto expr = Parser::parse(script);
-		if(!expr)
-			cerr << "expr is null" << endl;
-		string res = expr->evaluate(bot.vm, nick).toString();
-		cerr << "res: " << res << endl;
-		return res;
-	} catch(ParseException e) {
-		cerr << e.pretty() << endl;
-		return e.msg + " @" + asString(e.idx);
-	} catch(StackTrace e) {
-		cerr << e.toString() << endl;
-		return e.toString();
-	} catch(string &s) {
-		cerr << "string type error: " << s << endl;
-		return s;
-	}
-}
-
 
 bool powerHook(PrivateMessage pmsg) {
 	if(import)

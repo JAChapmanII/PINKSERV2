@@ -37,6 +37,8 @@ struct Bot {
 	bool isOwner(std::string nick);
 	bool isAdmin(std::string nick);
 
+	std::string evaluate(std::string script, std::string nick);
+
 	public:
 		bool done{false};
 		zidcu::Database &db;
