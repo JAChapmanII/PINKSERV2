@@ -54,3 +54,8 @@ markov probability
 	rough
 	normalize
 
+
+!in triggers
+	!every ?
+trigger explanations
+
