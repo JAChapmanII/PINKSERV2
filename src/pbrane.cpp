@@ -35,6 +35,7 @@ using util::trim;
 #include "db.hpp"
 using zidcu::Database;
 #include "bot.hpp"
+#include "sed.hpp"
 
 void process(Bot &bot, string network, string script, string nick, string target);
 
@@ -349,36 +350,9 @@ bool regexHook(PrivateMessage pmsg) {
 	if(((string)":/|").find(pmsg.message[1]) == string::npos)
 		return false;
 
-	try {
-		Regex r(pmsg.message.substr(1));
-		auto entries = pmsg.bot.journal.fetch(AndPredicate{
-			[=](Entry &e) {
-				// only replace on non-executed things
-				if(e.etype == ExecuteType::Hook || e.etype == ExecuteType::Function
-						|| e.etype == ExecuteType::Unknown)
-					return false;
-				// if a nick was specified as a flag and it's not who said it, skip
-				if(!r.flags().empty() && r.flags() != e.nick())
-					return false;
-				return true;
-			}, RegexPredicate{r.match()}}, 1);
+	auto regex = pmsg.message.substr(1);
+	pmsg.bot.send(pmsg.network, pmsg.target, s(&pmsg.bot, regex), true);
 
-		if(entries.empty())
-			return true;
-		auto e = entries.front();
-
-		string result;
-		r.execute(e.arguments, result);
-		if(e.etype == ExecuteType::None)
-			pmsg.bot.send(pmsg.network, pmsg.target, "<" + e.nick() + "> " + result, true);
-		else
-			pmsg.bot.send(pmsg.network, pmsg.target, result, true);
-
-		return true;
-	} catch(string e) {
-		pmsg.bot.send(pmsg.network, pmsg.target, e, true);
-	}
-
-	return false;
+	return true;
 }
 
