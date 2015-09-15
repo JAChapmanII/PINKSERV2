@@ -71,9 +71,8 @@ bool ngramStore::exists(ngram_t ngram) {
 template<typename Generator>
 word_t ngramStore::random(prefix_t prefix, Generator &g) {
 	createTable(prefix.size());
-	auto countRes = _db.executeScalar<int>(_builder.prefixCount(prefix.size()),
-			prefix);
-	int total = (countRes ? *countRes : 0);
+	auto total = _db.executeScalar<sqlite_int64>(
+			_builder.prefixCount(prefix.size()), prefix).value_or(0);
 
 	uniform_int_distribution<> uid(0, total);
 	total = uid(g);
@@ -87,10 +86,10 @@ word_t ngramStore::random(prefix_t prefix, Generator &g) {
 		}
 		while(result.status() == SQLITE_ROW) {
 			rowCount++;
-			total -= result.getInteger(prefix.size() + 1)
-					* result.getInteger(prefix.size() + 1);
+			total -= result.getLong(prefix.size() + 1)
+					* result.getLong(prefix.size() + 1);
 			if(total <= 0)
-				return result.getInteger(prefix.size());
+				return result.getLong(prefix.size());
 			result.step();
 		}
 	}

@@ -7,8 +7,8 @@
 #include <sqlite3.h>
 #include "db.hpp"
 
-using word_t = sqlite3_int64;
-using count_t = sqlite3_int64;
+using word_t = sqlite_int64;
+using count_t = sqlite_int64;
 using prefix_t = std::vector<word_t>;
 
 struct ngram_t {
