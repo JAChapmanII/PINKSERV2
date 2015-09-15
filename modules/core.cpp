@@ -34,6 +34,14 @@ string help(Bot *bot, string function) {
 	return join(global::moduleFunctionList, ", ");
 }
 
+string list(Bot *bot) {
+	auto ps = util::split(bot->vars.getString("bot.plist"));
+	auto fs = bot->vars.getExecutable();
+	for(auto &n : ps)
+		fs.erase(std::remove(fs.begin(), fs.end(), n), fs.end());
+	return util::join(fs);
+}
+
 void irc(string command) { cout << command << endl; }
 
 string echo(string args) { return args; }

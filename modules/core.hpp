@@ -10,6 +10,9 @@
 // #f: help: returns a list of builtin functions, or the help text
 std::string help(Bot *bot, std::string function);
 
+// #f: list: list user defined functions
+std::string list(Bot *bot);
+
 // #f: irc: issues an IRC command
 void irc(std::string command);
 

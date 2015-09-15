@@ -207,7 +207,9 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 		if(func == "null")
 			return Variable(body, Permissions());
 
-		return vm.vars.set(func, body);
+		auto res = vm.vars.set(func, body);
+		vm.vars.markExecutable(func);
+		return res;
 	}
 
 	// function calls, special :D
@@ -217,6 +219,10 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 		string func = this->args[0]->args[0]->evaluate(vm, context).toString();
 		if(!vm.vars.defined(func) && !contains(modules::hfmap, func))
 			context.except(func + " does not exist as a callable function");
+
+		if(!contains(modules::hfmap, func))
+			vm.vars.markExecutable(func);
+
 		string body = vm.vars.getString(func);
 
 		if(vm.debugFunctionBodies)
