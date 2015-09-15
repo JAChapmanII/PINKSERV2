@@ -1,6 +1,9 @@
-kick => "dummy function for testing"; !echo ""
-roulette => { ($shot++ > 6)? { !kick $nick; "$nick shot himself!" } : "click" }
-spin => { $shot = {!rand 1 6}; "The barrel comes to a stop. Who will die next?" }
+${ kick => !irc server + " KICK " + where + " :" + $1 }
+TODO: what is up with the typing on 'shot'? string/int
+::roulette => shot = (!toint shot) + (!toint 1); \
+::            (shot == "6")? { (!kick nick); nick + " shot himself!" } : \
+::                         { "click" }
+${ spin => { shot = (!toint {!rand 1 5}); "The barrel comes to a stop. Who will die next?" } }
 
 !spin
 !roulette

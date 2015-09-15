@@ -1,13 +1,16 @@
-:!on text (null => ($text =~ ':o/|\\o:')? !or 'o/' '\o')
-:!on text (null => ($toUs && $text =~ ":<3:")? !echo "<3")
-:!on text (null => ($toUs && $text =~ ":</3:")? !echo ":(")
+::(!undefined 'bot.simplev')? bot.standardv = 0
+${ (bot.standardv < 1)? { !on 'text' (null => (text =~ ':o/|\\o:')? !or 'o/' '\\o') } }
+${ (bot.standardv < 1)? { !on 'text' (null => (toUs && text =~ ":<3:")? "<3") } }
+${ (bot.standardv < 1)? { !on 'text' (null => (toUs && text =~ ":</3:")? ":(") } }
 
-:chance => (!drand 0 1) < $1
-:!on join (null => (!or "Hello" "Hi") + ", " + $nick + "!")
+${ chance => (!drand 0 1) < $1 }
+${ (bot.standardv < 1)? { !on 'join' (null => (!or "Hello" "Hi") + ", " + nick + "!") } }
+::bot.standardv = 1
 
+::toUs = false
 o/
 \o
-:$toUs = true
+::toUs = true
 <3
 </3
 
