@@ -5,6 +5,7 @@ using modules::Word;
 #include "regex.hpp"
 #include "journal.hpp"
 #include "expression.hpp"
+#include "util.hpp"
 
 string s(Bot *bot, string regex) {
 	try {
@@ -40,14 +41,30 @@ string s(Bot *bot, string regex) {
 }
 
 string push(Bot *bot, Word name, string regex) {
+	// remove name from plist, will be readded if needed
+	auto ps = util::split(bot->vars.getString("bot.plist"));
+	ps.erase(std::remove(ps.begin(), ps.end(), name), ps.end());
+	bot->vars.set("bot.plist", util::join(ps, " "));
+
+	if(regex.empty()) {
+		bot->vars.erase(name);
+		return "removed " + name;
+	}
+
 	try {
 		Regex validate{regex};
 		auto s = "${ " + name + " => !s '" + reEscape(regex) + "' }";
 		auto r = bot->evaluate(s, bot->vars.getString("nick"));
+
+		ps.push_back(name);
+		bot->vars.set("bot.plist", util::join(ps, " "));
+
 		return r;
 	} catch(string &e) {
 		return e;
 	}
 	throw string{"push: ran off edge?"};
 }
+
+string rlist(Bot *bot) { return bot->vars.getString("bot.plist"); }
 
