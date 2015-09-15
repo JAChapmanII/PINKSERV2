@@ -52,4 +52,6 @@ struct Expression {
 		Variable evaluate(Pvm &vm, StackTrace &context) const;
 };
 
+std::string reEscape(std::string str);
+
 #endif // EXPRESSION_HPP

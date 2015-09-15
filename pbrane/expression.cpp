@@ -41,7 +41,6 @@ Expression::Expression(const Expression &rhs) : type(rhs.type), text(rhs.text) {
 		this->args.emplace_back(new Expression(*(i.get())));
 }
 
-string reEscape(string str);
 string reEscape(string str) {
 	string result;
 	for(char c : str)
