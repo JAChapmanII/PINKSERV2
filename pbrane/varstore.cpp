@@ -1,5 +1,6 @@
 #include "varstore.hpp"
 using std::string;
+using std::to_string;
 using std::vector;
 using zidcu::Database;
 
@@ -65,4 +66,22 @@ vector<string> VarStore::getList(string variable) {
 	return makeList(lists);
 }
 
+void VarStore::markExecutable(string name, bool x) {
+	createTables();
+	_db.executeVoid("UPDATE " + _varTable + " SET execute = ?1 WHERE name = ?2",
+			x ? 1 : 0, name);
+}
+vector<string> VarStore::getExecutable() {
+	createTables();
+	vector<string> executable;
+	auto results = _db.execute("SELECT * FROM " + _varTable + " WHERE execute = 1");
+	while(results.status() == SQLITE_ROW) {
+		executable.push_back(results.getString(0));
+		results.step();
+	}
+	if(results.status() == SQLITE_DONE)
+		return executable;
+
+	throw make_except("sqlite error: " + to_string(results.status()));
+}
 

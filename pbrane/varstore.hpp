@@ -21,6 +21,9 @@ struct VarStore {
 
 	std::vector<std::string> getList(std::string variable);
 
+	void markExecutable(std::string name, bool x = true);
+	std::vector<std::string> getExecutable();
+
 	private:
 		void createTables();
 
