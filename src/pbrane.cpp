@@ -14,9 +14,8 @@ using std::vector;
 #include <random>
 using std::random_device;
 
-#include <fstream>
-using std::ifstream;
-using std::ofstream;
+#include <map>
+using std::map;
 
 #include "global.hpp"
 #include "config.hpp"
@@ -246,6 +245,9 @@ int main(int argc, char **argv) {
 			} else if(message.substr(0, 2) == (string)"${" && message.back() == '}') {
 				process(pbrane, network, message, nick, target);
 				entry.etype = ExecuteType::Function;
+			} else if(message.substr(0, 2) == (string)"::") {
+				process(pbrane, network, message, nick, target);
+				entry.etype = ExecuteType::Function;
 			}
 			// otherwise, run on text triggers
 			else {
@@ -284,6 +286,19 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
+struct Context {
+	string network;
+	string nick;
+	string target;
+
+	decltype(auto) toTuple() const {
+		return make_tuple(network, nick, target);
+	}
+	bool operator<(const Context &rhs) const {
+		return toTuple() < rhs.toTuple();
+	}
+};
+
 void process(Bot &bot, string network, string script, string nick, string target) {
 	if(import)
 		return;
@@ -296,9 +311,25 @@ void process(Bot &bot, string network, string script, string nick, string target
 	if(script[0] == '!')
 		plainFunction = true, plainFName = script.substr(1, script.find(" ") - 1);
 	string noF = plainFName + " does not exist as a callable function [stacktrace: !]";
+
+	static map<Context, string> contextMap;
+
+	if(script.substr(0, 2) == "::") {
+		auto context = Context{ network, nick, target };
+		script = trim(script.substr(2));
+		if(script.back() == '\\') {
+			script.pop_back();
+			contextMap[context] += script;
+			return;
+		}
+
+		script = "${ " + contextMap[context] + " " + script + " }";
+		contextMap[context] = "";
+	}
+
 	string result = evaluate(bot, script, nick);
 	if(plainFunction && result == noF) {
-		cerr << "simple call to nonexistante function error supressed" << endl;
+		cerr << "simple call to nonexistant function error supressed" << endl;
 		return;
 	}
 	// assume we can run the script
