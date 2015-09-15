@@ -302,7 +302,7 @@ unique_ptr<Expression> Parser::parseString() {
 			args.push_back(parseExpression());
 		} else {
 			if(is("\\"))
-				str += _str[_idx++];
+				_idx++;
 			str += _str[_idx++];
 		}
 	}

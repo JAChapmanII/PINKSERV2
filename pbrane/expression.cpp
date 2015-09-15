@@ -41,11 +41,22 @@ Expression::Expression(const Expression &rhs) : type(rhs.type), text(rhs.text) {
 		this->args.emplace_back(new Expression(*(i.get())));
 }
 
+string reEscape(string str);
+string reEscape(string str) {
+	string result;
+	for(char c : str)
+		switch(c) {
+			case '\\': result += '\\';
+			default: result += c;
+		}
+	return result;
+}
+
 string Expression::toString() const {
 	if(this == nullptr)
 		return "[null]";
 	if(this->type == "str" || this->type == "num")
-		return this->text;
+		return reEscape(this->text);
 	if(this->type == "\"" || this->type == "'") {
 		string res = this->type;
 		for(auto &arg : this->args)
