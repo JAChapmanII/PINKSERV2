@@ -51,11 +51,10 @@ void observe(Bot *bot, string text) {
 	}
 
 	if(bot->clock.now() > ng_timestamp + 10) {
-		cerr << "totalIncrements: " << totalIncrements << endl;
 		ng_timestamp = bot->clock.now();
-		cerr << "checkpointing..." << endl;
+		cerr << ng_timestamp << " checkpointing... ("
+			<< bot->journal.size() << "L, " << totalIncrements << "I)" << endl;
 		sqlite3_wal_checkpoint(bot->db.getDB(), nullptr);
-		cerr << "    done" << endl;
 	}
 
 	//lastNGObserve = now;
