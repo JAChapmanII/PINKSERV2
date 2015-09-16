@@ -100,10 +100,11 @@ namespace zidcu {
 	};
 
 	struct Transaction {
-		Transaction(Statement &start, Statement &end);
+		Transaction(Database &db, Statement &start, Statement &end);
 		~Transaction();
 
 		private:
+			Database &_db;
 			Statement &_start;
 			Statement &_end;
 	};

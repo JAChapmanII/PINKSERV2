@@ -36,7 +36,7 @@ zidcu::Transaction zidcu::Database::transaction() {
 	if(!_commitTransaction) {
 		_commitTransaction = new Statement{*this, "COMMIT TRANSACTION"};
 	}
-	return Transaction{*_startTransaction, *_commitTransaction};
+	return Transaction{*this, *_startTransaction, *_commitTransaction};
 }
 
 void zidcu::Database::open(string fileName) {
@@ -138,12 +138,13 @@ namespace zidcu {
 	}
 }
 
-zidcu::Transaction::Transaction(Statement &start, Statement &end)
-		: _start(start), _end(end) {
+zidcu::Transaction::Transaction(Database &db, Statement &start, Statement &end)
+		: _db(db), _start(start), _end(end) {
 	_start.executeVoid();
 }
 zidcu::Transaction::~Transaction() {
 	_end.executeVoid();
+	sqlite3_wal_checkpoint(_db.getDB(), nullptr);
 }
 
 zidcu::StatementCache::StatementCache(Database &db) : _db{db}, _cache{} { }
