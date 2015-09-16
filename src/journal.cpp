@@ -78,6 +78,7 @@ Journal::Journal(Database &db, string table) : _db{db}, _table{table} { }
 
 sqlite_int64 Journal::upsert(Entry &entry) {
 	createTable();
+	auto tran = _db.transaction();
 	if(entry.id == -1) {
 		_db.executeVoid("INSERT INTO " + _table + "(ts, sent, etype, network, contents)"
 				+ " VALUES(?1, ?2, ?3, ?4, ?5)", entry.timestamp, (int)entry.sent,
@@ -128,6 +129,7 @@ sqlite_int64 Journal::size() {
 void Journal::createTable() {
 	if(_tableCreated) return;
 
+	auto tran =  _db.transaction();
 	_db.executeVoid("CREATE TABLE IF NOT EXISTS " + _table
 			+ " (id integer primary key, ts integer, "
 			+ "  sent integer, etype integer, network string, contents string)");

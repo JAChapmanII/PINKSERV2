@@ -35,7 +35,6 @@ void EventSystem::push(EventType etype, Event e) {
 vector<string> EventSystem::getBodies(EventType etype) {
 	this->createTables();
 	vector<string> bodies;
-	auto tran = _db.transaction();
 	auto result = _db.execute("SELECT * FROM " + _table + " WHERE type = ?1",
 			(int)etype);
 	while(result.status() == SQLITE_ROW) {

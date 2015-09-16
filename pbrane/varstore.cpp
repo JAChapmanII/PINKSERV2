@@ -68,6 +68,7 @@ vector<string> VarStore::getList(string variable) {
 
 void VarStore::markExecutable(string name, bool x) {
 	createTables();
+	auto tran = _db.transaction();
 	_db.executeVoid("UPDATE " + _varTable + " SET execute = ?1 WHERE name = ?2",
 			x ? 1 : 0, name);
 }
