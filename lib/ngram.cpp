@@ -86,8 +86,7 @@ word_t ngramStore::random(prefix_t prefix, Generator &g) {
 		}
 		while(result.status() == SQLITE_ROW) {
 			rowCount++;
-			total -= result.getLong(prefix.size() + 1)
-					* result.getLong(prefix.size() + 1);
+			total -= result.getLong(prefix.size() + 1);
 			if(total <= 0)
 				return result.getLong(prefix.size());
 			result.step();
