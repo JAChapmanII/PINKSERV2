@@ -249,17 +249,14 @@ int main(int argc, char **argv) {
 					pbrane.send(network, target, results.front().toString(), true);
 			}
 		}
-		if(fields[1] == (string)"JOIN") {
-			string nick = fields[0].substr(1, fields[0].find("!") - 1);
-			string where = fields[2];
-			if(where[0] == ':')
-				where = where.substr(1);
+		if(entry.type == EntryType::Join) {
+			auto nick = entry.nick(), where = entry.where;
 
 			// TODO: proper environment for triggers
 			pbrane.vars.set("nick", nick);
 			pbrane.vars.set("where", where);
 
-			vector<Variable> results = pbrane.events.process(EventType::Join, pbrane.vm);
+			auto results = pbrane.events.process(EventType::Join, pbrane.vm);
 			if(results.size() == 1)
 				pbrane.send(network, where, results.front().toString(), true);
 		}

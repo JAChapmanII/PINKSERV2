@@ -40,6 +40,8 @@ void Entry::parse() {
 	this->command = parts[1];
 	if(this->command == "PRIVMSG")
 		this->type = EntryType::Text;
+	if(this->command == "JOIN")
+		this->type = EntryType::Join;
 
 	if(parts.size() > 3) {
 		this->arguments = join(parts.begin() + 3, parts.end(), " ");
