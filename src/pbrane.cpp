@@ -203,15 +203,17 @@ int main(int argc, char **argv) {
 		auto fields = split(line);
 		if(fields.empty()) continue;
 
-		if(fields[1] == (string)"PRIVMSG") {
-			string nick = fields[0].substr(1, fields[0].find("!") - 1);
+		if(entry.type == EntryType::Text) {
+			auto nick = entry.nick();
+			auto message = entry.arguments;
+			auto target = entry.where;
 
-			size_t mstart = line.find(":", 1);
-			string message = line.substr(mstart + 1);
-
-			string target = fields[2];
-			if(fields[2] == pbrane.vars.getString("bot.nick"))
+			if(target == pbrane.vars.getString("bot.nick"))
 				target = nick;
+
+			// TODO: proper environment for triggers
+			pbrane.vars.set("nick", nick);
+			pbrane.vars.set("text", message);
 
 			// check for a special hook
 			bool wasHook = false;
@@ -220,10 +222,6 @@ int main(int argc, char **argv) {
 					wasHook = true;
 					break;
 				}
-
-			// TODO: proper environment for triggers
-			pbrane.vars.set("nick", nick);
-			pbrane.vars.set("text", message);
 
 			if(wasHook)
 				entry.etype = ExecuteType::Hook;
