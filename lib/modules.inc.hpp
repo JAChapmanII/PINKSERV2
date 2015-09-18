@@ -39,6 +39,7 @@ namespace modules {
 		template<typename Ret> Variable makeVariable(Ret ret) {
 			return Variable(ret, Permissions());
 		}
+		template<> Variable makeVariable(sqlite_int64 var);
 		template<> Variable makeVariable(Variable var);
 
 		template<typename F>

@@ -63,6 +63,10 @@ namespace modules {
 			return var;
 		}
 		template<> Variable makeVariable(Variable var) { return var; }
+		template<> Variable makeVariable(sqlite_int64 var) {
+			// TODO: this is terrible
+			return Variable((long int)var, Permissions());
+		}
 	}
 }
 

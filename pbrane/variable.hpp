@@ -9,6 +9,7 @@
 enum Type { String, Double, Integer, Boolean };
 
 // TODO: optimize storage of this/union?
+// TODO: this whole this is terrible...
 struct Value {
 	std::string s;
 	bool b;
