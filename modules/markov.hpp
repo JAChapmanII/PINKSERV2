@@ -1,8 +1,7 @@
 #ifndef MODULES_MARKOV_HPP
 #define MODULES_MARKOV_HPP
 
-#include <vector>
-#include "variable.hpp"
+#include <string>
 #include "bot.hpp"
 
 // #m: markov: markov functions
@@ -18,20 +17,20 @@ std::string markov(Bot *bot, std::string text);
 
 
 // #f: chainCount: count the number of times a chain occurs
-Variable chainCount(std::vector<Variable> arguments);
+sqlite_int64 chainCount(Bot *bot, std::string chain_s);
 
 // #f: prefixOptions: count the number of endpoints of a prefix
-Variable prefixOptions(std::vector<Variable> arguments);
+sqlite_int64 prefixOptions(Bot *bot, std::string prefix_s);
 
 // #f: totalChains: return the total number of chains of all orders
-Variable totalChains(std::vector<Variable> arguments);
+sqlite_int64 totalChains(Bot *bot);
 
 
 
 // #f: respond: responds with a markov chain given a seed string
-Variable respond(std::vector<Variable> arguments);
+std::string respond(Bot *bot, std::string text);
 
 // #f: correct: magically corrects you
-Variable correct(std::vector<Variable> arguments);
+std::string correct(Bot *bot, std::string text);
 
 #endif // MODULES_MARKOV_HPP

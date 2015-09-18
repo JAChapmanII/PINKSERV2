@@ -127,22 +127,37 @@ string markov(Bot *bot, string text) {
 
 
 
-Variable chainCount(vector<Variable>) {
-	throw (string)"error: chainCount unimplemented"; // TODO implement
+sqlite_int64 chainCount(Bot *bot, string chain_s) {
+	auto words_s = util::split(chain_s);
+	if(words_s.size() < 1)
+		throw string{"chainCount requires a chain (at least one word)}"};
+
+	word_t atom = bot->dictionary[words_s.back()];
+	words_s.pop_back();
+
+	prefix_t prefix;
+	prefix.reserve(words_s.size());
+	for(auto &word : words_s)
+		prefix.push_back(bot->dictionary[word]);
+
+	ngram_t ngram{prefix, atom};
+
+	chain_t chain = bot->ngStore.fetch(ngram);
+	return chain.count;
 }
-Variable prefixOptions(vector<Variable>) {
+sqlite_int64 prefixOptions(Bot *bot, string prefix_s) {
 	throw (string)"error: prefixOptions unimplemented"; // TODO implement
 }
-Variable totalChains(vector<Variable>) {
+sqlite_int64 totalChains(Bot *bot) {
 	throw (string)"error: totalChains unimplemented"; // TODO implement
 }
 
 
 
-Variable respond(vector<Variable>) {
+string respond(Bot *bot, string text) {
 	throw (string)"error: respond unimplemented"; // TODO: implement
 }
-Variable correct(vector<Variable>) {
+string correct(Bot *bot, string text) {
 	throw (string)"error: correct unimplemented"; // TODO: implement
 }
 
