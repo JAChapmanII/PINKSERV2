@@ -15,9 +15,8 @@ using std::endl;
 // TODO: turn into pbrane variable
 static int ngObserveMaxOrder = 4;
 static unsigned long long totalIncrements = 0;
-static long long ng_timestamp = 0;
 static string lastNGObserve = "";
-
+static long long ng_timestamp = 0;
 
 void observe(Bot *bot, string text) {
 	auto toObserve = text;
@@ -52,9 +51,9 @@ void observe(Bot *bot, string text) {
 
 	if(bot->clock.now() > ng_timestamp + 10) {
 		ng_timestamp = bot->clock.now();
-		cerr << ng_timestamp << " checkpointing... ("
-			<< bot->journal.size() << "L, " << totalIncrements << "I)" << endl;
-		sqlite3_wal_checkpoint(bot->db.getDB(), nullptr);
+		cerr << ng_timestamp << " stats: "
+			<< bot->journal.size() << "L, "
+			<< totalIncrements << "I" << endl;
 	}
 
 	//lastNGObserve = now;

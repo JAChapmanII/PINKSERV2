@@ -3,6 +3,7 @@ using std::string;
 using std::to_string;
 
 #include "err.hpp"
+#include "clock.hpp"
 
 #include <iostream>
 using std::cerr;
@@ -16,6 +17,8 @@ zidcu::Database::~Database() {
 	if(_commitTransaction) { delete _commitTransaction; }
 	if(_opened) {
 		if(_db) {
+			sqlite3_wal_checkpoint(_db, nullptr);
+
 			int rc = sqlite3_close(_db);
 			if(rc != SQLITE_OK) {
 				throw make_except(string{"Database::~Database: error closing db "}
@@ -138,13 +141,23 @@ namespace zidcu {
 	}
 }
 
+
 zidcu::Transaction::Transaction(Database &db, Statement &start, Statement &end)
 		: _db(db), _start(start), _end(end) {
 	_start.executeVoid();
 }
 zidcu::Transaction::~Transaction() {
 	_end.executeVoid();
-	sqlite3_wal_checkpoint(_db.getDB(), nullptr);
+
+	static Clock clock{};
+	static auto checkpointTS = clock.now();
+
+	if(clock.now() > checkpointTS + 30) {
+		cerr << checkpointTS << " checkpointing... " << endl;
+		checkpointTS = clock.now();
+		sqlite3_wal_checkpoint(_db.getDB(), nullptr);
+		cerr << clock.now() << "     done" << endl;
+	}
 }
 
 zidcu::StatementCache::StatementCache(Database &db) : _db{db}, _cache{} { }
