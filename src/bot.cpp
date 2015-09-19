@@ -10,8 +10,6 @@ using std::endl;
 #include <fstream>
 using std::ifstream;
 
-#include <ctime>
-
 #include "util.hpp"
 #include "parser.hpp"
 #include "expression.hpp"
@@ -46,12 +44,6 @@ bool allSpaces(string str) {
 	return true;
 }
 
-
-
-sqlite_int64 Clock::now() {
-	// TODO: fix
-	return time(NULL);
-}
 
 Bot::Bot(Database &db, Options opts, Clock clock, ExtraSetup setup) : db{db},
 		opts{opts}, clock{clock}, journal{db}, events{db, opts.debugEventSystem},

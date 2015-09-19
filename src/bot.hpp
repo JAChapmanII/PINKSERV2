@@ -11,6 +11,7 @@
 #include "pvm.hpp"
 #include "eventsystem.hpp"
 #include "ngram.hpp"
+#include "clock.hpp"
 
 struct Options {
 	bool debugSQL{false};
@@ -18,10 +19,6 @@ struct Options {
 	bool debugFunctionBodies{false};
 
 	unsigned int seed{0};
-};
-
-struct Clock {
-	sqlite_int64 now();
 };
 
 struct Bot;
