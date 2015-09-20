@@ -55,10 +55,13 @@ chain_t ngramStore::fetch(ngram_t ngram) {
 			ngram);
 	return chain_t{ngram, count ? *count : 0};
 }
-void ngramStore::increment(ngram_t ngram) {
+void ngramStore::increment(ngram_t ngram, int amount) {
 	createTable(ngram.order());
-	_db.executeVoid(_builder.ngramIncrement(ngram.order()), ngram);
-	if(sqlite3_changes(_db.getDB()) == 0)
+	auto &statement = _db[_builder.ngramIncrement(ngram.order())];
+	statement.bind(0, ngram);
+	statement.bind(ngram.order() + 2, amount);
+	statement.executeVoid();
+	if(sqlite3_changes(_db.getDB()) == 0 && amount > 0)
 		_db.executeVoid(_builder.ngramInsert(ngram.order()), ngram);
 }
 bool ngramStore::exists(ngram_t ngram) {
@@ -145,7 +148,8 @@ string ngramStoreStatementBuilder::ngramInsert(int order) const {
 		+ " VALUES(" + qmarks(order) + ", 1);";
 }
 string ngramStoreStatementBuilder::ngramIncrement(int order) const {
-	return "UPDATE " + table(order) + " SET count = count + 1 "
+	return "UPDATE " + table(order) + " SET count = "
+			+ " max(0, count + ?" + to_string(order + 2) + ")"
 		+ " WHERE " + where(order);
 }
 string ngramStoreStatementBuilder::prefixCount(int order) const {

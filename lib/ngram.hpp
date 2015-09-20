@@ -51,7 +51,7 @@ struct ngramStore {
 	ngramStore(zidcu::Database &db, std::string baseTableName = "ngrams");
 
 	chain_t fetch(ngram_t ngram);
-	void increment(ngram_t ngram);
+	void increment(ngram_t ngram, int amount = 1);
 	bool exists(ngram_t ngram);
 
 	template<typename Generator>
