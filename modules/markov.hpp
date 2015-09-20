@@ -9,6 +9,9 @@
 // #f: observe: observes a line and adds it into the ngram model
 void observe(Bot *bot, std::string text);
 
+// #f: unlearn: decrease the probability of a chain in the ngram model
+void unlearn(Bot *bot, std::string text);
+
 // #f: ngrandom: return a random word given a prefix
 std::string ngrandom(Bot *bot, std::string text);
 

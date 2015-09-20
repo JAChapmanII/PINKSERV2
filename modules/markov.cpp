@@ -18,15 +18,8 @@ static unsigned long long totalIncrements = 0;
 static string lastNGObserve = "";
 static long long ng_timestamp = 0;
 
-void observe(Bot *bot, string text) {
-	auto toObserve = text;
-
-	vector<string> words_s = util::split(toObserve);
-	vector<word_t> words; words.reserve(words_s.size());
-	words.push_back((word_t)Anchor::Start);
-	for(auto &word : words_s) words.push_back(bot->dictionary[word]);
-	words.push_back((word_t)Anchor::End);
-
+void learn(Bot *bot, vector<word_t> words, int increment = 1);
+void learn(Bot *bot, vector<word_t> words, int increment) {
 	{
 		auto tran = bot->db.transaction();
 
@@ -35,7 +28,7 @@ void observe(Bot *bot, string text) {
 			ngram_t ngram{prefix, words[i]};
 			if(ngram.atom != (word_t)Anchor::Start
 					&& ngram.atom != (word_t)Anchor::End)
-				bot->ngStore.increment(ngram);
+				bot->ngStore.increment(ngram, increment);
 			totalIncrements++;
 
 			for(int j = i + 1; j < (int)words.size(); ++j) {
@@ -43,7 +36,7 @@ void observe(Bot *bot, string text) {
 				ngram.atom = words[j];
 				if(ngram.order() > ngObserveMaxOrder)
 					break;
-				bot->ngStore.increment(ngram);
+				bot->ngStore.increment(ngram, increment);
 				totalIncrements++;
 			}
 		}
@@ -55,8 +48,24 @@ void observe(Bot *bot, string text) {
 			<< bot->journal.size() << "L, "
 			<< totalIncrements << "I" << endl;
 	}
+}
 
-	//lastNGObserve = now;
+void observe(Bot *bot, string text) {
+	auto words_s = util::split(text);
+	vector<word_t> words; words.reserve(words_s.size());
+	words.push_back((word_t)Anchor::Start);
+	for(auto &word : words_s) words.push_back(bot->dictionary[word]);
+	words.push_back((word_t)Anchor::End);
+
+	learn(bot, words, 1);
+}
+
+void unlearn(Bot *bot, string text) {
+	auto words_s = util::split(text);
+	vector<word_t> words; words.reserve(words_s.size());
+	for(auto &word : words_s) words.push_back(bot->dictionary[word]);
+
+	learn(bot, words, -4);
 }
 
 string ngrandom(Bot *bot, string text) {
