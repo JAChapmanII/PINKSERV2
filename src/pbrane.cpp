@@ -260,10 +260,10 @@ int main(int argc, char **argv) {
 			if(results.size() == 1)
 				pbrane.send(network, where, results.front().toString(), true);
 		}
-		if(fields[1] == (string)"NICK") {
+		if(entry.type == EntryType::Nick) {
 			;// run nick triggers
 		}
-		if((fields[1] == (string)"PART") || (fields[1] == (string)"QUIT")) {
+		if(entry.type == EntryType::Part || entry.type == EntryType::Quit) {
 			;// run leave triggers
 		}
 

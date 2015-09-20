@@ -7,7 +7,7 @@
 #include <sqlite3.h>
 #include "db.hpp"
 
-enum class EntryType { Text, Join, Quit, Part, Invalid };
+enum class EntryType { Text, Join, Quit, Part, Nick, Invalid };
 enum class ExecuteType { None, Hook, Function, Sent, Unknown };
 enum class SentType { Recieved, Sent, Log, Invalid };
 

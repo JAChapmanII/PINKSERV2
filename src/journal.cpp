@@ -35,6 +35,22 @@ void Entry::parse() {
 		return;
 	}
 	this->who = parts[0];
+
+	if(this->command == "NICK") {
+		this->type = EntryType::Nick;
+		this->arguments = parts[2];
+		if(this->arguments[0] == ':')
+			this->arguments = this->arguments.substr(1);
+		return;
+	}
+
+	if(this->command == "QUIT") {
+		this->type = EntryType::Quit;
+		this->arguments = join(parts.begin() + 2, parts.end(), " ");
+		if(this->arguments[0] == ':')
+			this->arguments = this->arguments.substr(1);
+	}
+
 	this->where = parts[2];
 
 	this->command = parts[1];
@@ -42,7 +58,9 @@ void Entry::parse() {
 		this->type = EntryType::Text;
 	if(this->command == "JOIN")
 		this->type = EntryType::Join;
-
+	if(this->command == "PART")
+		this->type = EntryType::Part;
+	
 	if(parts.size() > 3) {
 		this->arguments = join(parts.begin() + 3, parts.end(), " ");
 		if(this->arguments[0] == ':')
