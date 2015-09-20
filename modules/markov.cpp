@@ -50,45 +50,29 @@ void learn(Bot *bot, vector<word_t> words, int increment) {
 	}
 }
 
-void observe(Bot *bot, string text) {
-	auto words_s = util::split(text);
-	vector<word_t> words; words.reserve(words_s.size());
-	words.push_back((word_t)Anchor::Start);
-	for(auto &word : words_s) words.push_back(bot->dictionary[word]);
-	words.push_back((word_t)Anchor::End);
+prefix_t make_prefix(Bot *bot, string text);
+prefix_t make_prefix(Bot *bot, string text) {
+	auto words = util::split(text);
 
-	learn(bot, words, 1);
+	prefix_t prefix;
+	for(auto &word : words)
+		prefix.push_back(bot->dictionary[word]);
+	return prefix;
 }
 
-void unlearn(Bot *bot, string text) {
-	auto words_s = util::split(text);
-	vector<word_t> words; words.reserve(words_s.size());
-	for(auto &word : words_s) words.push_back(bot->dictionary[word]);
-
-	learn(bot, words, -4);
+string make_string(Bot *bot, prefix_t words);
+string make_string(Bot *bot, prefix_t words) {
+	// return the generated string
+	string rs;
+	for(auto &word : words)
+		rs += bot->dictionary[word] + " ";
+	return rs;
 }
 
-string ngrandom(Bot *bot, string text) {
-	auto arguments = util::split(text);
-	prefix_t words; words.reserve(arguments.size());
-	for(auto &word : arguments)
-		words.push_back(bot->dictionary[word]);
-
-	word_t res = bot->ngStore.random(words, bot->rengine);
-	return bot->dictionary[res];
-}
-string markov(Bot *bot, string text) {
+prefix_t generateSentence(Bot *bot, prefix_t words);
+prefix_t generateSentence(Bot *bot, prefix_t words) {
 	// TODO: newlines, respond
-	auto arguments = util::split(text);
-
-	prefix_t words, result;
-	words.reserve(arguments.size());
-	result.reserve(arguments.size() * 3);
-	for(auto &word : arguments) {
-		word_t w = bot->dictionary[word];
-		words.push_back(w);
-		result.push_back(w);
-	}
+	auto result = words;
 
 	while(true && result.size() < 32) {
 		// check to see if we should try to pick another one or just be done
@@ -104,11 +88,12 @@ string markov(Bot *bot, string text) {
 		}
 		if(rc == (int)Anchor::Start) continue;
 		if(rc == (int)Anchor::End) {
-			if(generate_canonical<double, 10>(bot->rengine) < 0.05 * result.size()) {
+			size_t len = result.size() - words.size();
+			if(generate_canonical<double, 10>(bot->rengine) < 0.05 * (len + 1)) {
 				cerr << "ngmarkov: end break" << endl;
 				break;
 			} else {
-				cerr << "ngmarkov: failed end break: " << result.size() << endl;
+				cerr << "ngmarkov: failed end break: " << (len + 1) << endl;
 				continue;
 			}
 		}
@@ -132,13 +117,46 @@ string markov(Bot *bot, string text) {
 			break;
 	}
 
-	// return the generated string
-	string rs;
-	for(auto &word : result)
-		rs += bot->dictionary[word] + " ";
-	return rs;
+	return result;
 }
 
+
+void observe(Bot *bot, string text) {
+	auto words = make_prefix(bot, text);
+	words.insert(words.begin(), (word_t)Anchor::Start);
+	words.push_back((word_t)Anchor::End);
+
+	learn(bot, words, 1);
+}
+
+void unlearn(Bot *bot, string text) {
+	auto words = make_prefix(bot, text);
+
+	learn(bot, words, -4);
+}
+
+string ngrandom(Bot *bot, string text) {
+	auto prefix = make_prefix(bot, text);
+	word_t res = bot->ngStore.random(prefix, bot->rengine);
+	return bot->dictionary[res];
+}
+
+string markov(Bot *bot, string text) {
+	auto words = make_prefix(bot, text);
+	auto sentence = generateSentence(bot, words);
+	return make_string(bot, sentence);
+}
+
+string respond(Bot *bot, string text) {
+	auto words = make_prefix(bot, text);
+	words.push_back((word_t)Anchor::End);
+	words.push_back((word_t)Anchor::Start);
+
+	auto sentence = generateSentence(bot, words);
+	sentence.erase(sentence.begin(), sentence.begin() + words.size());
+
+	return make_string(bot, sentence);
+}
 
 
 sqlite_int64 chainCount(Bot *bot, string chain_s) {
@@ -168,9 +186,6 @@ sqlite_int64 totalChains(Bot *bot) {
 
 
 
-string respond(Bot *bot, string text) {
-	throw (string)"error: respond unimplemented"; // TODO: implement
-}
 string correct(Bot *bot, string text) {
 	throw (string)"error: correct unimplemented"; // TODO: implement
 }
