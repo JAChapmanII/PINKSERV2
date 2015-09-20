@@ -53,7 +53,7 @@ bool regexHook(PrivateMessage pmsg);
 
 vector<hook> hooks = { &powerHook, &regexHook };
 
-bool import = false;
+bool import = false, importLog{false};
 
 void prettyPrint(string arg);
 void teval(vector<string> args);
@@ -169,6 +169,10 @@ int main(int argc, char **argv) {
 		} else if(arg == "--debugFunctionBodies") {
 			opts.debugFunctionBodies = true;
 			cerr << "pbrane: debug function bodies enabled" << endl;
+		} else if(arg == "--importLog") {
+			import = true;
+			importLog = true;
+			cerr << "pbrane: import log enabled" << endl;
 		} else {
 			opts.seed = fromString<unsigned int>(argv[1]);
 		}
@@ -191,13 +195,29 @@ int main(int argc, char **argv) {
 		if(line.find_first_not_of(" \t\r\n") == string::npos)
 			continue;
 
-		string network = line.substr(0, line.find(" "));
-		line = line.substr(line.find(" ") + 1);
+		string network;
+		auto ts = Clock{}.now();
 
-		if(line.find_first_not_of(" \t\r\n") == string::npos)
-			continue;
+		if(!importLog) {
+			network = line.substr(0, line.find(" "));
+			line = line.substr(line.find(" ") + 1);
 
-		Entry entry{Clock{}.now(), network, line};
+			if(line.find_first_not_of(" \t\r\n") == string::npos)
+				continue;
+		} else {
+			auto fs = util::split(line, "|");
+			if(fs.size() < 3) {
+				cerr << "unable to parse log line" << endl;
+				cerr << "line: " << line << endl;
+				return 32;
+			}
+
+			ts = util::fromString<sqlite_int64>(fs[0]);
+			network = fs[1];
+			line = util::join(fs.begin() + 2, fs.end(), " ");
+		}
+
+		Entry entry{ts, network, line};
 		pbrane.journal.upsert(entry);
 
 		auto fields = split(line);
