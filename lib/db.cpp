@@ -152,7 +152,7 @@ zidcu::Transaction::~Transaction() {
 	static Clock clock{};
 	static auto checkpointTS = clock.now();
 
-	if(clock.now() > checkpointTS + 30) {
+	if(clock.now() > checkpointTS + 600) {
 		cerr << checkpointTS << " checkpointing... " << endl;
 		checkpointTS = clock.now();
 		sqlite3_wal_checkpoint(_db.getDB(), nullptr);
