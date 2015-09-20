@@ -102,9 +102,15 @@ string markov(Bot *bot, string text) {
 			words.erase(words.begin());
 			prob *= .98;
 		}
+		if(rc == (int)Anchor::Start) continue;
 		if(rc == (int)Anchor::End) {
-			cerr << "ngmarkov: end break" << endl;
-			break;
+			if(generate_canonical<double, 10>(bot->rengine) < 0.05 * result.size()) {
+				cerr << "ngmarkov: end break" << endl;
+				break;
+			} else {
+				cerr << "ngmarkov: failed end break: " << result.size() << endl;
+				continue;
+			}
 		}
 
 		result.push_back(rc);
