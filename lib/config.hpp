@@ -2,16 +2,10 @@
 #define CONFIG_HPP
 
 #include <string>
-#include <vector>
 
 namespace config {
 	extern std::string todoFileName;
 	extern std::string databaseFileName;
-
-	namespace regex {
-		extern std::string toUs;
-		extern std::string toUsReplace;
-	}
 }
 
 #endif // CONFIG_HPP

@@ -30,8 +30,6 @@ struct Entry {
 	// parse contents to determine type, w^3, arguments
 	void parse();
 
-	// determines if this is a message addressed to us
-	//bool toUs();
 	// formats this object as a printable string
 	//std::string toString() const;
 
