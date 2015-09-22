@@ -2,9 +2,6 @@ boost:
 	report the bug with boost regex and
 		!push/annoying/^((.)(.)((?1)|)).*?$/\U\2\L\3\4
 
-TODO:
-	why is there a modules and a requests section? They're very blurred.
-
 pbrane
 	include the topic in lastLog
 	rate limit
@@ -20,7 +17,6 @@ Modules
 	Add GABEN mode
 	say goodnight to people
 	say hello to people
-	Have PredefinedRegexFunction match the replacement regex too
 	fix .* matching twice while .+ works properly
 	play wit PkgnBotX
 	prevent bot fights better
@@ -31,7 +27,6 @@ Requests:
 	Cacapulse: !gaga
 	randomly yell <USERNAME> IS A SPY after <user> posts (5% chance)
 	ZeldaFan: insult people on leaving channel
-	____________jext: need a delete function
 	Solshine: command 'recharge' time to prevent command spam automatically
 	jac: when ^ is implemented, stroke Solshine's ego
 
@@ -41,11 +36,6 @@ doing line.nick + ": " manually. This also fixes the private message thing.
 
 
 overhaul help system, it sucks
-m_write not really needed right?
-!help -> ?
-expose config variables as !set-etc'able things
-
-
 
 
 
