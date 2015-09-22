@@ -37,8 +37,6 @@ using zidcu::Database;
 #include "bot.hpp"
 #include "sed.hpp"
 
-void process(Bot &bot, string network, string script, string nick, string target);
-
 struct PrivateMessage {
 	string network{};
 	string message{};
@@ -52,8 +50,6 @@ bool powerHook(PrivateMessage pmsg);
 bool regexHook(PrivateMessage pmsg);
 
 vector<hook> hooks = { &powerHook, &regexHook };
-
-bool import = false, importLog{false};
 
 void prettyPrint(string arg);
 void teval(vector<string> args);
@@ -158,7 +154,7 @@ int main(int argc, char **argv) {
 		}
 
 		if(arg == "--import") {
-			import = true;
+			opts.import = true;
 			cerr << "pbrane: import mode enabled" << endl;
 		} else if(arg == "--debugSQL") {
 			opts.debugSQL = true;
@@ -170,8 +166,8 @@ int main(int argc, char **argv) {
 			opts.debugFunctionBodies = true;
 			cerr << "pbrane: debug function bodies enabled" << endl;
 		} else if(arg == "--importLog") {
-			import = true;
-			importLog = true;
+			opts.import = true;
+			opts.importLog = true;
 			cerr << "pbrane: import log enabled" << endl;
 		} else {
 			opts.seed = fromString<unsigned int>(argv[1]);
@@ -198,7 +194,7 @@ int main(int argc, char **argv) {
 		string network;
 		auto ts = Clock{}.now();
 
-		if(!importLog) {
+		if(!opts.importLog) {
 			network = line.substr(0, line.find(" "));
 			line = line.substr(line.find(" ") + 1);
 
@@ -237,11 +233,13 @@ int main(int argc, char **argv) {
 
 			// check for a special hook
 			bool wasHook = false;
-			for(auto h : hooks)
-				if((*h)({ network, message, nick, target, pbrane })) {
-					wasHook = true;
-					break;
-				}
+			if(!opts.import) {
+				for(auto h : hooks)
+					if((*h)({ network, message, nick, target, pbrane })) {
+						wasHook = true;
+						break;
+					}
+			}
 
 			if(wasHook)
 				entry.etype = ExecuteType::Hook;
@@ -249,15 +247,15 @@ int main(int argc, char **argv) {
 			else if(message[0] == '!' && message.length() > 1) {
 				// it might be a !: to force intepretation line
 				if(message.size() > 1 && message[1] == ':')
-					process(pbrane, network, message.substr(2), nick, target);
+					pbrane.process(network, message.substr(2), nick, target);
 				else
-					process(pbrane, network, message, nick, target);
+					pbrane.process(network, message, nick, target);
 				entry.etype = ExecuteType::Function;
 			} else if(message.substr(0, 2) == (string)"${" && message.back() == '}') {
-				process(pbrane, network, message, nick, target);
+				pbrane.process(network, message, nick, target);
 				entry.etype = ExecuteType::Function;
 			} else if(message.substr(0, 2) == (string)"::") {
-				process(pbrane, network, message, nick, target);
+				pbrane.process(network, message, nick, target);
 				entry.etype = ExecuteType::Function;
 			}
 			// otherwise, run on text triggers
@@ -294,59 +292,7 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-struct Context {
-	string network;
-	string nick;
-	string target;
-
-	decltype(auto) toTuple() const {
-		return make_tuple(network, nick, target);
-	}
-	bool operator<(const Context &rhs) const {
-		return toTuple() < rhs.toTuple();
-	}
-};
-
-void process(Bot &bot, string network, string script, string nick, string target) {
-	if(import)
-		return;
-	script = trim(script);
-	if(script.empty())
-		return;
-
-	bool plainFunction = false;
-	string plainFName;
-	if(script[0] == '!')
-		plainFunction = true, plainFName = script.substr(1, script.find(" ") - 1);
-	string noF = plainFName + " does not exist as a callable function [stacktrace: ! -> str]";
-
-	static map<Context, string> contextMap;
-
-	if(script.substr(0, 2) == "::") {
-		auto context = Context{ network, nick, target };
-		script = trim(script.substr(2));
-		if(script.back() == '\\') {
-			script.pop_back();
-			contextMap[context] += script;
-			return;
-		}
-
-		script = "${ " + contextMap[context] + " " + script + " }";
-		contextMap[context] = "";
-	}
-
-	string result = bot.evaluate(script, nick);
-	if(plainFunction && result == noF) {
-		cerr << "simple call to nonexistant function error supressed" << endl;
-		return;
-	}
-	// assume we can run the script
-	bot.send(network, target, result, true);
-}
-
 bool powerHook(PrivateMessage pmsg) {
-	if(import)
-		return false;
 	if(pmsg.message[0] == ':') // ignore starting colon
 		pmsg.message = pmsg.message.substr(1);
 	if(pmsg.message == (string)"!restart" && pmsg.bot.isOwner(pmsg.nick))
@@ -356,8 +302,6 @@ bool powerHook(PrivateMessage pmsg) {
 	return false;
 }
 bool regexHook(PrivateMessage pmsg) {
-	if(import)
-		return false;
 	if(pmsg.message[0] != 's')
 		return false;
 	if(pmsg.message.size() < 2)

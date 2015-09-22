@@ -7,8 +7,8 @@ using zidcu::Database;
 using std::cout;
 using std::cerr;
 using std::endl;
-#include <fstream>
-using std::ifstream;
+#include <map>
+using std::map;
 
 #include "util.hpp"
 #include "parser.hpp"
@@ -95,6 +95,7 @@ bool Bot::isAdmin(std::string nick) {
 	return util::contains(vars.getString("bot.admins"), " " + nick + " ");
 }
 
+// TODO: eliminate
 string Bot::evaluate(string script, string nick) {
 	try {
 		auto expr = Parser::parse(script);
@@ -116,4 +117,82 @@ string Bot::evaluate(string script, string nick) {
 	}
 }
 
+
+struct Context {
+	string network;
+	string nick;
+	string target;
+
+	decltype(auto) toTuple() const {
+		return make_tuple(network, nick, target);
+	}
+	bool operator<(const Context &rhs) const {
+		return toTuple() < rhs.toTuple();
+	}
+};
+
+void Bot::process(string network, string script, string nick, string target) {
+	if(opts.import)
+		return;
+
+	script = util::trim(script);
+	if(script.empty())
+		return;
+
+	bool plainFunction = false;
+	string plainFName;
+	if(script[0] == '!')
+		plainFunction = true, plainFName = script.substr(1, script.find(" ") - 1);
+	string noF = plainFName + " does not exist as a callable function [stacktrace: ! -> str]";
+
+	static map<Context, string> contextMap;
+
+	if(script.substr(0, 2) == "::") {
+		auto context = Context{ network, nick, target };
+		script = util::trim(script.substr(2));
+		if(script.back() == '\\') {
+			script.pop_back();
+			contextMap[context] += script + " ";
+			return;
+		}
+
+		script = "${ " + contextMap[context] + script + " }";
+		contextMap[context] = "";
+	}
+
+	string result = "";
+	try {
+		auto expr = Parser::parse(script);
+		if(!expr) {
+			cerr << "Bot::evaluate: \"" << script << "\" is null expr" << endl;
+		} else {
+			result = expr->evaluate(vm, nick).toString();
+		}
+	} catch(ParseException e) {
+		cerr << e.pretty() << endl;
+		auto lines = util::split(e.pretty(), "\n");
+		if(lines.size() != 3) {
+			result = e.msg + " @" + util::asString(e.idx);
+		} else {
+			// TODO: jank
+			this->send(network, target, ":" + lines[1].substr(3), true);
+			this->send(network, target, ":" + lines[2].substr(3) + "  " + lines[0], true);
+			return;
+		}
+	} catch(StackTrace e) {
+		cerr << e.toString() << endl;
+		result = e.toString();
+	} catch(string &s) {
+		cerr << "string type error: " << s << endl;
+		result = s;
+	}
+
+
+	if(plainFunction && result == noF) {
+		cerr << "simple call to nonexistant function error supressed" << endl;
+		return;
+	}
+	// assume we can run the script
+	this->send(network, target, result, true);
+}
 

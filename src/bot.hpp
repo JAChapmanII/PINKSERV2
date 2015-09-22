@@ -17,6 +17,8 @@ struct Options {
 	bool debugSQL{false};
 	bool debugEventSystem{false};
 	bool debugFunctionBodies{false};
+	bool import{false};
+	bool importLog{false};
 
 	unsigned int seed{0};
 };
@@ -35,6 +37,7 @@ struct Bot {
 	bool isAdmin(std::string nick);
 
 	std::string evaluate(std::string script, std::string nick);
+	void process(std::string network, std::string script, std::string nick, std::string target);
 
 	public:
 		bool done{false};
