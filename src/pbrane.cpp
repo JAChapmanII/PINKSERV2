@@ -318,7 +318,7 @@ void process(Bot &bot, string network, string script, string nick, string target
 	string plainFName;
 	if(script[0] == '!')
 		plainFunction = true, plainFName = script.substr(1, script.find(" ") - 1);
-	string noF = plainFName + " does not exist as a callable function [stacktrace: !]";
+	string noF = plainFName + " does not exist as a callable function [stacktrace: ! -> str]";
 
 	static map<Context, string> contextMap;
 
