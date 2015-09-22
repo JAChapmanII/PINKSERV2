@@ -2,6 +2,7 @@
 using std::vector;
 using std::string;
 using std::unique_ptr;
+using std::to_string;
 
 #include <memory>
 using std::move;
@@ -152,11 +153,23 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 
 	// multiple expressions
 	if(this->type == ";") {
+		// store $ variables incase they're clobbered
+		Variable fargs = vm.vars.get("args");
+		vector<Variable> fvars;
+		for(int i = 0; i < 10; ++i)
+			fvars.push_back(vm.vars.get("$" + to_string(i)));
+
 		// first might have side effects
 		Variable result;
-		for(int i = 0; i < (int)this->args.size(); ++i)
+		for(int i = 0; i < (int)this->args.size(); ++i) {
+			// restort $ variables
+			vm.vars.set("args", fargs);
+			for(int i = 0; i < 10; ++i)
+				vm.vars.set("$" + to_string(i), fvars[i]);
+
 			if(this->args[i])
 				result = this->args[i]->evaluate(vm, context);
+		}
 		return result;
 	}
 
@@ -236,11 +249,12 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 
 		string argsstr;
 		for(auto arg : argVars)
-			argsstr += " " + arg.toString();
+			argsstr += arg.toString() + " ";
+		argsstr.pop_back();
 
 		// clear out argument variables
 		for(int i = 0; i < 10; ++i)
-			vm.vars.set("$" + asString(i + 1), "");
+			vm.vars.erase("$" + asString(i + 1));
 
 		// set the argument values
 		vm.vars.set("args", argsstr);
@@ -249,9 +263,8 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 			vm.vars.set("$" + asString(i + 1), argVars[i]);
 
 		// a module function
-		if(contains(modules::hfmap, func)) {
+		if(contains(modules::hfmap, func))
 			return modules::hfmap[func](argVars);
-		}
 
 		try {
 			unique_ptr<Expression> expr = Parser::parseCanonical(body);
