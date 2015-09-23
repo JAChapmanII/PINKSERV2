@@ -247,10 +247,7 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 		for(unsigned i = 1; i < args.size(); ++i)
 			argVars.push_back(args[i]->evaluate(vm, context));
 
-		string argsstr;
-		for(auto arg : argVars)
-			argsstr += arg.toString() + " ";
-		argsstr.pop_back();
+		auto argsstr = util::join(argVars, " ");
 
 		// clear out argument variables
 		for(int i = 0; i < 10; ++i)
