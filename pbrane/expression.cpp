@@ -7,6 +7,9 @@ using std::to_string;
 #include <memory>
 using std::move;
 
+#include <map>
+using std::map;
+
 #include <cmath>
 
 #include "permission.hpp"
@@ -153,23 +156,11 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 
 	// multiple expressions
 	if(this->type == ";") {
-		// store $ variables incase they're clobbered
-		Variable fargs = vm.vars.get("args");
-		vector<Variable> fvars;
-		for(int i = 0; i < 10; ++i)
-			fvars.push_back(vm.vars.get("$" + to_string(i)));
-
 		// first might have side effects
 		Variable result;
-		for(int i = 0; i < (int)this->args.size(); ++i) {
-			// restort $ variables
-			vm.vars.set("args", fargs);
-			for(int i = 0; i < 10; ++i)
-				vm.vars.set("$" + to_string(i), fvars[i]);
-
+		for(int i = 0; i < (int)this->args.size(); ++i)
 			if(this->args[i])
 				result = this->args[i]->evaluate(vm, context);
-		}
 		return result;
 	}
 
@@ -227,6 +218,15 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 
 	// function calls, special :D
 	if(this->type == "!") {
+		// store $ variables incase they're clobbered
+		Variable oargs = vm.vars.get("args");
+		map<string, Variable> ovars;
+		for(int i = 0; i < 10; ++i) {
+			auto v = "$" + to_string(i);
+			if(vm.vars.defined(v))
+				ovars[v] = vm.vars.get(v);
+		}
+
 		if(this->args[0]->type != "var")
 			context.except("rhs of ! is not a variable");
 		string func = this->args[0]->args[0]->evaluate(vm, context).toString();
@@ -259,17 +259,27 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 		for(unsigned i = 0; i < args.size() - 1; ++i)
 			vm.vars.set("$" + asString(i + 1), argVars[i]);
 
-		// a module function
-		if(contains(modules::hfmap, func))
-			return modules::hfmap[func](argVars);
+		Variable result;
 
-		try {
-			unique_ptr<Expression> expr = Parser::parseCanonical(body);
-			context.frames.push_back(func);
-			return expr->evaluate(vm, context);
-		} catch(ParseException e) {
-			context.except(e.msg + " @" + asString(e.idx));
+		// a module function
+		if(contains(modules::hfmap, func)) {
+			result = modules::hfmap[func](argVars);
+		} else {
+			try {
+				auto expr = Parser::parseCanonical(body);
+				context.frames.push_back(func);
+				result = expr->evaluate(vm, context);
+			} catch(ParseException e) {
+				context.except(e.msg + " @" + asString(e.idx));
+			}
 		}
+
+		// restort $ variables
+		vm.vars.set("args", oargs);
+		for(auto &e : ovars)
+			vm.vars.set(e.first, e.second);
+
+		return result;
 	}
 
 	// TODO: reimplement ++ and --, needs parser support too
