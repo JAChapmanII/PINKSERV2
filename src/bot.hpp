@@ -12,6 +12,7 @@
 #include "eventsystem.hpp"
 #include "ngram.hpp"
 #include "clock.hpp"
+#include "todo.hpp"
 
 struct Options {
 	bool debugSQL{false};
@@ -27,7 +28,7 @@ struct Bot;
 using ExtraSetup = std::function<void(Bot *)>;
 
 struct Bot {
-	Bot(zidcu::Database &db, Options opts, Clock clock, ExtraSetup setup);
+	Bot(zidcu::Database &idb, Options iopts, Clock iclock, ExtraSetup setup);
 	~Bot();
 
 	void send(std::string network, std::string target, std::string line,
@@ -51,6 +52,7 @@ struct Bot {
 		VarStore vars;
 		Pvm vm;
 		ngramStore ngStore;
+		TODOs todos;
 
 		std::mt19937_64 rengine;
 };

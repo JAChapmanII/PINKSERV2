@@ -56,7 +56,7 @@ std::string rline(Bot *bot, std::string regex);
 std::string debug(std::string text);
 
 // #f: todo: add a todo for jac to implement
-std::string todo(std::string text);
+std::string todo(Bot *bot, std::string text);
 
 // #f: toint: force a result to be an integer
 Variable toint(Variable arg);

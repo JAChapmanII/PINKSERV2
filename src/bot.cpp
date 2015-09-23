@@ -45,9 +45,10 @@ bool allSpaces(string str) {
 }
 
 
-Bot::Bot(Database &db, Options opts, Clock clock, ExtraSetup setup) : db{db},
-		opts{opts}, clock{clock}, journal{db}, events{db, opts.debugEventSystem},
-		dictionary{db}, vars{db}, vm{vars}, ngStore{db}, rengine{} {
+Bot::Bot(Database &idb, Options iopts, Clock iclock, ExtraSetup setup) :
+		db{idb}, opts{iopts}, clock{iclock}, journal{db},
+		events{db, opts.debugEventSystem}, dictionary{db}, vars{db}, vm{vars},
+		ngStore{db}, todos{journal, db}, rengine{} {
 	rengine.seed(opts.seed);
 
 	db.executeVoid("PRAGMA cache_size = 10000;");

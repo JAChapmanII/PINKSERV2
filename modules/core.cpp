@@ -11,17 +11,12 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-#include <fstream>
-using std::ofstream;
-
 #include "global.hpp"
 #include "util.hpp"
 using util::contains;
 using util::join;
 #include "parser.hpp"
 #include "expression.hpp"
-
-#include "config.hpp"
 
 Entry regexRandomEntry(Bot &bot, string regex);
 
@@ -131,13 +126,10 @@ string debug(string text) {
 	return "see cerr";
 }
 
-string todo(string text) {
-	// TODO: db
-	ofstream out(config::todoFileName, std::ios::app);
-	if(!out.good())
-		return "error: couldn't save to TODO file";
-	out << text << endl;
-	return "saved!";
+string todo(Bot *bot, string text) {
+	if(bot->todos.push(text))
+		return "saved!";
+	return "error: couldn't save";
 }
 
 Variable toint(Variable var) { return var.asInteger(); }
