@@ -137,9 +137,20 @@ void teval(vector<string> args) {
 	}
 }
 
+
+void setupDB(Database &db);
+void setupDB(Database &db) {
+	db.executeVoid("PRAGMA cache_size = 10000;");
+	db.executeVoid("PRAGMA page_size = 8192;");
+	db.executeVoid("PRAGMA temp_store = MEMORY;");
+	db.executeScalar<string>("PRAGMA journal_mode = WAL;");
+	db.executeVoid("PRAGMA synchronous = NORMAL;");
+}
+
 void importGoogleNGramData();
 void importGoogleNGramData() {
 	Database db{config::databaseFileName};
+	setupDB(db);
 	Dictionary dictionary{db};
 
 	const int minYear = 2015 - 30;
@@ -149,10 +160,14 @@ void importGoogleNGramData() {
 	vector<ngramStore> ngramStores{};
 	for(int i = 0; i < maxOrder; ++i) {
 		ngramDBs[i].open("ngrams_" + to_string(i) + ".db");
+		setupDB(ngramDBs[i]);
 		ngramStores.emplace_back(ngramDBs[i]);
 	}
 
-	sqlite_int64 lines = 0;
+	Clock clock{};
+	auto lastTime = clock.now();
+
+	sqlite_int64 lines = 0, totalLines = 0;
 	string line;
 	// while there is more input coming
 	while(!cin.eof()) {
@@ -161,6 +176,13 @@ void importGoogleNGramData() {
 
 		if(line.empty())
 			continue;
+
+		totalLines++;
+
+		if(lastTime < clock.now() - 10) {
+			lastTime = clock.now();
+			cerr << lastTime << " " << totalLines << " " << lines << endl;
+		}
 
 		auto fields = util::split(line, "\t");
 		if(fields.size() != 4) {
@@ -192,11 +214,17 @@ void importGoogleNGramData() {
 		for(auto &bit : bits)
 			prefix.push_back(dictionary[bit]);
 
-		ngramStores[prefix.size()].increment(ngram_t{prefix, atom}, count);
+		{
+			auto tran = ngramDBs[prefix.size()].transaction();
+			ngramStores[prefix.size()].increment(ngram_t{prefix, atom}, count);
+		}
+
 		lines++;
 	}
 
-	cerr << "lines: " << lines << endl;
+	lastTime = clock.now();
+	cerr << lastTime << " " << totalLines << " " << lines << endl
+		<< lastTime << " done" << endl;
 }
 
 int main(int argc, char **argv) {
