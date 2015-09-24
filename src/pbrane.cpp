@@ -7,6 +7,7 @@ using std::endl;
 #include <string>
 using std::string;
 using std::getline;
+using std::to_string;
 
 #include <vector>
 using std::vector;
@@ -36,6 +37,7 @@ using util::trim;
 using zidcu::Database;
 #include "bot.hpp"
 #include "sed.hpp"
+#include "ngram.hpp"
 
 struct PrivateMessage {
 	string network{};
@@ -135,6 +137,68 @@ void teval(vector<string> args) {
 	}
 }
 
+void importGoogleNGramData();
+void importGoogleNGramData() {
+	Database db{config::databaseFileName};
+	Dictionary dictionary{db};
+
+	const int minYear = 2015 - 30;
+	const int maxOrder = 6;
+
+	vector<Database> ngramDBs{maxOrder};
+	vector<ngramStore> ngramStores{};
+	for(int i = 0; i < maxOrder; ++i) {
+		ngramDBs[i].open("ngrams_" + to_string(i) + ".db");
+		ngramStores.emplace_back(ngramDBs[i]);
+	}
+
+	sqlite_int64 lines = 0;
+	string line;
+	// while there is more input coming
+	while(!cin.eof()) {
+		// read the current line of input
+		getline(cin, line);
+
+		if(line.empty())
+			continue;
+
+		auto fields = util::split(line, "\t");
+		if(fields.size() != 4) {
+			cerr << "fields.size: " << fields.size() << endl;
+			cerr << "invalid line: \"" << line << "\"" << endl;
+			continue;
+		}
+
+		auto ngram = fields[0];
+		auto year = util::fromString<int>(fields[1]);
+		auto count = util::fromString<int>(fields[2]);
+		//auto vcount = util::fromString<int>(fields[3]);
+
+		if(year < minYear)
+			continue;
+
+		auto bits = util::split(ngram, " ");
+		if(bits.size() >= maxOrder) {
+			cerr << "bits.size over maxOrder: " << bits.size()
+				<< " >= " << maxOrder << endl;
+			cerr << "invalid line: \"" << line << "\"" << endl;
+			continue;
+		}
+
+		auto atom = dictionary[bits.back()];
+		bits.pop_back();
+
+		prefix_t prefix;
+		for(auto &bit : bits)
+			prefix.push_back(dictionary[bit]);
+
+		ngramStores[prefix.size()].increment(ngram_t{prefix, atom}, count);
+		lines++;
+	}
+
+	cerr << "lines: " << lines << endl;
+}
+
 int main(int argc, char **argv) {
 	vector<string> args;
 	for(int i = 1; i < argc; ++i)
@@ -150,6 +214,10 @@ int main(int argc, char **argv) {
 			for(auto &arg2 : args)
 				if(!startsWith(arg2, "--"))
 					prettyPrint(arg2);
+			return 0;
+		}
+		if(arg == "--importGoogle") {
+			importGoogleNGramData();
 			return 0;
 		}
 
