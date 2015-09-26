@@ -23,6 +23,7 @@ ${ (bot.hversion < 1)? { !on 'shutdown' (null => !rm 'bot.crashed') } }
 ${ (bot.hversion < 1)? { (eval => !args) } }
 ${ (bot.hversion < 1)? { (alias => !eval $1 + " => !" + $2 + " args") } }
 ${ (bot.hversion < 1)? { !alias 'rword' 'ngrandom' } }
+${ (bot.hversion < 1)? { !alias 'dsize' 'prefixOptions' } }
 
 ${ (bot.hversion < 1)? { toUs => text =~ ('/^(' + bot.nick + '\\w*[:,]?\\s*)/') } }
 
