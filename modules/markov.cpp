@@ -178,11 +178,9 @@ sqlite_int64 chainCount(Bot *bot, string chain_s) {
 	return chain.count;
 }
 sqlite_int64 prefixOptions(Bot *bot, string prefix_s) {
-	throw (string)"error: prefixOptions unimplemented"; // TODO implement
+	return bot->ngStore.chainsWithPrefix(make_prefix(bot, prefix_s));
 }
-sqlite_int64 totalChains(Bot *bot) {
-	throw (string)"error: totalChains unimplemented"; // TODO implement
-}
+sqlite_int64 totalChains(Bot *bot) { return bot->ngStore.count(); }
 
 
 
