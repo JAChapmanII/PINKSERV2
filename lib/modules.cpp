@@ -84,7 +84,7 @@ bool modules::init(Bot *bot) {
 	cerr << "moudles::init: " << endl;
 	defineModules();
 
-	//cerr << "    dictionary size: " << global::dictionary.size() << endl;
+	cerr << "    dictionary size: " << bot->dictionary.size() << endl;
 
 	setupFunctions(bot);
 	return true;
