@@ -71,6 +71,22 @@ bool ngramStore::exists(ngram_t ngram) {
 			ngram);
 	return (count ? *count > 0 : false);
 }
+sqlite_int64 ngramStore::chainsWithPrefix(prefix_t prefix) {
+	createTable(prefix.size());
+	return _db.executeScalar<sqlite_int64>(
+			_builder.chainsWithPrefix(prefix.size()), prefix)
+		.value_or(0);
+}
+sqlite_int64 ngramStore::count() {
+	static const int maxOrder = 6;
+	sqlite_int64 count = 0;
+	for(int order = 0; order < maxOrder; ++order) {
+		createTable(order);
+		count += _db.executeScalar<sqlite_int64>(_builder.count(order))
+			.value_or(0);
+	}
+	return count;
+}
 template<typename Generator>
 word_t ngramStore::random(prefix_t prefix, Generator &g) {
 	createTable(prefix.size());
@@ -176,6 +192,20 @@ string ngramStoreStatementBuilder::prefixFetch(int order) const {
 	if(!where.empty()) where = " WHERE " + where;
 
 	return "SELECT " + pkColumns + " atom, count * count FROM " + table(order) + where;
+}
+string ngramStoreStatementBuilder::chainsWithPrefix(int order) const {
+	if(order == 0)
+		return count(0);
+
+	vector<string> clauses;
+	for(int i = 0; i < order; ++i)
+		clauses.push_back("(" + column(i) + " = ?" + to_string(i + 1) + ")");
+
+	return "SELECT COUNT(1) FROM " + table(order)
+		+ " WHERE " + util::join(clauses, " AND ");
+}
+string ngramStoreStatementBuilder::count(int order) const {
+	return "SELECT COUNT(1) FROM " + table(order);
 }
 
 

@@ -42,6 +42,8 @@ struct ngramStoreStatementBuilder {
 	std::string ngramIncrement(int order) const;
 	std::string prefixCount(int order) const;
 	std::string prefixFetch(int order) const;
+	std::string chainsWithPrefix(int order) const;
+	std::string count(int order) const;
 
 	private:
 		std::string _baseTableName{};
@@ -53,6 +55,9 @@ struct ngramStore {
 	chain_t fetch(ngram_t ngram);
 	void increment(ngram_t ngram, int amount = 1);
 	bool exists(ngram_t ngram);
+
+	sqlite_int64 chainsWithPrefix(prefix_t prefix);
+	sqlite_int64 count();
 
 	template<typename Generator>
 	word_t random(prefix_t prefix, Generator &g);
