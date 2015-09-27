@@ -50,13 +50,25 @@ void learn(Bot *bot, vector<word_t> words, int increment) {
 	}
 }
 
-prefix_t make_prefix(Bot *bot, string text);
-prefix_t make_prefix(Bot *bot, string text) {
+prefix_t make_prefix(Bot *bot, string text, bool allowAnchor = false);
+prefix_t make_prefix(Bot *bot, vector<string> words, bool allowAnchor);
+
+prefix_t make_prefix(Bot *bot, string text, bool allowAnchor) {
 	auto words = util::split(text);
 
+	return make_prefix(bot, words, allowAnchor);
+}
+
+prefix_t make_prefix(Bot *bot, vector<string> words, bool allowAnchor) {
 	prefix_t prefix;
-	for(auto &word : words)
-		prefix.push_back(bot->dictionary[word]);
+	for(auto &word : words) {
+		if(allowAnchor && word == "{$}")
+			prefix.push_back((word_t)Anchor::End);
+		else if(allowAnchor && word == "{^}")
+			prefix.push_back((word_t)Anchor::Start);
+		else
+			prefix.push_back(bot->dictionary[word]);
+	}
 	return prefix;
 }
 
@@ -164,13 +176,15 @@ sqlite_int64 chainCount(Bot *bot, string chain_s) {
 	if(words_s.size() < 1)
 		throw string{"chainCount requires a chain (at least one word)}"};
 
-	word_t atom = bot->dictionary[words_s.back()];
-	words_s.pop_back();
+	auto atom_s = words_s.back(); words_s.pop_back();
 
-	prefix_t prefix;
-	prefix.reserve(words_s.size());
-	for(auto &word : words_s)
-		prefix.push_back(bot->dictionary[word]);
+	auto atom = bot->dictionary[atom_s];
+	if(atom_s == "{$}")
+		atom = (word_t)Anchor::End;
+	if(atom_s == "{^}")
+		atom = (word_t)Anchor::Start;
+
+	auto prefix = make_prefix(bot, words_s, true);
 
 	ngram_t ngram{prefix, atom};
 
@@ -178,7 +192,7 @@ sqlite_int64 chainCount(Bot *bot, string chain_s) {
 	return chain.count;
 }
 sqlite_int64 prefixOptions(Bot *bot, string prefix_s) {
-	return bot->ngStore.chainsWithPrefix(make_prefix(bot, prefix_s));
+	return bot->ngStore.chainsWithPrefix(make_prefix(bot, prefix_s, true));
 }
 sqlite_int64 totalChains(Bot *bot) { return bot->ngStore.count(); }
 
