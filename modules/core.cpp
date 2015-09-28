@@ -1,130 +1,151 @@
 #include "core.hpp"
+using std::vector;
 using std::string;
-using std::ostream;
-using std::istream;
-using boost::smatch;
 
-#include <ctime>
+#include <random>
+using std::uniform_int_distribution;
+using std::uniform_real_distribution;
+
+#include <iostream>
+using std::cout;
+using std::cerr;
+using std::endl;
 
 #include "global.hpp"
 #include "util.hpp"
-using util::join;
 using util::contains;
-using util::fromString;
-using util::asString;
-#include "modules.hpp"
+using util::join;
+#include "parser.hpp"
+#include "expression.hpp"
 
+Entry regexRandomEntry(Bot &bot, string regex);
 
-IgnoreFunction::IgnoreFunction() : Function( // {{{
-		"ignore", "Ignore a user", "^!ignore(?:\\s+(!)?(\\S+))?", true) {
-}// }}}
-string IgnoreFunction::run(ChatLine line, smatch matches) { // {{{
-	if(!global::isOwner(line.nick) && !global::isAdmin(line.nick))
-		return "";
-
-	string nstring = matches[1], nick = matches[2];
-	if(nstring.empty() && nick.empty()) {
-		if(global::ignoreList.empty())
-			return line.nick + ": not ignoring anyone";
-		return line.nick + ": " + join(global::ignoreList);
+string help(Bot *bot, string function) {
+	if(!function.empty()) {
+		if(!contains(global::moduleFunctionList, function))
+			return "error: requested function does not exist";
+		return bot->vars.getString(function + ".help");
 	}
+	return join(global::moduleFunctionList, ", ");
+}
 
-	if(nstring.empty()) {
-		if(contains(global::ignoreList, nick))
-			return ""; //fargs.nick + ": " + nick + " already ignored";
+string list(Bot *bot) {
+	auto ps = util::split(bot->vars.getString("bot.plist"));
+	auto fs = bot->vars.getExecutable();
+	for(auto &n : ps)
+		fs.erase(std::remove(fs.begin(), fs.end(), n), fs.end());
+	return util::join(fs);
+}
 
-		global::ignoreList.push_back(nick);
-		return line.nick + ": ignored " + nick;
+void irc(string command) { cout << command << endl; }
+
+string echo(string args) { return args; }
+
+Variable core_or(Bot *bot, vector<Variable> arguments) {
+	uniform_int_distribution<> uid(0, arguments.size() - 1);
+	unsigned target = uid(bot->rengine);
+	return arguments[target];
+}
+
+long rand(Bot *bot, long low, long high) {
+	if(low > high)
+		throw (string)"rand's second parameter must be larger";
+	if(low == high)
+		return low;
+	uniform_int_distribution<long> lrng(low, high);
+	return lrng(bot->rengine);
+}
+
+double drand(Bot *bot, double low, double high) {
+	if(low > high)
+		throw (string)"drand's second parameter must be larger";
+	uniform_real_distribution<double> lrng(low, high);
+	return lrng(bot->rengine);
+}
+
+string type(vector<Variable> arguments) {
+	string res;
+	for(auto arg : arguments) {
+		switch(arg.type) {
+			case Type::Integer: res += arg.toString() + ":Integer"; break;
+			case Type::Double: res += arg.toString() + ":Double"; break;
+			case Type::Boolean: res += arg.toString() + ":Boolean"; break;
+			case Type::String: res += arg.toString() + ":String"; break;
+			default: res += "(" + arg.toString() + ":error)"; break;
+		}
+		res += " ";
 	}
+	res.pop_back();
+	return res;
+}
 
-	if(!contains(global::ignoreList, nick))
-		return line.nick + ": user isn't ignored currently";
+bool defined(Bot *bot, string name) { return bot->vars.defined(name); }
+bool undefined(Bot *bot, string name) { return !bot->vars.defined(name); }
 
-	auto it = find(global::ignoreList.begin(), global::ignoreList.end(), nick);
-	if(*it != nick)
-		return line.nick + ": error, it not nick!?";
+// TODO: we need to know the caller for this to work... (perms)
+void rm(Bot *bot, string name) { bot->vars.erase(name); }
 
-	global::ignoreList.erase(it);
-	return line.nick + ": " + nick + " no longer ignored ";
-} // }}}
-ostream &IgnoreFunction::output(ostream &out) { // {{{
-	unsigned char size = global::ignoreList.size();
-	out << size;
-	for(auto nick : global::ignoreList)
-		brain::write(out, nick);
-	return out;
-}// }}}
-istream &IgnoreFunction::input(istream &in) { // {{{
-	int size = in.get();
-	if(size < 0)
-		return in;
-	for(int i = 0; i < size; ++i) {
-		string nick;
-		brain::read(in, nick);
-		global::ignoreList.push_back(nick);
+void sleep(Bot *bot) { bot->done = true; }
+
+long jsize(Bot *bot) { return bot->journal.size(); }
+
+Entry regexRandomEntry(Bot &bot, string regex) {
+	auto lines = bot.journal.fetch(RegexPredicate{regex});
+	if(lines.size() < 1)
+		throw (string)"no matches";
+
+	uniform_int_distribution<> uid(0, lines.size() - 1);
+	unsigned target = uid(bot.rengine);
+	return lines[target];
+}
+
+string rgrep(Bot *bot, string regex) {
+	return regexRandomEntry(*bot, regex).arguments;
+}
+
+string rline(Bot *bot, string regex) {
+	auto line = regexRandomEntry(*bot, regex);
+	return "<" + line.nick() + "> " + line.arguments;
+}
+
+string debug(string text) {
+	cerr << "debug: \"" << text << "\"" << endl;
+	try {
+		auto expr = Parser::parse(text);
+		if(!expr)
+			cerr << "expr is null" << endl;
+		else
+			cerr << "expr: " << endl << expr->pretty() << endl;
+	} catch(ParseException e) {
+		cerr << e.pretty() << endl;
+	} catch(StackTrace e) {
+		cerr << e.toString() << endl;
+	} catch(string &s) {
+		cerr << "string type error: " << s << endl;
 	}
-	return in;
-} // }}}
+	return "see cerr";
+}
 
+string todo(Bot *bot, string text) {
+	if(bot->todos.push(text))
+		return "saved!";
+	return "error: couldn't save";
+}
 
-HelpFunction::HelpFunction() : Function( // {{{
-		"help", "Do you really need to ask?", "^!help(\\s+(\\S+)?)?", false) {
-}// }}}
-string HelpFunction::run(ChatLine line, smatch matches) { // {{{
-	string func = matches[2];
-	if(func.empty()) {
-		string res;
-		for(auto i : modules::map)
-			res += i.second->name() + ", ";
-		return res.substr(0, res.length() - 2);
-	}
+Variable toint(Variable var) { return var.asInteger(); }
 
-	if(contains(modules::map, func))
-		return line.nick + ": " + modules::map[func]->help();
-	for(auto i : modules::map) {
-		if(i.second->name() == func)
-			return line.nick + ": " + i.second->help();
-	}
+// TODO: vector of long
+string bmess(vector<Variable> arguments) {
+	if(arguments.size() < 1)
+		return "error: bmess takes a list of bytes";
+	string res = "bmess: ";
+	for(auto &v : arguments)
+		res += (char)(v.asInteger().value.l & 0xFF);
+	return res;
+}
 
-	return line.nick + ": that function does not exist";
-} // }}}
-
-
-ShutupFunction::ShutupFunction() : Function( // {{{
-		"quiet", "Make me quiet for a default or a user specified amount of time",
-		"^!quiet(\\s+(\\d+))?", false) {
-}// }}}
-string ShutupFunction::run(ChatLine line, smatch matches) { // {{{
-	unsigned t = 120;
-	string num = matches[2];
-	if(!num.empty())
-		t = fromString<unsigned>(num);
-	if(t > 180)
-		t = 180;
-
-	global::minSpeakTime = time(NULL) + t*60;
-	return line.nick + ": yes sir, shutting up for " + asString(t) + " minutes";
-} // }}}
-
-
-UnShutupFunction::UnShutupFunction() : Function( // {{{
-		"unquiet", "Get me to talk again", "!unquiet", false) {
-}// }}}
-string UnShutupFunction::run(ChatLine line, smatch matches) { // {{{
-	global::minSpeakTime = time(NULL) - 1;
-	return line.nick + ": OK! :D";
-} // }}}
-
-
-KickFunction::KickFunction() : Function( // {{{
-		"kick", "Kick a user", "!kick(\\s+(\\w+))", false) {
-}// }}}
-string KickFunction::run(ChatLine line, smatch matches) { // {{{
-	string user = matches[2];
-	if(global::isOwner(line.nick) || global::isAdmin(line.nick)) {
-		global::kick(line.target, user, line.nick + " said so");
-		return line.nick + ": (tried to) kick " + user;
-	}
-	return line.nick + ": you are not authed to do that";
-} // }}}
+string pol(string body) {
+	auto e = Parser::parse("${ " + body + " }");
+	return e->prettyOneLine();
+}
 

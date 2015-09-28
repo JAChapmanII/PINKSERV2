@@ -1,0 +1,10 @@
+${ dubstep => "WUB WUB WUB" }
+
+${ matchi => $1 =~ "/(?i)" + $2 + "/" }
+
+${ !on 'text' (null => (!matchi text "(wub|dubstep)")? !dubstep) }
+
+!dubstep
+dubstep
+wub
+

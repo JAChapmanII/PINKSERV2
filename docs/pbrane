@@ -1,0 +1,82 @@
+pbrane is the scripting language used by this bot.
+
+
+Note: The terms "lhs" and "rhs" used below reference the left and right hand
+sides of the operator respectively.
+
+
+Variables
+=========
+
+Variables may have alphanumeric and dots but must start with a letter:
+	my.var = 5;
+
+There are a few special variables:
+	$1, $2, ... are the arguments to a function
+	$r_, $r0, $r1, ... are special variables used by regex, discussed below
+
+
+regex
+-----
+
+Using the ~ or =~ operators, the user can use regex features. The resulting
+string on the left is put through a regex replace of the regex on the rhs.
+
+A regex can take a number of forms, all of which must be quoted:
+	/regex/             : Used just to attempt a match (no replacement performed)
+	/regex/replacement/ : Used to do a regex based replacement
+
+Either form can have flags appended to the end (not yet implemented). The
+delimiter does not have to be /, but must be consistent. For example:
+	("te/s/t" ~ ":/::") will result in "test"
+
+$r_ is the resulting text after replacement. $r1, $r2, ... will be the groups.
+
+
+Operators
+=========
+
+It currently supports (or will soon support) the following operations:
+
+	=  This assigns the result of the rhs to the lhs
+	=> This binds the rhs expression as a function
+	~  This applies a regex of the rhs on the lhs and returns the text
+	=~ This applies a regex of the rhs on the lhs and returns true/false
+	?  This runs the rhs if the lhs is true
+	?: This is the standard ternary operator, it runs the middle if lhs is
+	     true, and the rhs otherwise
+
+Standard logical operators:    <   >   >=   <=   ==   !=   &&   ||
+Standard arithmetic operators: +   -   /   *   %   ^
+Combination assignments:       +=  -=  /=  *=  %=  ^=  ~=
+
+Post- and prefix increment and decrement.
+
+
+Built-in functions/modules
+==========================
+
+There are a number of built-in functions or modules. These are defined at
+compile time, but users may add their own if they want more complicated
+functionality not currently provided by pbrane. See the docs/modules file for
+information regarding creating new modules.
+
+
+markov module
+-------------
+
+The markov module provides a way to construct strings of text based on
+previous user input.
+
+TODO: talk about the functions provided here.
+
+
+Examples
+========
+
+Examples of working pbrane scripts can be found inside the pscript/ directory.
+A bash script to run these un-interactively can be found in bin/
+
+Run the sl script as user bob:
+	./bin/rpscript sl bob
+

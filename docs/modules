@@ -1,0 +1,51 @@
+Modules should be defined in the modules/ directory.
+
+To get your modules detected and integrated at compile time, you must add
+special comments marking the file as a module and telling the makemods script
+which functions should be injected into the pbrane interpreter.
+
+All modules should have a #m line. The general format is:
+	// #m: module name: description
+
+
+For any functions you want accesible from the running pbrane environment, you
+should have a #f line. The format of these lines is:
+	// #f: function name: description (used as help message)
+
+If the pbrane function name should be different from the C++-source function
+name, you can put the following in the function name field:
+	c++_name = pbrane_name
+
+
+Functions can use c++ native types. Return types and arguments will be
+automatically coerced to/from pbrane interpter Variables. Some example
+function signatures:
+	void noop();
+	string echo(string str);
+	long add(long a, long b);
+
+If you need access to the running bot context, make the first parameter a Bot *
+	void recordLine(Bot *bot);
+
+The modules namespace from lib/ contains the type 'Word' which is coerced from
+a single word (space delimited) instead of consuming all remaining arguments
+from the interpreter like string does. string can be empty, while Word cannot.
+
+Types that can be arguments:
+	string, Word, long, double, vector<Variable>, Variable
+
+	(vector<Variable> will consume all remaining variables as they are handled
+	by the interpter, while Variable will only consume the next one)
+
+Types that can be the return value:
+	void, Variables, sqlite_int64
+
+	(as well as anything that can be passed directly into the Variable
+	constructor, like chra *, string, bool, double and long)
+
+
+Currently (2015-09-19), the automatic wrapping of c++ functions for use in the
+pbrane interpreter is a little brittle. See the lib/modules* files for more
+information. More user-friendly error messages when failing to bind a function
+are still forthcoming.
+

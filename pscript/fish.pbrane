@@ -1,0 +1,6 @@
+${ fish => !or "<><" "><>" }
+${ eval => !$1 }
+${ fishes => !eval ("!echo " + "{!fish}" * {!rand 2 7}) }
+
+!fish
+!fishes

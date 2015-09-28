@@ -1,2 +1,4 @@
-pbrane
+bin/pbrane
+lib/modules.cpp.gen
+
 *.o

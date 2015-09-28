@@ -1,57 +1,14 @@
 #ifndef MODULES_MATH_HPP
 #define MODULES_MATH_HPP
 
-#include "function.hpp"
+#include "variable.hpp"
 
-// lg
-class BinaryLogFunction : public Function {
-	public:
-		BinaryLogFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
-// set a variable to something
-class SetFunction : public Function {
-	public:
-		SetFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
-// erase a variable
-class EraseFunction : public Function {
-	public:
-		EraseFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
-// list all variables
-class ListFunction : public Function {
-	public:
-		ListFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
-// get the value of a variable
-class ValueFunction : public Function {
-	public:
-		ValueFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
+// #m: math: math functions
 
-// increment a variable
-class IncrementFunction : public Function {
-	public:
-		IncrementFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
-// decrement a variable
-class DecrementFunction : public Function {
-	public:
-		DecrementFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
+// #f: math_pow = pow: raise a number to a power
+long math_pow(long base, long exp);
 
-// arbitrary expression function
-class MathFunction : public Function {
-	public:
-		MathFunction();
-		virtual std::string run(ChatLine line, boost::smatch matches);
-};
+// #f: math_sqrt = sqrt: take the square root of a number
+double math_sqrt(double arg);
 
 #endif // MODULES_MATH_HPP

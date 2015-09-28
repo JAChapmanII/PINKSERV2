@@ -1,140 +1,94 @@
 #include "modules.hpp"
+using std::map;
+using std::vector;
 using std::string;
+
+using modules::Module;
 
 #include <iostream>
 using std::cerr;
 using std::endl;
 
-#include <fstream>
-using std::ifstream;
-using std::ofstream;
-using std::fstream;
+#include "global.hpp"
 
-#include "config.hpp"
-
-// module includes
-#include "core.hpp"
-#include "markov.hpp"
-#include "math.hpp"
-#include "regex.hpp"
-#include "script.hpp"
-#include "simple.hpp"
-#include "todo.hpp"
-
-std::map<string, Function *> modules::map;
+map<string, InjectedFunction> modules::hfmap;
+vector<Module> modules::modules;
 static bool modules_inited = false;
 
-bool modules::init(std::string fileName) {
+Module findModule(string mname);
+
+void defineModules();
+void setupFunctions(Bot *bot);
+
+namespace modules {
+	namespace IFHelper {
+		template<> string coerce(vector<Variable> &vars) {
+			//if(vars.empty())
+				//throw string{"coerce: wanted string but has nothing"};
+			string res = util::join(vars, " ");
+			vars.clear();
+			return res;
+		}
+		template<> Word coerce(vector<Variable> &vars) {
+			if(vars.empty())
+				throw string{"coerce: wanted word but has nothing"};
+			string res = vars.front().toString();
+			vars.erase(vars.begin());
+			return Word{res.begin(), res.end()};
+		}
+		template<> long coerce(vector<Variable> &vars) {
+			if(vars.empty())
+				throw string{"coerce: wanted int but has nothing"};
+			long var = vars.front().asInteger().value.l;
+			vars.erase(vars.begin());
+			return var;
+		}
+		template<> double coerce(vector<Variable> &vars) {
+			if(vars.empty())
+				throw string{"coerce: wanted int but has nothing"};
+			double var = vars.front().asDouble().value.d;
+			vars.erase(vars.begin());
+			return var;
+		}
+		template<> vector<Variable> coerce(vector<Variable> &vars) {
+			auto copy = vars;
+			vars.clear();
+			return copy;
+		}
+		template<> Variable coerce(vector<Variable> &vars) {
+			if(vars.empty())
+				throw string{"coerce: wanted Variable but has nothing"};
+			Variable var = vars.front();
+			vars.erase(vars.begin());
+			return var;
+		}
+		template<> Variable makeVariable(Variable var) { return var; }
+		template<> Variable makeVariable(sqlite_int64 var) {
+			// TODO: this is terrible
+			return Variable((long int)var, Permissions());
+		}
+	}
+}
+
+Module findModule(string mname) {
+	for(auto mod : modules::modules)
+		if(mod.name == mname)
+			return mod;
+	throw (string)"module " + mname + " nonexistant";
+}
+
+bool modules::init(Bot *bot) {
 	if(modules_inited)
 		return true;
 
-	map["o/"] = new WaveFunction();
-	map["fish"] = new FishFunction();
-	map["<3"] = new LoveFunction();
-	map["sl"] = new TrainFunction();
-	map["dubstep"] = new DubstepFunction();
-	map["or"] = new OrFunction();
-	map["yes"] = new YesFunction(config::nick);
-	map["speak"] = new SayFunction();
-	map["tell"] = new TellFunction();
+	cerr << "moudles::init: " << endl;
+	defineModules();
 
-	map["set"] = new SetFunction();
-	map["++"] = new IncrementFunction();
-	map["--"] = new DecrementFunction();
-	map["erase"] = new EraseFunction();
-	map["value"] = new ValueFunction();
-	map["list"] = new ListFunction();
-	//map["lg"] = new BinaryLogFunction();
-	map["math"] = new MathFunction();
+	cerr << "    dictionary size: " << bot->dictionary.size() << endl;
 
-	map["s"] = new RegexFunction();
-	map["push"] = new PushFunction();
-	map["rlist"] = new ListRegexesFunction();
-	map["invoke"] = new InvokeFunction();
-
-	map["markov"] = new MarkovFunction();
-	map["count"] = new ChainCountFunction();
-	map["correct"] = new CorrectionFunction();
-	map["dsize"] = new DictionarySizeFunction();
-	map["rword"] = new RandomWordFunction();
-
-	map["todo"] = new TodoFunction(config::todoFileName);
-
-	map["ignore"] = new IgnoreFunction();
-	map["help"] = new HelpFunction();
-	map["shutup"] = new ShutupFunction();
-	map["unshutup"] = new UnShutupFunction();
-	map["kick"] = new KickFunction();
-
-	map["on"] = new OnRegexFunction();
-	map["explain"] = new ExplainFunction();
-
-	map["roulette"] = new RouletteFunction();
-	map["spin"] = new SpinFunction();
-
-	map["text"] = new TextFunction();
-
-	ifstream in(fileName, fstream::binary);
-	cerr << "  init: " << endl;
-	uint8_t hasDict = false;
-	if(!in.eof() && in.good())
-		hasDict = in.get();
-	if(!in.eof() && in.good() && hasDict)
-		global::dictionary.read(in);
-	cerr << "    read dictionary" << endl;
-	cerr << "    modules: " << endl;
-	while(!in.eof() && in.good()) {
-		int length = in.get();
-		if(!in.good()) {
-			break;
-		}
-		string name;
-		for(int i = 0; i < length; ++i) {
-			int c = in.get();
-			if(!in.good()) {
-				break;
-			}
-			name += (string)"" + (char)c;
-		}
-		Function *f = NULL;
-		for(auto module : map)
-			if(module.second->name() == name)
-				f = module.second;
-		if(f != NULL) {
-			in >> *f;
-		} else {
-			cerr << " (unable to find function! " << name << ") " << endl;
-			break;
-		}
-		cerr << " " << name;
-	}
-	cerr << endl;
+	setupFunctions(bot);
 	return true;
 }
 
-bool modules::deinit(std::string fileName) {
-	ofstream out(fileName, fstream::binary | fstream::trunc);
-	cerr << "  DEinit: " << endl;
-	out.put('y');
-	global::dictionary.write(out);
-	cerr << "    wrote dictionary" << endl;
-	cerr << "    modules: " << endl;
-	if(out.good()) {
-		for(auto m : map) {
-			string name = m.second->name();
-			unsigned char length = name.length();
-			out << length;
-			for(int i = 0; i < length; ++i)
-				out << name[i];
-			out << (*m.second);
-			cerr << " " << name;
-		}
-	} else
-		cerr << "out not good";
-	cerr << endl;
-
-	for(auto m : map)
-		delete m.second;
-	return true;
-}
+#include "modules.cpp.gen"
 

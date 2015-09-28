@@ -5,23 +5,25 @@
 #include <string>
 #include <map>
 #include <utility>
+#include "variable.hpp"
 
 namespace util {
 	template<typename T> T split(std::string str, std::string on = " \t\r\n");
 	std::vector<std::string> split(std::string str, std::string on = " \t\r\n");
+	template<typename T> std::string join(T strsB, T strsE, std::string with = ", ");
 	template<typename T> std::string join(T strs, std::string with = ", ");
 	std::string join(std::vector<std::string> strs, std::string with = ", ");
+	std::string join(std::vector<Variable> strs, std::string with = ", ");
 
 	template<typename T> std::vector<T> subvector(std::vector<T> vec,
 			size_t s, size_t n);
 	template<typename T> std::vector<T> last(std::vector<T> vec, size_t n);
 
 	std::string trim(std::string str, std::string what = " \t\r\n");
+	std::string trimWhitespace(std::string str);
 
 	bool startsWith(std::string str, std::string prefix);
-
-	template<typename T, typename F>
-			std::vector<T> filter(std::vector<T> vec, F func);
+	bool endsWith(std::string str, std::string suffix);
 
 	template<typename T> T fromString(std::string str);
 	template<typename T> std::string asString(T val);
@@ -32,6 +34,11 @@ namespace util {
 			bool contains(std::map<K, V> map, K key);
 	template<typename K, typename V>
 			bool contains(std::vector<std::pair<K, V>> list, K key);
+	bool contains(std::string str, char c);
+	bool contains(std::string str, std::string s);
+
+	// appends an ordinal string to the number (1 -> 1st, 2 -> 2nd, etc)
+	std::string toOrdinal(long num);
 
 	namespace file {
 		bool exists(std::string filename);

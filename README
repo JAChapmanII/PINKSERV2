@@ -1,6 +1,8 @@
-pbrane is an IRC bot. It's not designed very well, and it has a lot of what
-people might consider NIH syndrome. It is meant as a learning excersize and to
-be fun both to write and use.
+pbrane is an IRC bot.
+
+pbrane has what people might consider NIH syndrome, however it is meant as an
+excercize in play and learning.
+
 
 Building:
 	First of all, you may wish to change some constants in src/config.cpp .
@@ -10,10 +12,25 @@ Building:
 	Then run:
 		make
 
-Running:
-	This can be as simple as
-		./pbrane
+	Or:
+		tup
 
-	This works much the same way as jbotc. See its README for more information
-	and to see how to get pbrane connected to an IRC channel.
+Running:
+	This can be as simple as (but probably isn't):
+		./bin/pbrane
+
+	More likely you may wish to try:
+		./bin/rpbrane.sh
+
+	Or try:
+		./bin/rpscript.sh <pscript name> # such as sl
+	you can get a list of pscripts by looking in pscript/
+
+	Initially pbrane starts out as a blank slate. For common useful bits,
+	pipe the newbot file to her:
+		cat ./newbot.pbrane | ./bin/rpbrane.sh
+
+
+	You may want to investigate the jitro project if you wish to get pbrane
+	connected to a real IRC network.
 

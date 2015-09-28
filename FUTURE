@@ -1,0 +1,129 @@
+default args is %v
+return type if left off is inferred, or %d ?
+
+!reply sends back either $nick: text to a channel or just text to user
+if just text is result, !tell $here?
+hard coded "!has %d" to check for existence of (optional) arg
+markov::rword maybe is like choose? expose markov data as variables?
+ditch list variables?
+!push, !rlist and !s?
+
+
+$bot.ignore list of nicks to ignore
+
+execute things on events:
+	join
+	part/quit (same? or have "leave" as either?)
+	text
+	in (in 5m)
+	on (date)
+	every (every 5m) -- only let owner use? min time > 1 hour?
+		$bot.minEvery ?
+
+$here: either a channel or a nick depending on where the command is coming from
+$nick: the nick of the invoker
+$nicks: set of nicks that are here
+$text: the body of what was just said
+$ltext: the body of what was last said
+$toUs: true if to us, false otherwise
+$bot.nick: the bot's nick
+$bot.owner: the bot's owner
+$bot.admins: set of nicks which are admins
+$bot.maxLineLength: maximum length of output
+
+
+modes for everything:
+	bot owner has all permissions for everything
+	a (admin), o (owner), u (user), n:specific_nick (a specific person)
+		admin has all owner permissions
+		owner has all user permissions
+	r (read), w (writen), x (execute), m (modify), a (all)
+
+	default spec: [aax]
+		admin and owner have all permissions,
+		user has execute permissions
+
+functions can have errors
+there can be syntax errors
+
+
+argument specification:
+	%w -> word
+	%f -> float
+	%f[$v >= 0 && $v < 1] -> float between 0 (inclusive) and 1 (exclusive)
+		[] gives an expression which must match. $v is the currently attempted
+		to match thing
+	%i -> integer
+	%i[$v >= 0 && $v <= 1000] -> integer between 0 and 1000 inclusive
+	%s -> greedy "string" of words, or quote enclosed string (backtracks)
+	%n -> a currently active nick (for things like kick)
+
+	any specifier can be appended with ? for optional:
+		%w? -> optional word
+		%f[$v >= 0 && $v <= 1]? -> optional float between 0 and 1 inclusive
+
+	tests can refer to previous things:
+		%i %i[$v > $1]
+		an integer and an integer larger than that
+
+	can have literal characters that must be there, ex:
+		%n: you suck %ix
+		an active nick followed by a colon, some number of spaces, the words
+		"you suck", followed by some space, an integer follewd by the letter x
+		jac:      you suck     10000x
+
+	implied space between conjoined specifiers:
+		%i%f is really %i %f
+	but
+		%i: is really %i:
+	all space is really \s+ unless it is inside quotes
+		see the "you suck" thing above"
+
+	%v -> void (only valid as return type)
+	%d -> dynamic (delays type checking to eval time)
+	%e -> expression... either greedy or {!} enclosed
+
+	%x -> list of %w
+	%a -> vaild identifier? or just %w
+	%b -> bool
+
+
+lazy evaluation, strict type checking
+return type of functions is also specified
+%d can be used to make type checking lazy as well
+	%d can also mean tuple of things,
+		could eval to %i %f[0,1) %s
+
+user registration
+password
+gender:
+	$nick.pronoun, etc?
+
+
+special var namespaces: local, tmp
+	$local.shot for instance, would be a $shot variable that is only defined
+		for that function
+	$tmp.r would be a special $r that only exists during this execution of the
+		function
+
+
+Full text-index will be implemented in stages.
+	Initially, have it open a log file and do a standard search
+	at some point, we will be constructing an FM-index at startup for old
+	stuff, keeping new stuff in memory (most likely).
+	Possibly some other special strcutures? For various fuzzy searches?
+
+
+Switch from using only doubles or strings into type checked system. Add back
+in GMP support for large numbers.
+
+Automatically address caller if $nick.addressMe is set? Function specific?
+
+Keep track of various statistics:
+	bot.birthTime: first start date
+	bot.awakeTime: cumulative time bot is running
+	when things are defined
+	when things are last modified
+	how many times a function has been invoked
+	how many times a user has invoked functionality
+

@@ -1,104 +1,413 @@
 #include <iostream>
 using std::cin;
+using std::cout;
 using std::cerr;
 using std::endl;
 
 #include <string>
 using std::string;
 using std::getline;
+using std::to_string;
+
+#include <vector>
+using std::vector;
 
 #include <random>
 using std::random_device;
 
-#include <boost/regex.hpp>
-using boost::regex;
-using boost::smatch;
-using boost::regex_match;
-using boost::match_extra;
+#include <map>
+using std::map;
 
 #include "global.hpp"
-using global::isOwner;
-#include "chatline.hpp"
 #include "config.hpp"
+#include "journal.hpp"
 #include "modules.hpp"
 #include "util.hpp"
 using util::contains;
 using util::fromString;
+using util::asString;
+using util::split;
+using util::startsWith;
+using util::trim;
+#include "eventsystem.hpp"
+#include "expression.hpp"
+#include "parser.hpp"
+#include "regex.hpp"
+#include "db.hpp"
+using zidcu::Database;
+#include "bot.hpp"
+#include "sed.hpp"
+#include "ngram.hpp"
+
+struct PrivateMessage {
+	string network{};
+	string message{};
+	string nick{};
+	string target{};
+	Bot &bot;
+};
+typedef bool (*hook)(PrivateMessage pmsg);
+
+bool powerHook(PrivateMessage pmsg);
+bool regexHook(PrivateMessage pmsg);
+
+vector<hook> hooks = { &powerHook, &regexHook };
+
+void prettyPrint(string arg);
+void teval(vector<string> args);
+
+void prettyPrint(string arg) {
+	cout << arg << endl;
+	try {
+		auto et = parse(arg);
+		cout << et->pretty(' ', 4) << endl;
+	} catch(ParseException e) {
+		cerr << e.pretty() << endl;
+	}
+}
+
+void teval(vector<string> args) {
+	random_device randomDevice;
+	auto seed = randomDevice();
+
+	Database db{config::databaseFileName};
+	Options opts{};
+	opts.seed = seed;
+	Bot pbrane{db, opts, Clock{}, modules::init};
+
+	pbrane.vars.set("bot.owner", "jac");
+	pbrane.vars.set("bot.admins", "jac");
+
+	if(!args.empty()) {
+		for(auto &arg : args) {
+			if(arg.empty() || startsWith(arg, "--"))
+				continue;
+			cout << ": " << arg << endl;
+
+			try {
+				auto expr = Parser::parse(arg);
+				cout << "expr: " << (expr ? "true" : "false") << endl;
+
+				// print computed AST
+				cout << "final: " << endl;
+				cout << expr->pretty() << endl;
+				cout << "stringify: " << expr->toString() << endl;
+
+				cout << "result: " << expr->evaluate(pbrane.vm, "jac").toString() << endl;
+				// TODO: other exception types...
+			} catch(ParseException e) {
+				cout << e.pretty() << endl;
+			} catch(StackTrace e) {
+				cout << e.toString() << endl;
+			} catch(string &s) {
+				cout << "\t: " << s << endl;
+			}
+		}
+		return;
+	}
+
+	while(cin.good() && !cin.eof()) {
+		string nick, line;
+		getline(cin, nick);
+		getline(cin, line);
+		if(nick.empty() || line.empty())
+			break;
+
+		try {
+			auto expr = Parser::parse(line);
+
+			cerr << "eval'ing: " << line << " as " << nick << endl;
+			cerr << "final AST: " << endl;
+			cerr << expr->pretty() << endl;
+			cerr << "stringify: " << expr->toString() << endl;
+
+			string res = expr->evaluate(pbrane.vm, nick).toString();
+			cerr << "result: " << res << endl;
+			cout << nick + ": " << res << endl;
+
+			// TODO: other exception types
+		} catch(ParseException e) {
+			cerr << e.pretty() << endl;
+		} catch(StackTrace e) {
+			cout << e.toString() << endl;
+		} catch(string &s) {
+			cerr << "\texception: " << s << endl;
+			cout << nick + ": error: " + s << endl;
+		}
+	}
+}
+
+
+void setupDB(Database &db);
+void setupDB(Database &db) {
+	db.executeVoid("PRAGMA cache_size = 10000;");
+	db.executeVoid("PRAGMA page_size = 8192;");
+	db.executeVoid("PRAGMA temp_store = MEMORY;");
+	db.executeScalar<string>("PRAGMA journal_mode = WAL;");
+	db.executeVoid("PRAGMA synchronous = NORMAL;");
+}
+
+void importGoogleNGramData();
+void importGoogleNGramData() {
+	Database db{config::databaseFileName};
+	setupDB(db);
+	Dictionary dictionary{db};
+
+	const int minYear = 2015 - 30;
+	const int maxOrder = 6;
+
+	vector<Database> ngramDBs{maxOrder};
+	vector<ngramStore> ngramStores{};
+	for(int i = 0; i < maxOrder; ++i) {
+		ngramDBs[i].open("ngrams_" + to_string(i) + ".db");
+		setupDB(ngramDBs[i]);
+		ngramStores.emplace_back(ngramDBs[i]);
+	}
+
+	Clock clock{};
+	auto lastTime = clock.now();
+
+	sqlite_int64 lines = 0, totalLines = 0;
+	string line;
+	// while there is more input coming
+	while(!cin.eof()) {
+		// read the current line of input
+		getline(cin, line);
+
+		if(line.empty())
+			continue;
+
+		totalLines++;
+
+		if(lastTime < clock.now() - 10) {
+			lastTime = clock.now();
+			cerr << lastTime << " " << totalLines << " " << lines << endl;
+		}
+
+		auto fields = util::split(line, "\t");
+		if(fields.size() != 4) {
+			cerr << "fields.size: " << fields.size() << endl;
+			cerr << "invalid line: \"" << line << "\"" << endl;
+			continue;
+		}
+
+		auto ngram = fields[0];
+		auto year = util::fromString<int>(fields[1]);
+		auto count = util::fromString<int>(fields[2]);
+		//auto vcount = util::fromString<int>(fields[3]);
+
+		if(year < minYear)
+			continue;
+
+		auto bits = util::split(ngram, " ");
+		if(bits.size() >= maxOrder) {
+			cerr << "bits.size over maxOrder: " << bits.size()
+				<< " >= " << maxOrder << endl;
+			cerr << "invalid line: \"" << line << "\"" << endl;
+			continue;
+		}
+
+		auto atom = dictionary[bits.back()];
+		bits.pop_back();
+
+		prefix_t prefix;
+		for(auto &bit : bits)
+			prefix.push_back(dictionary[bit]);
+
+		{
+			auto tran = ngramDBs[prefix.size()].transaction();
+			ngramStores[prefix.size()].increment(ngram_t{prefix, atom}, count);
+		}
+
+		lines++;
+	}
+
+	lastTime = clock.now();
+	cerr << lastTime << " " << totalLines << " " << lines << endl
+		<< lastTime << " done" << endl;
+}
 
 int main(int argc, char **argv) {
-	unsigned int seed = 0;
-	if(argc > 1) {
-		seed = fromString<unsigned int>(argv[1]);
-	} else {
+	vector<string> args;
+	for(int i = 1; i < argc; ++i)
+		args.push_back(argv[i]);
+
+	Options opts{};
+	for(auto &arg : args) {
+		if (arg == "--teval") {
+			teval(args);
+			return 0;
+		}
+		if(arg == "--pprint") {
+			for(auto &arg2 : args)
+				if(!startsWith(arg2, "--"))
+					prettyPrint(arg2);
+			return 0;
+		}
+		if(arg == "--importGoogle") {
+			importGoogleNGramData();
+			return 0;
+		}
+
+		if(arg == "--import") {
+			opts.import = true;
+			cerr << "pbrane: import mode enabled" << endl;
+		} else if(arg == "--debugSQL") {
+			opts.debugSQL = true;
+			cerr << "pbrane: debug sql enabled" << endl;
+		} else if(arg == "--debugEventSystem") {
+			opts.debugEventSystem = true;
+			cerr << "pbrane: debug event system enabled" << endl;
+		} else if(arg == "--debugFunctionBodies") {
+			opts.debugFunctionBodies = true;
+			cerr << "pbrane: debug function bodies enabled" << endl;
+		} else if(arg == "--importLog") {
+			opts.import = true;
+			opts.importLog = true;
+			cerr << "pbrane: import log enabled" << endl;
+		} else {
+			opts.seed = fromString<unsigned int>(argv[1]);
+		}
+	}
+
+	if(args.empty()) {
 		random_device randomDevice;
-		seed = randomDevice();
+		opts.seed = randomDevice();
 	}
 
-	if(!global::init(seed)) {
-		cerr << "pbrane: global::init failed" << endl;
-		return -1;
-	}
-	global::log << "----- " << config::nick << " started -----" << endl;
-	cerr << "----- " << config::nick << " started -----" << endl;
-
-	regex privmsgRegex(config::regex::privmsg, regex::perl);
-	regex joinRegex(config::regex::join, regex::perl);
-
-	modules::init(config::brainFileName);
-	global::log << "loaded modules: ";
-	for(auto module : modules::map)
-		global::log << module.second->name() << " ";
-	global::log << endl;;
-
-	global::secondaryInit();
+	Database db{config::databaseFileName};
+	Bot pbrane{db, opts, Clock{}, modules::init};
 
 	// while there is more input coming
-	int done = 0;
-	while(!cin.eof() && !done) {
+	while(!cin.eof() && !pbrane.done) {
 		// read the current line of input
 		string line;
 		getline(cin, line);
 
-		smatch matches;
-		// if the current line is a PRIVMSG...
-		if(regex_match(line, matches, privmsgRegex)) {
-			string nick(matches[1]), target(matches[3]), message(matches[4]);
+		if(line.find_first_not_of(" \t\r\n") == string::npos)
+			continue;
 
-			// start out by trying to match the reload command
-			if(isOwner(nick) && (message == config::reload)) {
-				global::log << "----- RESTARTING -----" << endl;
-				global::log.flush();
-				done = 78;
-				break;
-			}
-			// next try to just die
-			if(isOwner(nick) && (message == config::die)) {
-				global::log << "----- DIEING -----" << endl;
-				return 77;
-			}
+		string network;
+		auto ts = Clock{}.now();
 
-			if(message.empty())
-				global::err << "main: message empty" << endl;
-			else
-				global::parse(ChatLine(nick, target, message));
-		// if the current line is a JOIN...
-		} else if(regex_match(line, matches, joinRegex)) {
-			// log all the join messages
-			global::log << matches[1] << " (" << matches[2] << ")"
-				<< " has joined " << matches[3] << endl;
-		// otherwise...
+		if(!opts.importLog) {
+			network = line.substr(0, line.find(" "));
+			line = line.substr(line.find(" ") + 1);
+
+			if(line.find_first_not_of(" \t\r\n") == string::npos)
+				continue;
 		} else {
-			// log all the failures
-			global::err << "NO MATCH: " + line << endl;;
+			auto fs = util::split(line, "|");
+			if(fs.size() < 3) {
+				cerr << "unable to parse log line" << endl;
+				cerr << "line: " << line << endl;
+				return 32;
+			}
+
+			ts = util::fromString<sqlite_int64>(fs[0]);
+			network = fs[1];
+			line = util::join(fs.begin() + 2, fs.end(), " ");
 		}
+
+		Entry entry{ts, network, line};
+		pbrane.journal.upsert(entry);
+
+		auto fields = split(line);
+		if(fields.empty()) continue;
+
+		if(entry.type == EntryType::Text) {
+			auto nick = entry.nick();
+			auto message = entry.arguments;
+			auto target = entry.where;
+
+			if(target == pbrane.vars.getString("bot.nick"))
+				target = nick;
+
+			// TODO: proper environment for triggers
+			pbrane.vars.set("nick", nick);
+			pbrane.vars.set("text", message);
+
+			// check for a special hook
+			bool wasHook = false;
+			if(!opts.import) {
+				for(auto h : hooks)
+					if((*h)({ network, message, nick, target, pbrane })) {
+						wasHook = true;
+						break;
+					}
+			}
+
+			if(wasHook)
+				entry.etype = ExecuteType::Hook;
+			// if the line is a ! command, run it
+			else if(message[0] == '!' && message.length() > 1) {
+				// it might be a !: to force intepretation line
+				if(message.size() > 1 && message[1] == ':')
+					pbrane.process(network, message.substr(2), nick, target);
+				else
+					pbrane.process(network, message, nick, target);
+				entry.etype = ExecuteType::Function;
+			} else if(message.substr(0, 2) == (string)"${" && message.back() == '}') {
+				pbrane.process(network, message, nick, target);
+				entry.etype = ExecuteType::Function;
+			} else if(message.substr(0, 2) == (string)"::") {
+				pbrane.process(network, message, nick, target);
+				entry.etype = ExecuteType::Function;
+			}
+			// otherwise, run on text triggers
+			else {
+				entry.etype = ExecuteType::None;
+
+				vector<Variable> results = pbrane.events.process(EventType::Text, pbrane.vm);
+				if(results.size() == 1)
+					pbrane.send(network, target, results.front().toString(), true);
+			}
+		}
+		if(entry.type == EntryType::Join) {
+			auto nick = entry.nick(), where = entry.where;
+
+			// TODO: proper environment for triggers
+			pbrane.vars.set("nick", nick);
+			pbrane.vars.set("where", where);
+
+			auto results = pbrane.events.process(EventType::Join, pbrane.vm);
+			if(results.size() == 1)
+				pbrane.send(network, where, results.front().toString(), true);
+		}
+		if(entry.type == EntryType::Nick) {
+			;// run nick triggers
+		}
+		if(entry.type == EntryType::Part || entry.type == EntryType::Quit) {
+			;// run leave triggers
+		}
+
+		pbrane.journal.upsert(entry);
 	}
 
-	// free memory associated with modules
-	modules::deinit(config::brainFileName);
+	cerr << "pbrane: exited main loop" << endl;
+	return 0;
+}
 
-	// deinit global
-	global::deinit();
+bool powerHook(PrivateMessage pmsg) {
+	if(pmsg.message[0] == ':') // ignore starting colon
+		pmsg.message = pmsg.message.substr(1);
+	if(pmsg.message == (string)"!restart" && pmsg.bot.isOwner(pmsg.nick))
+		return pmsg.bot.done = true;
+	if(pmsg.message == (string)"!save")
+		return pmsg.bot.done = true;
+	return false;
+}
+bool regexHook(PrivateMessage pmsg) {
+	if(pmsg.message[0] != 's')
+		return false;
+	if(pmsg.message.size() < 2)
+		return false;
+	if(((string)":/|").find(pmsg.message[1]) == string::npos)
+		return false;
 
-	return done - 1;
+	auto regex = pmsg.message.substr(1);
+	pmsg.bot.send(pmsg.network, pmsg.target, s(&pmsg.bot, regex), true);
+
+	return true;
 }
 

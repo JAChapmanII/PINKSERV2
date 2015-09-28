@@ -1,415 +1,204 @@
 #include "markov.hpp"
-using std::ostream;
-using std::istream;
-using boost::smatch;
-
-#include <random>
-using std::uniform_real_distribution;
-using std::uniform_int_distribution;
-using std::generate_canonical;
-
-#include <map>
-using std::map;
-
-#include <string>
+using std::vector;
 using std::string;
 
-#include <vector>
-using std::vector;
-
-#include <utility>
-using std::pair;
-using std::make_pair;
-
-#include <sstream>
-using std::stringstream;
+#include <random>
+using std::generate_canonical;
 
 #include <iostream>
+using std::cerr;
 using std::endl;
 
-#include <queue>
-using std::queue;
-
-#include "config.hpp"
 #include "util.hpp"
-using util::split;
-using util::join;
-using util::subvector;
-using util::last;
-using util::contains;
-using util::trim;
-using util::filter;
-using util::asString;
-using util::fromString;
 
-#include "brain.hpp"
-#include "global.hpp"
-using global::dictionary;
 
-#include "markovmodel.hpp"
+// TODO: turn into pbrane variable
+static int ngObserveMaxOrder = 4;
+static unsigned long long totalIncrements = 0;
+static string lastNGObserve = "";
+static long long ng_timestamp = 0;
 
-static const unsigned markovOrder = 2;
-static MarkovModel<markovOrder> markovModel;
+void learn(Bot *bot, vector<word_t> words, int increment = 1);
+void learn(Bot *bot, vector<word_t> words, int increment) {
+	{
+		auto tran = bot->db.transaction();
 
-// TODO: uhm, hmm?
-static string joinSeparator = " ";
-// TODO: best values for these?
-static vector<double> coefficientTable = { 1.0/128.0, 1.0/8.0, 1.0 };
+		for(int i = 0; i < (int)words.size(); ++i) {
+			vector<word_t> prefix;
+			ngram_t ngram{prefix, words[i]};
+			if(ngram.atom != (word_t)Anchor::Start
+					&& ngram.atom != (word_t)Anchor::End)
+				bot->ngStore.increment(ngram, increment);
+			totalIncrements++;
 
-// TODO: oh god why
-static bool lastWasQuestion = false;
-
-template<typename T>
-		T sum(vector<pair<string, T>> &l);
-template<typename T>
-		T value(vector<pair<string, T>> &l, string str);
-void insert(string text);
-void push(vector<string> words, unsigned order);
-string fetch(vector<string> words);
-string recover(string initial);
-string count(string initial);
-unsigned occurrences(vector<string> seed);
-
-template<typename T> // {{{
-		T sum(vector<pair<string, T>> &l) {
-	T s = 0;
-	for(auto i : l)
-		s += i.second;
-	return s;
-} // }}}
-template<typename T> // {{{
-		T value(vector<pair<string, T>> &l, string str) {
-	for(auto i : l)
-		if(i.first == str)
-			return i.second;
-	return 0;
-} // }}}
-
-// insert each possible map for a set of words using a specific order
-void push(vector<string> words, unsigned order) { // {{{
-	if(words.size() <= order)
-		return;
-	// special case the 0th order chain
-	if(order == 0) {
-		queue<string> empty;
-		for(auto w : words)
-			markovModel.increment(empty, w);
-		return;
-	}
-
-	// insert first chain (build word queue first)
-	queue<string> chain;
-	for(unsigned i = 0; i < order; ++i)
-		chain.push(words[i]);
-	markovModel.increment(chain, words[order]);
-
-	// insert the remaining chains
-	for(unsigned e = order + 1; e < words.size(); ++e) {
-		chain.pop();
-		chain.push(words[e - 1]);
-		markovModel.increment(chain, words[e]);
-	}
-} // }}}
-
-// simple way to push all possible orders of splits for a string
-void insert(string text) { // {{{
-	vector<string> words = split(text);
-	if(words.empty())
-		return;
-	for(unsigned o = 0; o <= markovOrder; ++o)
-		push(words, o);
-} // }}}
-
-// return a random endpoint given a seed
-string fetch(vector<string> seed) { // {{{
-	queue<string> chain;
-	for(auto i : seed)
-		chain.push(i);
-	while(chain.size() > markovOrder)
-		chain.pop();
-
-	map<unsigned, double> smoothModel;
-	double smoothModelTotal = 0;
-	double weight = 0;
-	while(!chain.empty()) {
-		map<unsigned, unsigned> cmodel = markovModel.endpoint(chain);
-		for(auto i : cmodel) {
-			weight = coefficientTable[chain.size()] * i.second / cmodel.size();
-			// TODO: see how the division here works out
-			smoothModel[i.first] += weight;
-			smoothModelTotal += weight;
+			for(int j = i + 1; j < (int)words.size(); ++j) {
+				ngram.prefix.push_back(ngram.atom);
+				ngram.atom = words[j];
+				if(ngram.order() > ngObserveMaxOrder)
+					break;
+				bot->ngStore.increment(ngram, increment);
+				totalIncrements++;
+			}
 		}
-		chain.pop();
 	}
 
-	// if we have nothing about that seed, return nothing
-	if(smoothModel.empty())
-		return "";
-
-	// add 0th order model
-	map<unsigned, unsigned> model0 = markovModel.endpoint(chain);
-	for(auto i : model0) {
-		weight = coefficientTable[0] * i.second / model0.size();
-		smoothModel[i.first] += weight;
-		smoothModelTotal += weight;
+	if(bot->clock.now() > ng_timestamp + 10) {
+		ng_timestamp = bot->clock.now();
+		cerr << ng_timestamp << " stats: "
+			<< bot->journal.size() << "L, "
+			<< totalIncrements << "I" << endl;
 	}
+}
 
-	// pick a random number in [0, total)
-	uniform_real_distribution<> urd(0, smoothModelTotal);
-	double r = urd(global::rengine);
+prefix_t make_prefix(Bot *bot, string text, bool allowAnchor = false);
+prefix_t make_prefix(Bot *bot, vector<string> words, bool allowAnchor);
 
-	// find the end point corresponding to that
-	auto i = smoothModel.begin();
-	for(; (i != smoothModel.end()) && (r >= i->second); ++i)
-		r -= i->second;
-	if(i == smoothModel.end()) {
-		global::err << "markov::fetch: oh shit ran off the end of ends!" << endl;
-		return "";
-	}
-	return dictionary[i->first];
-} // }}}
+prefix_t make_prefix(Bot *bot, string text, bool allowAnchor) {
+	auto words = util::split(text);
 
-// Handles returning markov chains by calling fetch repeatedly
-string recover(string initial) { // {{{
-	vector<string> chain = split(initial);
-	unsigned initialSize = chain.size();
+	return make_prefix(bot, words, allowAnchor);
+}
 
-	bool done = false;
-	while(!done) {
-		vector<string> seed;
-		// create the current seed
-		if(chain.size() < markovOrder)
-			seed = chain;
+prefix_t make_prefix(Bot *bot, vector<string> words, bool allowAnchor) {
+	prefix_t prefix;
+	for(auto &word : words) {
+		if(allowAnchor && word == "{$}")
+			prefix.push_back((word_t)Anchor::End);
+		else if(allowAnchor && word == "{^}")
+			prefix.push_back((word_t)Anchor::Start);
 		else
-			seed = last(chain, markovOrder);
+			prefix.push_back(bot->dictionary[word]);
+	}
+	return prefix;
+}
 
-		// find a random endpoint
-		string next = fetch(seed);
+string make_string(Bot *bot, prefix_t words);
+string make_string(Bot *bot, prefix_t words) {
+	// return the generated string
+	string rs;
+	for(auto &word : words)
+		rs += bot->dictionary[word] + " ";
+	return rs;
+}
 
-		// if it is empty, it's because we don't know anything about that
-		if(next.empty())
-			break;
+prefix_t generateSentence(Bot *bot, prefix_t words);
+prefix_t generateSentence(Bot *bot, prefix_t words) {
+	// TODO: newlines, respond
+	auto result = words;
 
-		// add next to the string
-		chain.push_back(next);
-
+	while(true && result.size() < 32) {
 		// check to see if we should try to pick another one or just be done
-		// the goal here is to make it more likely to fetch again when the
-		// string is small
-		double prob = 5.0 / (chain.size() - initialSize);
+		double prob = 0.999;
 
-		// if we haven't even reach chain length yet, make it twice as
-		// unlikely that we don't continue
-		if(chain.size() <= initialSize * 1.5)
-			prob += (1 - prob) / 2.0;
+		int rc = -1;
+		while((rc = bot->ngStore.random(words, bot->rengine)) == -1) {
+			if(words.empty())
+				break;
+			cerr << "stepping down from: " << words.size() << endl;
+			words.erase(words.begin());
+			prob *= .98;
+		}
+		if(rc == (int)Anchor::Start) continue;
+		if(rc == (int)Anchor::End) {
+			size_t len = result.size() - words.size();
+			if(generate_canonical<double, 10>(bot->rengine) < 0.05 * (len + 1)) {
+				cerr << "ngmarkov: end break" << endl;
+				break;
+			} else {
+				cerr << "ngmarkov: failed end break: " << (len + 1) << endl;
+				continue;
+			}
+		}
 
-		// cap the probability at something somewhat sensible
-		// 	aim for 50% chance to get to 12 words if it was capped each time
-		if(prob > .945)
-			prob = .945;
+		result.push_back(rc);
+		words.push_back(rc);
 
+		//if(chain.size() <= maxMarkovOrder * 2.5)
+			//prob += (1 - prob) / 2.0;
+		if(result.size() >= 25)
+			prob /= 10;
+
+		string nexts = bot->dictionary[rc];
 		// if we're currently ending with a punctuation, greatly increase the
 		// chance of ending and sounding somewhat coherent
-		if(((string)".?!;").find(next[next.length() - 1]) != string::npos)
+		if(((string)".?!;").find(nexts.back()) != string::npos)
 			prob /= 1.85;
 
 		// if a random num in [0, 1] is above our probability of ending, end
-		if(generate_canonical<double, 16>(global::rengine) > prob)
-			done = true;
+		if(generate_canonical<double, 16>(bot->rengine) > prob)
+			break;
 	}
 
-	// return the generated string
-	return join(chain, " ");
-} // }}}
-
-// count the occurrences of a seed
-unsigned occurrences(vector<string> seed) { // {{{
-	queue<string> chain;
-	for(auto i : seed)
-		chain.push(i);
-	return markovModel.total(chain);
-} // }}}
-
-// list chain count
-string count(string initial) { // {{{
-	vector<string> chain = split(initial);
-
-	string seed;
-	if(chain.size() < markovOrder)
-		seed = join(chain, joinSeparator);
-	else
-		seed = join(last(chain, markovOrder), joinSeparator);
-
-	vector<string> vseed = split(seed);
-	// count occurences of the seed string
-	unsigned total = occurrences(vseed);
-
-	// count total endpoints for all seeds
-	unsigned long totalEnds = 0;
-	//for(auto i : markovModel)
-		//totalEnds += i.second.size();
-
-	stringstream ss;
-	ss << "Chains starting with: " << seed << ": ("
-		// total unique endpoints for this seed, total occurences of this seed
-		<< markovModel[seed].size() << ", " << total << ") ["
-		// along with the total start points in the markov model
-		<< markovModel.size() << ", "
-		// finishing with total endpoints for all seeds
-		<< totalEnds << "]";
-
-	return ss.str();
-} // }}}
+	return result;
+}
 
 
-MarkovFunction::MarkovFunction() : Function( // {{{
-		"markov", "Returns a markov chain.", "^!markov\\s+(.+)", true) {
-} // }}}
-string MarkovFunction::run(ChatLine line, smatch matches) { // {{{
-	string seed = matches[1], r = recover(seed);
-	if(r == seed)
-		return "Sorry, I don't know anything about that";
-	return r;
-} // }}}
-string MarkovFunction::passive(ChatLine line, bool parsed) { // {{{
-	if(!parsed && !line.text.empty())
-		insert(line.text);
-	if(lastWasQuestion) {
-		lastWasQuestion = false;
-		return "Ah, OK! Thanks!";
-	}
+void observe(Bot *bot, string text) {
+	auto words = make_prefix(bot, text);
+	words.insert(words.begin(), (word_t)Anchor::Start);
+	words.push_back((word_t)Anchor::End);
 
-	if(generate_canonical<double, 16>(global::rengine) <
-			config::markovResponseChance) {
-		string res = recover(join(last(split(line.text), markovOrder + 1), " "));
-		if(res != line.text) {
-			if(res[res.length() - 1] == '?')
-				lastWasQuestion = true;
-			return res;
-		}
-	}
-	return "";
-} // }}}
-ostream &MarkovFunction::output(ostream &out) { // {{{
-	return markovModel.write(out);
-} // }}}
-istream &MarkovFunction::input(istream &in) { // {{{
-	return markovModel.read(in);
-} // }}}
+	learn(bot, words, 1);
+}
 
+void unlearn(Bot *bot, string text) {
+	auto words = make_prefix(bot, text);
 
-ChainCountFunction::ChainCountFunction() : Function( // {{{
-		"ccount", "Return number of markov chains", "^!c+ount\\s+(.+)", false) {
-} // }}}
-string ChainCountFunction::run(ChatLine line, smatch matches) { // {{{
-	return count(matches[1]);
-} // }}}
+	learn(bot, words, -4);
+}
+
+string ngrandom(Bot *bot, string text) {
+	auto prefix = make_prefix(bot, text);
+	word_t res = bot->ngStore.random(prefix, bot->rengine);
+	return bot->dictionary[res];
+}
+
+string markov(Bot *bot, string text) {
+	auto words = make_prefix(bot, text);
+	auto sentence = generateSentence(bot, words);
+	return make_string(bot, sentence);
+}
+
+string respond(Bot *bot, string text) {
+	auto words = make_prefix(bot, text);
+	words.push_back((word_t)Anchor::End);
+	words.push_back((word_t)Anchor::Start);
+
+	auto sentence = generateSentence(bot, words);
+	sentence.erase(sentence.begin(), sentence.begin() + words.size());
+
+	return make_string(bot, sentence);
+}
 
 
-CorrectionFunction::CorrectionFunction() : Function( // {{{
-		"correct", "Magically corrects you", "^!correct(\\s+.*)?", false) {
-} // }}}
-string CorrectionFunction::run(ChatLine line, smatch matches) { // {{{
-	for(auto l = global::lastLog.rbegin(); l != global::lastLog.rend(); ++l) {
-		string cline = this->correct(l->text);
-		if(!cline.empty())
-			return line.nick + ": maybe they meant " + cline;
-		break;
-	}
-	return line.nick + ": nothing irregular found, sorry";
-} // }}}
-string CorrectionFunction::passive(ChatLine line, bool parsed) { // {{{
-	if(parsed)
-		return "";
-	if(generate_canonical<double, 16>(global::rengine) <
-			config::correctionResponseChance) {
-		string cline = this->correct(line.text);
-		if(cline.empty())
-			return "";
-		// TODO: remove this entirely? Config option?
-		return /*line.nick + ": did you mean " +*/ cline;
-	}
-	return "";
-} // }}}
-string CorrectionFunction::correct(string line) { // {{{
-	vector<string> words = split(line);
-	words = filter(words, [](string s){ return !s.empty(); });
-	if(words.size() < markovOrder + 1)
-		return "";
-	global::log << "----- attempting to correct: " << line << endl;
-	string prefix = "";
-	unsigned last = words.size() - (markovOrder + 1);
-	for(unsigned i = 0; i < last; prefix += words[i] + " ", ++i) {
-		vector<string> currentPhrase = subvector(words, i, markovOrder);
-		string seed = join(currentPhrase, joinSeparator),
-				target = words[i + markovOrder];
+sqlite_int64 chainCount(Bot *bot, string chain_s) {
+	auto words_s = util::split(chain_s);
+	if(words_s.size() < 1)
+		throw string{"chainCount requires a chain (at least one word)}"};
 
-		unsigned ocount = occurrences(split(seed));
-		if(ocount == 0)
-			continue;
+	auto atom_s = words_s.back(); words_s.pop_back();
 
-		double ap = 1.0/ocount, p = 0;
-		// TODO: oh god, p is broken
-		//value(markovModel[seed], target) / (double)ocount;
+	auto atom = bot->dictionary[atom_s];
+	if(atom_s == "{$}")
+		atom = (word_t)Anchor::End;
+	if(atom_s == "{^}")
+		atom = (word_t)Anchor::Start;
 
-		global::log << "seed: \"" << seed << "\","
-			<< " target: \"" << target << "\", "
-			<< "p, ap: " << p << ", " << ap << endl;
+	auto prefix = make_prefix(bot, words_s, true);
 
-		if((ap > 0) && (p < ap * .60)) {
-			string res = trim(prefix);
-			if(!prefix.empty())
-				res += " ";
-			res += recover(join(currentPhrase, joinSeparator));
-			if(((string)".?;,:").find(res[res.length() - 1]) == string::npos)
-				res += "?";
-			return res;
-		}
-	}
-	return "";
-} // }}}
+	ngram_t ngram{prefix, atom};
+
+	chain_t chain = bot->ngStore.fetch(ngram);
+	return chain.count;
+}
+sqlite_int64 prefixOptions(Bot *bot, string prefix_s) {
+	return bot->ngStore.chainsWithPrefix(make_prefix(bot, prefix_s, true));
+}
+sqlite_int64 totalChains(Bot *bot) { return bot->ngStore.count(); }
 
 
-DictionarySizeFunction::DictionarySizeFunction() : Function( // {{{
-		"dsize", "Return number of unique 1-grams", "^!dsize(\\s+.*)?", false) {
-} // }}}
-string DictionarySizeFunction::run(ChatLine line, smatch matches) { // {{{
-	return line.nick + ": " + asString(dictionary.size());
-} // }}}
 
-RandomWordFunction::RandomWordFunction() : Function( // {{{
-		"rword", "Returns a random word (can be restricted to range)",
-		"^!rword(\\s+([\\d\\.-]+)\\s+([\\d\\.-]+).*?)?") {
-} // }}}
-string RandomWordFunction::run(ChatLine line, smatch matches) { // {{{
-	string mins = matches[2], maxs = matches[3];
-
-	queue<string> chain;
-	// get 0th order model
-	map<unsigned, unsigned> model0 = markovModel.endpoint(chain);
-	// TODO: already defined maybe?
-	double totalWeight = 0;
-	for(auto i : model0)
-		totalWeight += i.second;
-
-	double min = 0, max = 1;
-	if(!mins.empty())
-		min = fromString<double>(mins);
-	if(!maxs.empty())
-		max = fromString<double>(maxs);
-
-	// pick a random number in [0, total)
-	uniform_real_distribution<> urd(min, max * totalWeight);
-	double r = urd(global::rengine);
-
-	// find the end point corresponding to that
-	auto i = model0.begin();
-	for(; (i != model0.end()) && (r >= i->second); ++i)
-		r -= i->second;
-	if(i == model0.end()) {
-		global::err << "markov::fetch: oh shit ran off the end of ends!" << endl;
-		return "";
-	}
-	return dictionary[i->first];
-} // }}}
+string correct(Bot *bot, string text) {
+	throw (string)"error: correct unimplemented"; // TODO: implement
+}
 

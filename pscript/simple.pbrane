@@ -1,0 +1,9 @@
+${ match => $1 =~ "/" + $2 + "/" }
+::(!undefined 'bot.simplev')? bot.simplev = 0
+${ (bot.simplev < 1)? { !on 'text' (null => (!match text bot.nick)? !echo "yes") } }
+::bot.simplev = 1
+
+test
+test PINKSERV3 test
+PINKSERV3
+
