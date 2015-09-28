@@ -1,328 +1,204 @@
 #include "markov.hpp"
-using std::ostream;
-using std::istream;
 using std::vector;
 using std::string;
 
 #include <random>
-using std::uniform_real_distribution;
-using std::uniform_int_distribution;
 using std::generate_canonical;
 
-#include <map>
-using std::map;
-
-#include <utility>
-using std::pair;
-using std::make_pair;
-
-#include <sstream>
-using std::stringstream;
-
 #include <iostream>
+using std::cerr;
 using std::endl;
 
-#include <list>
-using std::list;
-
-#include <algorithm>
-using std::remove_if;
-
-#include "config.hpp"
 #include "util.hpp"
-using util::split;
-using util::join;
-using util::subvector;
-using util::last;
-using util::contains;
-using util::trim;
-using util::asString;
-using util::fromString;
 
-#include "brain.hpp"
-#include "global.hpp"
-using global::dictionary;
 
 // TODO: turn into pbrane variable
-static const unsigned maxMarkovOrder = 3;
-static MarkovModel markovModel;
+static int ngObserveMaxOrder = 4;
+static unsigned long long totalIncrements = 0;
+static string lastNGObserve = "";
+static long long ng_timestamp = 0;
 
-// TODO: uhm, hmm?
-static string joinSeparator = " ";
+void learn(Bot *bot, vector<word_t> words, int increment = 1);
+void learn(Bot *bot, vector<word_t> words, int increment) {
+	{
+		auto tran = bot->db.transaction();
 
-// insert each possible map for a set of words using a specific order
-void insert(string text);
-// simple way to push all possible orders of splits for a string
-void push(vector<string> words, unsigned order);
+		for(int i = 0; i < (int)words.size(); ++i) {
+			vector<word_t> prefix;
+			ngram_t ngram{prefix, words[i]};
+			if(ngram.atom != (word_t)Anchor::Start
+					&& ngram.atom != (word_t)Anchor::End)
+				bot->ngStore.increment(ngram, increment);
+			totalIncrements++;
 
-// return a random endpoint given a seed
-unsigned fetch(list<unsigned> words);
-string fetch(vector<string> words);
-// Handles returning markov chains by calling fetch repeatedly
-string recover(string initial, bool newline);
-
-// list chain count
-string count(string initial);
-
-ostream &dumpMarkov(ostream &out, MarkovModel *model, string prefix);
-ostream &dumpMarkov(ostream &out) {
-	list<unsigned> blank;
-	return dumpMarkov(out, markovModel[blank], "");
-}
-ostream &dumpMarkov(ostream &out, MarkovModel *model, string prefix) {
-	list<unsigned> blank;
-	for(auto it : *model) {
-		out << prefix << dictionary[it.first] << "  "
-			<< it.second->count(blank) << endl;
-		dumpMarkov(out, it.second, prefix + dictionary[it.first] + " ");
-	}
-	return out;
-}
-
-#include <iostream>
-using std::endl;
-using std::cerr;
-istream &readMarkov(istream &in) {
-	long count = 0;
-	in >> count;
-	string line;
-	getline(in, line);
-	for(long i = 0; i < count; ++i) {
-		getline(in, line);
-
-		vector<string> words = split(line);
-		int j = fromString<int>(words.back()) + 1;
-		words.pop_back();
-
-		list<unsigned> ws;
-		for(auto w : words)
-			ws.push_back(global::dictionary[w]);
-
-		markovModel.increment(ws, j);
-	}
-	return in;
-}
-
-void push(vector<string> words, unsigned order) {
-	if(words.size() <= order)
-		return;
-	// special case the 0th order chain
-	if(order == 0) {
-		for(auto w : words) {
-			list<unsigned> solo;
-			solo.push_back(dictionary[w]);
-			markovModel.increment(solo);
-		}
-		return;
-	}
-
-	// insert first chain (build word queue first)
-	list<unsigned> chain;
-	for(unsigned i = 0; i <= order; ++i)
-		chain.push_back(dictionary[words[i]]);
-	markovModel.increment(chain);
-
-	// insert the remaining chains
-	for(unsigned e = order + 1; e < words.size(); ++e) {
-		chain.pop_front();
-		chain.push_back(dictionary[words[e]]);
-		markovModel.increment(chain);
-	}
-}
-void insert(string text) {
-	vector<string> words = split(text, " ");
-	for(auto i = words.begin(); i != words.end(); ++i) {
-		if(i->length() > 1 && i->back() == '\n') {
-			auto t = i - words.begin();
-			string w = *i;
-			words.insert(words.begin() + t + 1, "\n");
-			words.insert(words.begin() + t + 1, w.substr(0, w.length() - 1));
-			words.erase(words.begin() + t);
-			i = words.begin() + t;
-		}
-	}
-	/*
-	cerr << "inserting: ";
-	for(auto i : words)
-		cerr << "\"" << i << "\" ";
-	cerr << endl;
-	*/
-	if(words.empty())
-		return;
-	for(unsigned o = 0; o <= maxMarkovOrder; ++o)
-		push(words, o);
-}
-
-unsigned fetch(list<unsigned> words) {
-	return markovModel.random(words);
-}
-string fetch(vector<string> seed) {
-	list<unsigned> seedl;
-	for(auto i : seed)
-		seedl.push_back(dictionary[i]);
-	return dictionary[fetch(seedl)];
-}
-string recover(string initial, bool newline) {
-	vector<string> ivec = split(initial +
-			(newline ? "\n" : ""));
-	unsigned initSize = ivec.size();
-	list<unsigned> chain;
-	for(auto i : ivec)
-		chain.push_back(dictionary[i]);
-
-	long newlineStreak = 0;
-	bool done = false;
-	while(!done) {
-		// find a random endpoint
-		unsigned next = fetch(chain);
-		string nexts = dictionary[next];
-		cerr << "nexts: \"" << nexts << "\"" << endl;
-
-		// if it is empty, it's because we don't know anything about that
-		if(next == 0)
-			break;
-
-		newlineStreak = (nexts.back() == '\n') ? newlineStreak + 1 : 0;
-
-		// if we hit a newline and we're in continue mode, try to get something
-		// else, unless we've hit a big streak of newlines (probably nothing to
-		// generate)
-		if(!newline) {
-			if(nexts.back() == '\n')
-				nexts.pop_back();
-			if(nexts.empty()) {
-				if(newlineStreak > 8) {
-					cerr << "newline streak break" << endl;
+			for(int j = i + 1; j < (int)words.size(); ++j) {
+				ngram.prefix.push_back(ngram.atom);
+				ngram.atom = words[j];
+				if(ngram.order() > ngObserveMaxOrder)
 					break;
-				} else
-					continue;
+				bot->ngStore.increment(ngram, increment);
+				totalIncrements++;
+			}
+		}
+	}
+
+	if(bot->clock.now() > ng_timestamp + 10) {
+		ng_timestamp = bot->clock.now();
+		cerr << ng_timestamp << " stats: "
+			<< bot->journal.size() << "L, "
+			<< totalIncrements << "I" << endl;
+	}
+}
+
+prefix_t make_prefix(Bot *bot, string text, bool allowAnchor = false);
+prefix_t make_prefix(Bot *bot, vector<string> words, bool allowAnchor);
+
+prefix_t make_prefix(Bot *bot, string text, bool allowAnchor) {
+	auto words = util::split(text);
+
+	return make_prefix(bot, words, allowAnchor);
+}
+
+prefix_t make_prefix(Bot *bot, vector<string> words, bool allowAnchor) {
+	prefix_t prefix;
+	for(auto &word : words) {
+		if(allowAnchor && word == "{$}")
+			prefix.push_back((word_t)Anchor::End);
+		else if(allowAnchor && word == "{^}")
+			prefix.push_back((word_t)Anchor::Start);
+		else
+			prefix.push_back(bot->dictionary[word]);
+	}
+	return prefix;
+}
+
+string make_string(Bot *bot, prefix_t words);
+string make_string(Bot *bot, prefix_t words) {
+	// return the generated string
+	string rs;
+	for(auto &word : words)
+		rs += bot->dictionary[word] + " ";
+	return rs;
+}
+
+prefix_t generateSentence(Bot *bot, prefix_t words);
+prefix_t generateSentence(Bot *bot, prefix_t words) {
+	// TODO: newlines, respond
+	auto result = words;
+
+	while(true && result.size() < 32) {
+		// check to see if we should try to pick another one or just be done
+		double prob = 0.999;
+
+		int rc = -1;
+		while((rc = bot->ngStore.random(words, bot->rengine)) == -1) {
+			if(words.empty())
+				break;
+			cerr << "stepping down from: " << words.size() << endl;
+			words.erase(words.begin());
+			prob *= .98;
+		}
+		if(rc == (int)Anchor::Start) continue;
+		if(rc == (int)Anchor::End) {
+			size_t len = result.size() - words.size();
+			if(generate_canonical<double, 10>(bot->rengine) < 0.05 * (len + 1)) {
+				cerr << "ngmarkov: end break" << endl;
+				break;
+			} else {
+				cerr << "ngmarkov: failed end break: " << (len + 1) << endl;
+				continue;
 			}
 		}
 
-		// add next to the string
-		chain.push_back(next);
+		result.push_back(rc);
+		words.push_back(rc);
 
-		// break on newline generation
-		if(nexts.back() == '\n' && chain.size() > initSize + 3)
-			break;
-
-		// check to see if we should try to pick another one or just be done
-		double prob = 0.999;
 		//if(chain.size() <= maxMarkovOrder * 2.5)
 			//prob += (1 - prob) / 2.0;
-		if(chain.size() >= 25)
+		if(result.size() >= 25)
 			prob /= 10;
 
+		string nexts = bot->dictionary[rc];
 		// if we're currently ending with a punctuation, greatly increase the
 		// chance of ending and sounding somewhat coherent
 		if(((string)".?!;").find(nexts.back()) != string::npos)
 			prob /= 1.85;
 
 		// if a random num in [0, 1] is above our probability of ending, end
-		if(generate_canonical<double, 16>(global::rengine) > prob)
-			done = true;
+		if(generate_canonical<double, 16>(bot->rengine) > prob)
+			break;
 	}
 
-	if(newline)
-		for(unsigned i = 0; i < initSize; ++i)
-			chain.erase(chain.begin());
-
-	// return the generated string
-	string result, word;
-	for(auto i : chain) {
-		word = dictionary[i];
-		if(newline && word == "\n")
-			continue;
-		else
-			result += dictionary[i] + " ";
-	}
-	if(!result.empty()) // TODO: what does this do?
-		result.pop_back();
 	return result;
 }
 
-string count(string initial) {
-	vector<string> seedv = split(initial);
-	list<unsigned> seed;
-	for(auto i : seedv)
-		seed.push_back(dictionary[i]);
 
-	// count occurences of the seed string
-	unsigned total = markovModel.count(seed);
+void observe(Bot *bot, string text) {
+	auto words = make_prefix(bot, text);
+	words.insert(words.begin(), (word_t)Anchor::Start);
+	words.push_back((word_t)Anchor::End);
 
-	if(total == 0 || markovModel[seed] == nullptr)
-		return "No occurrences of " + initial + " found";
-
-	stringstream ss;
-	ss << "Chains starting with: " << initial << ": ("
-		// total unique endpoints for this seed, total occurences of this seed
-		<< markovModel[seed]->size() << ", " << total << ") ["
-		// along with the total start points in the markov model
-		<< markovModel.size() << "]";
-
-	return ss.str();
+	learn(bot, words, 1);
 }
 
-// TODO: we're ignoring the return here...
-void markovLoad(istream &in) {
-	markovModel.read(in);
-}
-void markovSave(ostream &out) {
-	markovModel.write(out);
+void unlearn(Bot *bot, string text) {
+	auto words = make_prefix(bot, text);
+
+	learn(bot, words, -4);
 }
 
-static string lastObserve = "";
-Variable observe(vector<Variable> arguments) {
-	string now = join(arguments, " ") + "\n";
-	//cerr << "lastObserve: \"" << lastObserve << "\"" << endl;
-	//cerr << "now: \"" << now << "\"" << endl;
-	insert(lastObserve + " " + now);
-	lastObserve = now;
-	return Variable(true, Permissions());
+string ngrandom(Bot *bot, string text) {
+	auto prefix = make_prefix(bot, text);
+	word_t res = bot->ngStore.random(prefix, bot->rengine);
+	return bot->dictionary[res];
 }
 
-#include <iostream>
-using std::cerr;
-using std::endl;
-Variable markov(vector<Variable> arguments) {
-	cerr << "doing markov " << join(arguments, " ") << endl;
-	string seed = join(arguments, " "), r = recover(seed, false);
-	if(r == seed)
-		return Variable("Sorry, I don't know anything about that", Permissions());
-	return Variable(r, Permissions());
-}
-Variable respond(vector<Variable> arguments) {
-	string seed = join(arguments, " "), r = recover(seed, true);
-	if(r == seed)
-		return Variable("Sorry, I don't know anything about that", Permissions());
-	return Variable(r, Permissions());
+string markov(Bot *bot, string text) {
+	auto words = make_prefix(bot, text);
+	auto sentence = generateSentence(bot, words);
+	return make_string(bot, sentence);
 }
 
-Variable correct(vector<Variable> arguments) {
-	// TODO: implement
-	throw (string)"error: correct unimplemented";
+string respond(Bot *bot, string text) {
+	auto words = make_prefix(bot, text);
+	words.push_back((word_t)Anchor::End);
+	words.push_back((word_t)Anchor::Start);
+
+	auto sentence = generateSentence(bot, words);
+	sentence.erase(sentence.begin(), sentence.begin() + words.size());
+
+	return make_string(bot, sentence);
 }
 
-Variable ccount(vector<Variable> arguments) {
-	return Variable(count(join(arguments, " ")), Permissions());
+
+sqlite_int64 chainCount(Bot *bot, string chain_s) {
+	auto words_s = util::split(chain_s);
+	if(words_s.size() < 1)
+		throw string{"chainCount requires a chain (at least one word)}"};
+
+	auto atom_s = words_s.back(); words_s.pop_back();
+
+	auto atom = bot->dictionary[atom_s];
+	if(atom_s == "{$}")
+		atom = (word_t)Anchor::End;
+	if(atom_s == "{^}")
+		atom = (word_t)Anchor::Start;
+
+	auto prefix = make_prefix(bot, words_s, true);
+
+	ngram_t ngram{prefix, atom};
+
+	chain_t chain = bot->ngStore.fetch(ngram);
+	return chain.count;
 }
-Variable dsize(vector<Variable>) {
-	return Variable((long)dictionary.size(), Permissions());
+sqlite_int64 prefixOptions(Bot *bot, string prefix_s) {
+	return bot->ngStore.chainsWithPrefix(make_prefix(bot, prefix_s, true));
 }
-Variable rword(vector<Variable> arguments) {
-	// TODO: proper bail under new system?
-	if(arguments.size() > 2)
-		throw (string)"rword may only take two numeric endpoints";
+sqlite_int64 totalChains(Bot *bot) { return bot->ngStore.count(); }
 
-	string mins, maxs;
-	if(arguments.size() > 0)
-		mins = arguments[0].toString();
-	if(arguments.size() > 1)
-		maxs = arguments[1].toString();
 
-	list<unsigned> chain;
-	return Variable(dictionary[markovModel.random(chain)], Permissions());
 
-	// TODO: reimplement
+string correct(Bot *bot, string text) {
+	throw (string)"error: correct unimplemented"; // TODO: implement
 }
 

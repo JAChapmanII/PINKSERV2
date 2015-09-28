@@ -1,6 +1,4 @@
 #include "core.hpp"
-using std::ostream;
-using std::istream;
 using std::vector;
 using std::string;
 
@@ -13,98 +11,59 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-#include <fstream>
-using std::ofstream;
-
 #include "global.hpp"
-#include "brain.hpp"
 #include "util.hpp"
-using util::fromString;
-using util::asString;
 using util::contains;
 using util::join;
-#include "journal.hpp"
-#include "expression.hpp"
 #include "parser.hpp"
+#include "expression.hpp"
 
-#include "config.hpp"
+Entry regexRandomEntry(Bot &bot, string regex);
 
-void coreLoad(std::istream &in) {
-	brain::read(in, global::vars);
-}
-void coreSave(std::ostream &out) {
-	brain::write(out, global::vars);
-}
-
-Variable help(vector<Variable> arguments) {
-	if(arguments.size() > 1)
-		return Variable("error: help can only take a max of one function name",
-				Permissions());
-	if(arguments.size() == 1) {
-		string function = arguments.front().toString();
+string help(Bot *bot, string function) {
+	if(!function.empty()) {
 		if(!contains(global::moduleFunctionList, function))
-			return Variable("error: requested function does not exist", Permissions());
-		return global::vars[function + ".help"];
+			return "error: requested function does not exist";
+		return bot->vars.getString(function + ".help");
 	}
-	return Variable(join(global::moduleFunctionList, ", "), Permissions());
+	return join(global::moduleFunctionList, ", ");
 }
 
-Variable irc(vector<Variable> arguments) {
-	string out;
-	for(auto arg : arguments)
-		out += arg.toString() + " ";
-	out.pop_back();
-	cout << out << endl;
-	return Variable("", Permissions());
+string list(Bot *bot) {
+	auto ps = util::split(bot->vars.getString("bot.plist"));
+	auto fs = bot->vars.getExecutable();
+	for(auto &n : ps)
+		fs.erase(std::remove(fs.begin(), fs.end(), n), fs.end());
+	return util::join(fs);
 }
 
-Variable echo(vector<Variable> arguments) {
-	string res;
-	for(auto a : arguments) {
-		string arg = a.toString();
-		// TODO: old semantics of echo?
-		if(!res.empty() && (!isspace(res.back()) && !isspace(arg[0])))
-			res += " ";
-		res += arg;
-	}
-	// TODO: this should really just append to some other real return
-	// TODO: this is broken now >_>
-	//if(this->next && all)
-		//return argsstr + this->next->evaluate(nick);
-	return Variable(res, Permissions());
-}
+void irc(string command) { cout << command << endl; }
 
-Variable core_or(vector<Variable> arguments) {
+string echo(string args) { return args; }
+
+Variable core_or(Bot *bot, vector<Variable> arguments) {
 	uniform_int_distribution<> uid(0, arguments.size() - 1);
-	unsigned target = uid(global::rengine);
+	unsigned target = uid(bot->rengine);
 	return arguments[target];
 }
 
-Variable rand(vector<Variable> arguments) {
-	if(arguments.size() != 2)
-		throw (string)"rand takes two parameters; the bounds";
-	long low = fromString<long>(arguments[0].toString()),
-		high = fromString<long>(arguments[1].toString());
+long rand(Bot *bot, long low, long high) {
 	if(low > high)
 		throw (string)"rand's second parameter must be larger";
 	if(low == high)
-		return Variable(low, Permissions());
+		return low;
 	uniform_int_distribution<long> lrng(low, high);
-	return Variable(lrng(global::rengine), Permissions());
+	return lrng(bot->rengine);
 }
 
-Variable drand(vector<Variable> arguments) {
-	if(arguments.size() != 2)
-		throw (string)"drand takes two parameters; the bounds";
-	double low = fromString<double>(arguments[0].toString()),
-			high = fromString<double>(arguments[1].toString());
+double drand(Bot *bot, double low, double high) {
 	if(low > high)
 		throw (string)"drand's second parameter must be larger";
 	uniform_real_distribution<double> lrng(low, high);
-	return Variable(lrng(global::rengine), Permissions());
+	return lrng(bot->rengine);
 }
 
-Variable type(vector<Variable> arguments) {
+string type(vector<Variable> arguments) {
 	string res;
 	for(auto arg : arguments) {
 		switch(arg.type) {
@@ -117,69 +76,39 @@ Variable type(vector<Variable> arguments) {
 		res += " ";
 	}
 	res.pop_back();
-	return Variable(res, Permissions());
+	return res;
 }
 
-Variable undefined(std::vector<Variable> arguments) {
-	if(arguments.size() != 1)
-		throw (string)"error: undefined takes one argument";
-	if(global::vars.find(arguments.front().toString()) == global::vars.end())
-		return Variable(true, Permissions());
-	return Variable(false, Permissions());
-}
+bool defined(Bot *bot, string name) { return bot->vars.defined(name); }
+bool undefined(Bot *bot, string name) { return !bot->vars.defined(name); }
 
-// TODO: how to do this partly? Gah... :(
-Variable rm(vector<Variable> arguments) {
-	// TODO: we need to know the caller for this to work... (perms)
-	for(auto var : arguments) {
-		global::vars.erase(var.toString());
-	}
-	return Variable("erased", Permissions());
-	throw (string)"(not-implemented, bug " + global::vars["bot.owner"].toString() + ")";
-}
+// TODO: we need to know the caller for this to work... (perms)
+void rm(Bot *bot, string name) { bot->vars.erase(name); }
 
-Variable die(vector<Variable>) {
-	return Variable("what the hell! jac! help! somebody is abusing me!", Permissions());
-	//exit(0);
-	//throw (string)"uh-oh, we were supposed to die; " + 
-		//"bug " + global::vars["bot.owner"].toString();
-}
+void sleep(Bot *bot) { bot->done = true; }
 
-Variable sleep(vector<Variable>) {
-	// TODO: can we just exit(non-0)?
-	throw (string)"(uh-oh, bug " + global::vars["bot.owner"].toString() + ")";
-}
+long jsize(Bot *bot) { return bot->journal.size(); }
 
-Variable jsize(vector<Variable>) {
-	return Variable((long)journal::size(), Permissions());
-}
-
-Variable rgrep(vector<Variable> arguments) {
-	string regex = arguments.front().toString();
-	vector<journal::Entry> lines = journal::search(regex);
+Entry regexRandomEntry(Bot &bot, string regex) {
+	auto lines = bot.journal.fetch(RegexPredicate{regex});
 	if(lines.size() < 1)
 		throw (string)"no matches";
 
 	uniform_int_distribution<> uid(0, lines.size() - 1);
-	unsigned target = uid(global::rengine);
-
-	return Variable(lines[target].arguments, Permissions());
+	unsigned target = uid(bot.rengine);
+	return lines[target];
 }
 
-Variable rline(vector<Variable> arguments) {
-	string regex = arguments.front().toString();
-	vector<journal::Entry> lines = journal::search(regex);
-	if(lines.size() < 1)
-		throw (string)"no matches";
-
-	uniform_int_distribution<> uid(0, lines.size() - 1);
-	unsigned target = uid(global::rengine);
-
-	return Variable("<" + lines[target].nick() + "> " + lines[target].arguments, Permissions());
+string rgrep(Bot *bot, string regex) {
+	return regexRandomEntry(*bot, regex).arguments;
 }
 
-Variable debug(vector<Variable> arguments) {
-	string text = join(arguments, " ");
+string rline(Bot *bot, string regex) {
+	auto line = regexRandomEntry(*bot, regex);
+	return "<" + line.nick() + "> " + line.arguments;
+}
+
+string debug(string text) {
 	cerr << "debug: \"" << text << "\"" << endl;
 	try {
 		auto expr = Parser::parse(text);
@@ -194,37 +123,29 @@ Variable debug(vector<Variable> arguments) {
 	} catch(string &s) {
 		cerr << "string type error: " << s << endl;
 	}
-	return Variable(true, Permissions());
+	return "see cerr";
 }
 
-Variable todo(std::vector<Variable> arguments) {
-	string text = join(arguments, " ");
-	ofstream out(config::todoFileName, std::ios::app);
-	if(!out.good())
-		return Variable("error: couldn't save to TODO file", Permissions());
-	out << text << endl;
-	return Variable("saved!", Permissions());
+string todo(Bot *bot, string text) {
+	if(bot->todos.push(text))
+		return "saved!";
+	return "error: couldn't save";
 }
 
-Variable toint(vector<Variable> arguments) {
-	if(arguments.size() != 1)
-		return Variable("error: toint takes one argument", Permissions());
-	return arguments.front().asInteger();
-}
+Variable toint(Variable var) { return var.asInteger(); }
 
-Variable bmess(vector<Variable> arguments) {
+// TODO: vector of long
+string bmess(vector<Variable> arguments) {
 	if(arguments.size() < 1)
-		return Variable("error: bmess takes a list of bytes", Permissions());
+		return "error: bmess takes a list of bytes";
 	string res = "bmess: ";
 	for(auto &v : arguments)
 		res += (char)(v.asInteger().value.l & 0xFF);
-	return Variable(res, Permissions());
+	return res;
 }
 
-Variable pol(vector<Variable> arguments) {
-	if(arguments.size() != 1)
-		return Variable("error: pol takes one argument", Permissions());
-	auto e = Parser::parse("${ " + arguments.front().toString() + " }");
-	return Variable(e->prettyOneLine(), Permissions());
+string pol(string body) {
+	auto e = Parser::parse("${ " + body + " }");
+	return e->prettyOneLine();
 }
 

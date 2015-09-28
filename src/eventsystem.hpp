@@ -3,49 +3,35 @@
 
 #include <string>
 #include <vector>
-#include <queue>
-#include <map>
-#include <iostream>
+#include "db.hpp"
 #include "variable.hpp"
+#include "pvm.hpp"
 
+enum class EventType { Text, Join, Leave, Nick, BotStartup, BotShutdown };
+using Event = std::string;
 
-enum class EventType { Text, Join, Leave, Nick };
+// TODO: timed events
 
-struct Event {
-	std::string body;
-	Event() : body() { }
-	Event(std::string ibody) : body(ibody) { }
-};
+struct EventSystem {
+	EventSystem(zidcu::Database &db, bool debug, std::string table = "events");
 
-struct TimedEvent {
-	uint64_t time;
-	std::string body;
-	TimedEvent(uint64_t itime, std::string ibody) : time(itime), body(ibody) { }
-	bool operator<(const TimedEvent &rhs) const {
-		return time < rhs.time;
-	}
-};
+	void push(EventType etype, Event e);
 
-class EventSystem {
-	public:
-		EventSystem();
+	std::vector<Variable> process(EventType etype, Pvm &vm);
 
-		void push(TimedEvent e);
-		void push(EventType etype, Event e);
+	int eventsSize(EventType type);
+	Event getEvent(int id);
+	void deleteEvent(int id);
 
-		std::vector<Variable> process();
-		std::vector<Variable> process(EventType etype);
+	private:
+		void createTables();
+		std::vector<std::string> getBodies(EventType etype);
 
-		std::istream &read(std::istream &in);
-		std::ostream &write(std::ostream &out);
-
-		int eventsSize(EventType type);
-		Event getEvent(EventType type, int idx);
-		void deleteEvent(EventType type, int idx);
-
-	protected:
-		std::priority_queue<TimedEvent> m_queue;
-		std::map<EventType, std::vector<Event>> m_events;
+	private:
+		zidcu::Database &_db;
+		std::string _table;
+		bool _debug{false};
+		bool _tablesCreated{false};
 };
 
 #endif // EVENTSYSTEM_HPP

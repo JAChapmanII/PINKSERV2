@@ -15,8 +15,8 @@ using util::contains;
 using util::startsWith;
 using util::toOrdinal;
 
-#include "global.hpp"
 #include "variable.hpp"
+#include "varstore.hpp"
 
 uint8_t Permission::all = Read | Write | Execute | Modify;
 uint8_t Permission::rx = Read | Execute;
@@ -153,7 +153,8 @@ bool Permissions::allowed(Permission::Permission p, string nick, int level) {
 	}
 
 	// if the user is an admin, add in admin permissions
-	if(contains(getList(global::vars, "bot.admins"), nick)) {
+	string botAdmins = "jac"; // TODO
+	if(contains(botAdmins, nick)) {
 		fperms |= this->admin;
 		mlevel = 3;
 	}
@@ -171,13 +172,15 @@ bool Permissions::allowed(Permission::Permission p, string nick, int level) {
 
 bool Permission::hasPermission(Permission p, string nick, string variable) {
 	// the bot owner can do whatever they want
-	if(global::vars["bot.owner"].toString() == nick)
+	string botOwner = "jac"; // TODO
+	if(botOwner == nick)
 		return true;
 
-	Permissions perms = global::vars[variable].permissions;
-	return perms.allowed(p, nick);
+	return true;
+	// TODO Permissions perms = global::vars.get(variable).permissions;
+	// return perms.allowed(p, nick);
 }
-void Permission::ensurePermission(Permission p, std::string nick, std::string variable) {
+void Permission::ensurePermission(Permission p, string nick, string variable) {
 	if(hasPermission(p, nick, variable))
 		return;
 	throw nick + " does not have permission to " + asString(p) + " " + variable;

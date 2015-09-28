@@ -1,39 +1,39 @@
 #ifndef MODULES_MARKOV_HPP
 #define MODULES_MARKOV_HPP
 
-#include <iostream>
-#include <vector>
-#include "variable.hpp"
-#include "markovmodel.hpp"
+#include <string>
+#include "bot.hpp"
 
-// #m: markov: markov data: markovLoad: markovSave
-void markovLoad(std::istream &in);
-void markovSave(std::ostream &out);
+// #m: markov: markov functions
 
-// print the markov model in plain text
-std::ostream &dumpMarkov(std::ostream &out);
-// load the markov model in plain text (append to current model)
-std::istream &readMarkov(std::istream &in);
+// #f: observe: observes a line and adds it into the ngram model
+void observe(Bot *bot, std::string text);
 
-// #f: observe: observes a line and adds it into the markov model
-Variable observe(std::vector<Variable> arguments);
+// #f: unlearn: decrease the probability of a chain in the ngram model
+void unlearn(Bot *bot, std::string text);
 
-// #f: markov: returns a markov chain given a seed string
-Variable markov(std::vector<Variable> arguments);
+// #f: ngrandom: return a random word given a prefix
+std::string ngrandom(Bot *bot, std::string text);
+
+// #f: markov: return a random string given a seed
+std::string markov(Bot *bot, std::string text);
+
+
+// #f: chainCount: count the number of times a chain occurs
+sqlite_int64 chainCount(Bot *bot, std::string chain_s);
+
+// #f: prefixOptions: count the number of endpoints of a prefix
+sqlite_int64 prefixOptions(Bot *bot, std::string prefix_s);
+
+// #f: totalChains: return the total number of chains of all orders
+sqlite_int64 totalChains(Bot *bot);
+
+
 
 // #f: respond: responds with a markov chain given a seed string
-Variable respond(std::vector<Variable> arguments);
-
-// #f: ccount: return number of markov chains
-Variable ccount(std::vector<Variable> arguments);
+std::string respond(Bot *bot, std::string text);
 
 // #f: correct: magically corrects you
-Variable correct(std::vector<Variable> arguments);
-
-// #f: dsize: return number of unique 1-grams
-Variable dsize(std::vector<Variable> arguments);
-
-// #f: rword: returns a random word (can be restricted to frequency range)
-Variable rword(std::vector<Variable> arguments);
+std::string correct(Bot *bot, std::string text);
 
 #endif // MODULES_MARKOV_HPP

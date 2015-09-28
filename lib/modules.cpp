@@ -2,132 +2,93 @@
 using std::map;
 using std::vector;
 using std::string;
-using std::istream;
-using std::ostream;
-using std::fstream;
-using std::ifstream;
-using std::ofstream;
 
-using modules::Function;
 using modules::Module;
 
 #include <iostream>
 using std::cerr;
 using std::endl;
 
-#include "config.hpp"
 #include "global.hpp"
 
-map<string, Function> modules::hfmap;
+map<string, InjectedFunction> modules::hfmap;
 vector<Module> modules::modules;
 static bool modules_inited = false;
 
 Module findModule(string mname);
-bool moduleLoaded(string mname);
 
 void defineModules();
-void setupFunctions();
+void setupFunctions(Bot *bot);
 
-void none(istream &brain);
-void none(ostream &brain);
-void none(istream &brain) { if(brain.bad()) return; }
-void none(ostream &brain) { if(brain.bad()) return; }
+namespace modules {
+	namespace IFHelper {
+		template<> string coerce(vector<Variable> &vars) {
+			//if(vars.empty())
+				//throw string{"coerce: wanted string but has nothing"};
+			string res = util::join(vars, " ");
+			vars.clear();
+			return res;
+		}
+		template<> Word coerce(vector<Variable> &vars) {
+			if(vars.empty())
+				throw string{"coerce: wanted word but has nothing"};
+			string res = vars.front().toString();
+			vars.erase(vars.begin());
+			return Word{res.begin(), res.end()};
+		}
+		template<> long coerce(vector<Variable> &vars) {
+			if(vars.empty())
+				throw string{"coerce: wanted int but has nothing"};
+			long var = vars.front().asInteger().value.l;
+			vars.erase(vars.begin());
+			return var;
+		}
+		template<> double coerce(vector<Variable> &vars) {
+			if(vars.empty())
+				throw string{"coerce: wanted int but has nothing"};
+			double var = vars.front().asDouble().value.d;
+			vars.erase(vars.begin());
+			return var;
+		}
+		template<> vector<Variable> coerce(vector<Variable> &vars) {
+			auto copy = vars;
+			vars.clear();
+			return copy;
+		}
+		template<> Variable coerce(vector<Variable> &vars) {
+			if(vars.empty())
+				throw string{"coerce: wanted Variable but has nothing"};
+			Variable var = vars.front();
+			vars.erase(vars.begin());
+			return var;
+		}
+		template<> Variable makeVariable(Variable var) { return var; }
+		template<> Variable makeVariable(sqlite_int64 var) {
+			// TODO: this is terrible
+			return Variable((long int)var, Permissions());
+		}
+	}
+}
 
-Module findModule(std::string mname) {
+Module findModule(string mname) {
 	for(auto mod : modules::modules)
 		if(mod.name == mname)
 			return mod;
 	throw (string)"module " + mname + " nonexistant";
 }
 
-bool moduleLoaded(std::string mname) {
-	return findModule(mname).loaded;
-}
-
-bool modules::init(std::string brainFileName) {
+bool modules::init(Bot *bot) {
 	if(modules_inited)
 		return true;
 
-	cerr << "moudles::init: " << brainFileName << endl;
+	cerr << "moudles::init: " << endl;
 	defineModules();
 
-	ifstream brain(brainFileName, fstream::binary);
+	cerr << "    dictionary size: " << bot->dictionary.size() << endl;
 
-	uint8_t hasDict = false;
-	if(!brain.eof() && brain.good())
-		hasDict = brain.get();
-	if(!brain.eof() && brain.good() && hasDict)
-		global::dictionary.read(brain);
-
-	cerr << "\tread dictionary, size is: " << global::dictionary.size() << endl;
-	cerr << "\treading modules:" << endl;
-	unsigned read = 0;
-	while(!brain.eof() && brain.good()) {
-		// TODO: simplify this using brain:: for strings?
-		// find length of next module name
-		int length = brain.get();
-		// if we hit the end of the file, we're done
-		if(!brain.good())
-			break;
-
-		// read in the name of the module
-		string mname;
-		for(int i = 0; i < length; ++i) {
-			int c = brain.get();
-			// TODO: this isn't good
-			if(!brain.good())
-				break;
-			mname += (string)"" + (char)c;
-		}
-
-		try {
-			// TODO: error handling?
-			Module mod = findModule(mname);
-			cerr << "\t\tloading " << mod.name << " (" << mod.desc << ")" << endl;
-			mod.load(brain);
-			mod.loaded = true;
-			read++;
-		} catch(string &s) {
-			cerr << "error: " << s << endl;
-			throw s;
-		}
-	}
-	cerr << "\t\t" << read << " modules read" << endl;
-	
-	cerr << endl;
-	setupFunctions();
+	setupFunctions(bot);
 	return true;
 }
 
-bool modules::deinit(std::string brainFileName) {
-	ofstream brain(brainFileName, fstream::binary | fstream::trunc);
-	cerr << "modules::deinit: " << brainFileName << endl;
-
-	// TODO: uhhh....
-	brain.put('y');
-	global::dictionary.write(brain);
-	cerr << "\twrote dictionary, size is: " << global::dictionary.size() << endl;
-
-	cerr << "\twriting modules: " << endl;
-	unsigned wrote = 0;
-	if(brain.good()) {
-		for(auto mod : modules) {
-			// TODO: simplify by using brain::?
-			string name = mod.name;
-			unsigned char length = name.length();
-			brain << length;
-			for(int i = 0; i < length; ++i)
-				brain << name[i];
-			cerr << "\t\twriting " << mod.name << " (" << mod.desc << ")" << endl;
-			mod.save(brain);
-			wrote++;
-		}
-	} else
-		throw (string)"error: brain not good";
-	cerr << "\t\t" << wrote << " modules wrote" << endl;
-
-	return true;
-}
-
-#include "modules_gen.cpp"
+#include "modules.cpp.gen"
 

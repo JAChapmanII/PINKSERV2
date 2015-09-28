@@ -7,11 +7,19 @@ using std::map;
 using std::transform;
 using std::max;
 
+#include <limits>
+using std::numeric_limits;
+
+#include <cmath>
+
 #include "util.hpp"
 using util::split;
 using util::trimWhitespace;
 using util::fromString;
 using util::endsWith;
+
+bool doubleIsZero(double d);
+bool doubleIsZero(double d) { return abs(d) < numeric_limits<double>::epsilon(); }
 
 Variable coerce(const Variable &v, Type t);
 Variable coerce(const Variable &v, Type t) {
@@ -32,11 +40,6 @@ vector<string> makeList(string lists) {
 	vector<string> list = split(lists, ",");
 	transform(list.begin(), list.end(), list.begin(), trimWhitespace);
 	return list;
-}
-
-vector<string> getList(map<string, Variable> vars, string variable) {
-	string lists = vars[variable].toString();
-	return makeList(lists);
 }
 
 Variable::Variable() : value(), permissions(), type(Type::String) {
@@ -99,7 +102,7 @@ Variable Variable::asBoolean() const {
 		case Type::Integer:
 			return Variable(this->value.l == 0 ? false : true, this->permissions);
 		case Type::Double:
-			return Variable(this->value.d == 0 ? false : true, this->permissions);
+			return Variable(doubleIsZero(this->value.d) ? false : true, this->permissions);
 		case Type::String:
 			if(this->value.s == "false" || this->value.s == "0" || this->value.s.empty())
 				return Variable(false, this->permissions);
@@ -234,7 +237,7 @@ Variable Variable::operator/(const Variable &rhs) const {
 					throw (string)"error: division by zero";
 				return Variable(this->value.l / rhs.value.l, this->permissions);
 			case Type::Double:
-				if(rhs.value.d == 0.0)
+				if(doubleIsZero(rhs.value.d))
 					throw (string)"error: fdivision by zero";
 				return Variable(this->value.d / rhs.value.d, this->permissions);
 			case Type::String:
@@ -308,7 +311,7 @@ bool Variable::operator==(const Variable &rhs) const {
 	switch(this->type) {
 		case Type::Boolean: return this->value.b == rhs.value.b;
 		case Type::Integer: return this->value.l == rhs.value.l;
-		case Type::Double: return this->value.d == rhs.value.d;
+		case Type::Double: return doubleIsZero(this->value.d - rhs.value.d);
 		case Type::String: return this->value.s == rhs.value.s;
 		default:
 			throw (string)"== messed up badly?";
@@ -367,7 +370,7 @@ Variable Variable::parse(const string &rhs) {
 	if(!notInteger)
 		return Variable(fromString<long>(rhs), Permissions());
 	bool notDouble = false;
-	for(int i = 0; i < rhs.length(); ++i)
+	for(size_t i = 0; i < rhs.length(); ++i)
 		if(i == 0 && rhs[i] == '-')
 			continue;
 		else if(!(rhs[i] == '.' || (rhs[i] >= '0' && rhs[i] <= '9')))

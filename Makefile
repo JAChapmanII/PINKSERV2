@@ -6,30 +6,21 @@ MDIR=modules
 ODIR=obj
 BDIR=bin
 
-# main project binaries
-BINS=${BDIR}/pbrane ${BDIR}/teval ${BDIR}/cycle_brain ${BDIR}/pprint
+# main binary
+BIN=pbrane
 
-MOBJS=
-# module related objects from lib/
-MOBJS+=${ODIR}/brain.o ${ODIR}/modules.o ${ODIR}/util.o ${ODIR}/dictionary.o
-MOBJS+=${ODIR}/markovmodel.o
-# module object files from modules/
-# TODO: have this auto-generated?
-MOBJS+=${ODIR}/markov.o ${ODIR}/core.o ${ODIR}/events.o ${ODIR}/math.o
+OBJS:= \
+	$(patsubst ${SDIR}/%.cpp,${ODIR}/%.o,$(wildcard ${SDIR}/*.cpp)) \
+	$(patsubst ${LDIR}/%.cpp,${ODIR}/%.o,$(wildcard ${LDIR}/*.cpp)) \
+	$(patsubst ${PDIR}/%.cpp,${ODIR}/%.o,$(wildcard ${PDIR}/*.cpp)) \
+	$(patsubst ${MDIR}/%.cpp,${ODIR}/%.o,$(wildcard ${MDIR}/*.cpp))
 
-# object files required for main binary
-OBJS=${MOBJS}
-OBJS+=${ODIR}/util.o ${ODIR}/global.o ${ODIR}/journal.o ${ODIR}/config.o
-OBJS+=${ODIR}/expression.o ${ODIR}/parser.o
-OBJS+=${ODIR}/permission.o ${ODIR}/variable.o ${ODIR}/eventsystem.o
-OBJS+=${ODIR}/regex.o
-
-CXXFLAGS=-std=c++0x -I${SDIR} -I${LDIR} -I${PDIR} -I${MDIR}
-LDFLAGS=-lboost_regex
+CXXFLAGS=-std=c++1y -I${SDIR} -I${LDIR} -I${PDIR} -I${MDIR}
+LDFLAGS=-lboost_regex -lsqlite3
 # -lgmp -lgmpxx
 
 ifndef release
-CXXFLAGS+=-g
+CXXFLAGS+=-g -rdynamic
 else
 CXXFLAGS+=-O3 -Os
 endif
@@ -46,22 +37,16 @@ CXXFLAGS+=-pg
 LDFLAGS+=-pg
 endif
 
-all: dir ${BINS}
+all: dir ${BDIR}/${BIN}
 dir:
 	mkdir -p ${SDIR} ${ODIR} ${BDIR}
 
-${BDIR}/pbrane: ${ODIR}/pbrane.o ${OBJS}
-	${CXX} -o $@ $^ ${LDFLAGS}
-${BDIR}/teval: ${ODIR}/teval.o ${OBJS}
-	${CXX} -o $@ $^ ${LDFLAGS}
-${BDIR}/pprint: ${ODIR}/pprint.o ${OBJS}
-	${CXX} -o $@ $^ ${LDFLAGS}
-${BDIR}/cycle_brain: ${ODIR}/cycle_brain.o ${OBJS}
+${BDIR}/${BIN}: ${OBJS}
 	${CXX} -o $@ $^ ${LDFLAGS}
 
-${LDIR}/modules_gen.cpp: ${MDIR}/*.hpp
+${LDIR}/modules.cpp.gen: ${MDIR}/*.hpp
 	${BDIR}/makemods
-${ODIR}/modules.o: ${LDIR}/modules.cpp ${LDIR}/modules_gen.cpp
+${ODIR}/modules.o: ${LDIR}/modules.cpp ${LDIR}/modules.cpp.gen
 	${CXX} -c -o $@ $< ${CXXFLAGS}
 
 ${ODIR}/%.o: ${SDIR}/%.cpp
@@ -74,6 +59,6 @@ ${ODIR}/%.o: ${MDIR}/%.cpp
 	${CXX} -c -o $@ $^ ${CXXFLAGS}
 
 clean:
-	rm -rf ${ODIR}/*.o ${LDIR}/modules_gen.cpp ${BINS}
+	rm -rf ${ODIR}/*.o ${LDIR}/modules.cpp.gen ${BDIR}/${BIN}
 
 

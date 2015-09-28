@@ -155,6 +155,9 @@ unique_ptr<Expression> Parser::parseVariableName() {
 		args.emplace_back(new Expression("str", str));
 	str.clear();
 
+	if(args.size() == 0)
+		except("missing variable name");
+
 	// simple string, or only a ${} (which is really just an expression...)
 	if(args.size() == 1)
 		return move(args[0]);
@@ -302,7 +305,7 @@ unique_ptr<Expression> Parser::parseString() {
 			args.push_back(parseExpression());
 		} else {
 			if(is("\\"))
-				str += _str[_idx++];
+				_idx++;
 			str += _str[_idx++];
 		}
 	}

@@ -1,32 +1,36 @@
 #ifndef DICTIONARY_HPP
 #define DICTIONARY_HPP
 
-#include <map>
-#include <iostream>
+#include <string>
+#include <sqlite3.h>
+#include "db.hpp"
 
-static unsigned anchorCount = 2;
-template<typename K, typename V> class Dictionary {
-	public:
-		enum Anchor { Start = 1, End, Invalid };
-		Dictionary();
+enum class Anchor { Start, End, Count, ReservedCount = 0x100 };
 
-		V get(K key);
-		V operator[](K key);
+struct Dictionary {
+	Dictionary(zidcu::Database &db, std::string tableName = "dictionary");
 
-		K get(V value);
-		K operator[](V value);
+	std::string get(sqlite_int64 key);
+	std::string operator[](sqlite_int64 key);
 
-		std::istream &read(std::istream &in);
-		std::ostream &write(std::ostream &out);
+	sqlite_int64 get(std::string value);
+	sqlite_int64 operator[](std::string value);
 
-		unsigned size() const;
+	sqlite_int64 size();
 
-	protected:
-		// TODO: minimal DAFSA for perfect hashing
-		std::map<K, V> m_fmap;
-		std::map<V, K> m_rmap;
+	bool isAnchor(sqlite_int64 key);
+	bool isInvalidAnchor(sqlite_int64 key);
+
+	void createTable();
+
+	private:
+		void insert(std::string value);
+
+	private:
+		zidcu::Database &_db;
+		std::string _tableName{};
+		bool _createdTable{false};
+		// TODO: minimal DAFSA for perfect hashing?
 };
-
-#include "dictionary.imp"
 
 #endif // DICTIONARY_HPP

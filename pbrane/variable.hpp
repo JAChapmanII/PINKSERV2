@@ -9,6 +9,7 @@
 enum Type { String, Double, Integer, Boolean };
 
 // TODO: optimize storage of this/union?
+// TODO: this whole this is terrible...
 struct Value {
 	std::string s;
 	bool b;
@@ -72,7 +73,6 @@ class Variable {
 		Type type;
 };
 
-std::vector<std::string> getList(std::map<std::string, Variable> vars, std::string variable);
 std::vector<std::string> makeList(std::string lists);
 
 #endif // VARIABLE_HPP

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OUTF="./lib/modules_gen.cpp"
+OUTF="./lib/modules.cpp.gen"
 
 :> mincs
 :> mods
@@ -8,26 +8,26 @@ OUTF="./lib/modules_gen.cpp"
 
 echo -e "void defineModules() {" >> mods
 
-echo -e "void setupFunctions() {" >> mfuncs
+echo -e "void setupFunctions(Bot *bot) {" >> mfuncs
 echo -e "\tcerr << \"discovered functions: \" << endl;" >> mfuncs;
 
 for f in modules/*.hpp; do
 	module=$(grep '^// #m: ' "$f" | cut -d':' -f2-)
 	mname=$(echo $(echo $module | cut -d':' -f1))
 	mdesc=$(echo $(echo $module | cut -d':' -f2))
-	loadf=$(echo $(echo $module | cut -d':' -f3))
-	savef=$(echo $(echo $module | cut -d':' -f4))
 
-	echo "module $mname ($mdesc) uses $loadf and $savef"
+	echo ""
+	echo "============== $mname: $mdesc"
 
 	echo -e "#include \"$(basename "$f")\"" >> mincs
 	# save the module definition data to a file
-	echo -e "\tModule $mname = { \"$mname\", \"$mdesc\", &$loadf, &$savef, false };" >> mods
+	echo -e "\tModule $mname = { \"$mname\", \"$mdesc\", false };" >> mods
 	echo -e "\tmodules::modules.push_back($mname);" >> mods
 
 	# add module function header to file
 	echo -e "" >> mfuncs;
 	echo -e "\t// functions from $mname" >> mfuncs
+	echo -e "\tcerr <<  \"    [$mname]: \";" >> mfuncs
 	grep '^// #f: ' "$f" | cut -d':' -f2- | while read -r function; do
 		fname=$(echo $(echo $function | cut -d':' -f1))
 		pfname="$fname"
@@ -36,18 +36,19 @@ for f in modules/*.hpp; do
 			fname=$(echo $(echo $fname | cut -d'=' -f1))
 		fi
 		fdesc=$(echo $(echo $function | cut -d':' -f2))
-		echo "  has function $pfname ($fdesc)"
+		printf "%14s: %s\n" "$pfname" "$fdesc"
 
 		# save the function information to a file
-		echo -e "\tcerr << \"\\\t$pfname ($fdesc) [$mname]\" << endl;" >> mfuncs;
-		echo -e "\tmodules::hfmap[\"$pfname\"] = &$fname;" >> mfuncs
-		echo -e "\tglobal::vars[\"${pfname}\"] = \"{ hard coded }\";" >> mfuncs
-		echo -e "\tglobal::vars[\"${pfname}.help\"] = \"$fdesc\";" >> mfuncs
+		echo -e "\tcerr << \"$pfname \";" >> mfuncs;
+		echo -e "\tmodules::hfmap[\"$pfname\"] = modules::make_wrapper(bot, $fname);" >> mfuncs
+		echo -e "\tbot->vars.set(\"${pfname}\", \"{ hard coded }\");" >> mfuncs
+		echo -e "\tbot->vars.set(\"${pfname}.help\", \"$fdesc\");" >> mfuncs
 		echo -e "\tglobal::moduleFunctionList.push_back(\"${pfname}\");" >> mfuncs
 		# TODO: setup permissions?
 	done
 	echo -e "\tcerr << endl;" >> mfuncs
 done
+echo -e "\tcerr << endl;" >> mfuncs
 
 echo "}" | tee -a mods mfuncs >/dev/null
 

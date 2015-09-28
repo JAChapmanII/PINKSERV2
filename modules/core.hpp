@@ -1,69 +1,70 @@
 #ifndef MODULES_CORE_HPP
 #define MODULES_CORE_HPP
 
-#include <iostream>
 #include <vector>
 #include "variable.hpp"
+#include "bot.hpp"
 
-// #m: core: core functions: coreLoad: coreSave
-void coreLoad(std::istream &in);
-void coreSave(std::ostream &out);
+// #m: core: core functions
 
 // #f: help: returns a list of builtin functions, or the help text
-Variable help(std::vector<Variable> arguments);
+std::string help(Bot *bot, std::string function);
+
+// #f: list: list user defined functions
+std::string list(Bot *bot);
 
 // #f: irc: issues an IRC command
-Variable irc(std::vector<Variable> arguments);
+void irc(std::string command);
 
 // #f: echo: displays it's arguments
-Variable echo(std::vector<Variable> arguments);
+std::string echo(std::string args);
 
 // #f: core_or = or: returns a random argument
-Variable core_or(std::vector<Variable> arguments);
+Variable core_or(Bot *bot, std::vector<Variable> arguments);
 
 // #f: rand: returns a random integer in a given range
-Variable rand(std::vector<Variable> arguments);
+long rand(Bot *bot, long low, long high);
 
 // #f: drand: return a random double in a given range
-Variable drand(std::vector<Variable> arguments);
+double drand(Bot *bot, double low, double high);
 
 // #f: type: return a string representation of the variable(s) type(s)
-Variable type(std::vector<Variable> arguments);
+std::string type(std::vector<Variable> arguments);
+
+// #f: defined: returns true if a variable is bound
+bool defined(Bot *bot, std::string name);
 
 // #f: undefined: returns true if a variable is unbound
-Variable undefined(std::vector<Variable> arguments);
+bool undefined(Bot *bot, std::string name);
 
 // #f: rm: wipe a variable form existence
-Variable rm(std::vector<Variable> arguments);
-
-// #f: die: reload bot code without saving brain
-Variable die(std::vector<Variable> arguments);
+void rm(Bot *bot, std::string name);
 
 // #f: sleep: stop being awake
-Variable sleep(std::vector<Variable> arguments);
+void sleep(Bot *bot);
 
 // #f: jsize: returns size of journal
-Variable jsize(std::vector<Variable> arguments);
+long jsize(Bot *bot);
 
 // #f: rgrep: returns a random line from the journal
-Variable rgrep(std::vector<Variable> arguments);
+std::string rgrep(Bot *bot, std::string regex);
 
 // #f: rline: returns a random line (with nick info) from the journal
-Variable rline(std::vector<Variable> arguments);
+std::string rline(Bot *bot, std::string regex);
 
 // #f: debug: prints result of parsing argument to cerr
-Variable debug(std::vector<Variable> arguments);
+std::string debug(std::string text);
 
 // #f: todo: add a todo for jac to implement
-Variable todo(std::vector<Variable> arguments);
+std::string todo(Bot *bot, std::string text);
 
 // #f: toint: force a result to be an integer
-Variable toint(std::vector<Variable> arguments);
+Variable toint(Variable arg);
 
 // #f: bmess: fuck with bots
-Variable bmess(std::vector<Variable> arguments);
+std::string bmess(std::vector<Variable> arguments);
 
 // #f: pol: pretty one line
-Variable pol(std::vector<Variable> arguments);
+std::string pol(std::string body);
 
 #endif // MODULES_CORE_HPP

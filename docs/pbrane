@@ -8,11 +8,8 @@ sides of the operator respectively.
 Variables
 =========
 
-Variables are manipulated through a standard sigil syntax:
-	$my_var = 5;
-
-Variables must start with an alphanumeric character or underscore, and then
-can be followed by any alphanumeric, period or underscore.
+Variables may have alphanumeric and dots but must start with a letter:
+	my.var = 5;
 
 There are a few special variables:
 	$1, $2, ... are the arguments to a function

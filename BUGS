@@ -1,8 +1,1 @@
-Memory balloons sometimes when !correct is invoked. Here are the results of a
-very limited test set:
-	Did not make memory jump:
-		08:14:37     Golurk | aaaaaaaah
-		08:34:33 googlegram | balloon? It may
-	Did make memory jump:
-		08:34:45       +jac | .... did you magically fix yourself? O.o
-
+${ test => !test test!}

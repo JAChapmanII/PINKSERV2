@@ -1,0 +1,31 @@
+${ (!undefined 'bot.hversion')? { bot.hversion = 0; } }
+${ (!undefined 'warn')? { warn => !irc 'slashnet PRIVMSG #jitro :' + $1 } }
+${ (!undefined 'bot.nick')? { bot.nick = 'PINKSERV3'; } }
+${ (!undefined 'bot.owner')? { bot.owner = 'jac'; } }
+${ (!undefined 'bot.admins')? { bot.admins = "jac"; } }
+${ (!undefined 'bot.maxLineLength')? { bot.maxLineLength = 256; } }
+${ (!undefined 'bot.markovChance')? { bot.markovChance = 0.05; } }
+${ (!undefined 'bot.correctChance')? { bot.correctChance = 0.00; } }
+
+${ (bot.hversion < 1)? { !on 'startup' (null => (!defined 'bot.crashed')? { !warn 'oh no, ' + bot.crashed + ' made me crash?' } ) } }
+${ (bot.hversion < 1)? { !on 'startup' (null => !rm 'bot.crashed') } }
+${ (bot.hversion < 1)? { !on 'text' (null => (bot.crashed = nick; "")) } }
+
+${ (bot.hversion < 1)? { rmarkov => !markov text } }
+${ (bot.hversion < 1)? { rcorrect => !markov text } }
+${ (bot.hversion < 1)? { !on 'text' (null => !observe text) } }
+${ (bot.hversion < 1)? { !on 'text' (null => ({!drand 0 1} > bot.markovChance)? !rmarkov) } }
+${ (bot.hversion < 1)? { !on 'text' (null => ({!drand 0 1} > bot.correctChance)? !rcorrect) } }
+
+${ (bot.hversion < 1)? { !on 'shutdown' (null => !rm 'bot.crashed') } }
+
+
+${ (bot.hversion < 1)? { (eval => !args) } }
+${ (bot.hversion < 1)? { (alias => !eval $1 + " => !" + $2 + " args") } }
+${ (bot.hversion < 1)? { !alias 'rword' 'ngrandom' } }
+${ (bot.hversion < 1)? { !alias 'dsize' 'prefixOptions' } }
+
+${ (bot.hversion < 1)? { toUs => text =~ ('/^(' + bot.nick + '\\w*[:,]?\\s*)/') } }
+
+${ bot.hversion = 1; }
+

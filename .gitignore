@@ -1,9 +1,4 @@
 bin/pbrane
-bin/teval
-bin/cycle_brain
-bin/pprint
+lib/modules.cpp.gen
 
 *.o
-
-lib/modules_gen.cpp
-

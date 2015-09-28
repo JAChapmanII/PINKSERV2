@@ -5,21 +5,24 @@ using std::string;
 
 vector<string> util::split(string str, string on) {
 	vector<string> fields;
-	// there are no separators
-	if(str.find_first_of(on) == string::npos) {
-		fields.push_back(str);
-		return fields;
-	}
-	size_t fsep = 0;
-	while((fsep = str.find_first_of(on)) != string::npos) {
-		fields.push_back(str.substr(0, fsep));
-		str = str.substr(fsep + 1);
-	}
-	if(!str.empty()) {
-		fields.push_back(str);
+	size_t idx = 0, m = 0;
+	while((idx = str.find_first_not_of(on, idx)) != string::npos) {
+		m = str.find_first_of(on, idx);
+		// str ends with a word
+		if(m == string::npos) {
+			fields.push_back(str.substr(idx));
+			return fields;
+		}
+
+		// we have a word spanning idx to m
+		fields.push_back(str.substr(idx, m - idx));
+
+		// jump to next potential
+		idx = m;
 	}
 	return fields;
 }
+
 string util::join(vector<string> strs, string with) {
 	if(strs.empty())
 		return "";
