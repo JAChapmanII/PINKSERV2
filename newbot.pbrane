@@ -27,5 +27,8 @@ ${ (bot.hversion < 1)? { !alias 'dsize' 'prefixOptions' } }
 
 ${ (bot.hversion < 1)? { toUs => text =~ ('/^(' + bot.nick + '\\w*[:,]?\\s*)/') } }
 
+${ (bot.hversion < 1)? { (quiet => bot.maxLineLength = 0) } }
+${ (bot.hversion < 1)? { (unquiet => bot.maxLineLength = 256) } }
+
 ${ bot.hversion = 1; }
 

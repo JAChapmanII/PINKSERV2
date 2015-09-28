@@ -3,13 +3,9 @@ help? Hmm.... Default help function? Special function in function namespace:
 	!help => !eval "!echo $1.help"
 
 $bot.quiet (bool of quiet or not)
-quiet => $bot.quiet = true; !in 60m $bot.quiet = false;
-unquiet => $bot.quiet = false;
 
 kick => !irc KICK $1 $2
 op => !irc MODE +o $1
 
 tell => !irc PRIVMSG $1 :$2
-
-todo - builtin
 
