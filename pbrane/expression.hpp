@@ -7,14 +7,36 @@
 #include "variable.hpp"
 #include "pvm.hpp"
 
+using StackFrame = std::string;
+
+struct StackFrameLifetime;
+
+
 // may be thrown during Expression::evaluate
 struct StackTrace {
-	std::vector<std::string> frames{};
+	std::vector<StackFrame> frames{};
+	bool hasError{false};
 	std::string error{};
 	std::string owner{};
 
 	std::string toString() const;
 	void except(std::string err);
+
+	StackFrameLifetime push(StackFrame frame);
+};
+
+struct StackFrameLifetime {
+	StackFrameLifetime(StackTrace &trace, int which = -1);
+	~StackFrameLifetime();
+
+	StackFrameLifetime(const StackFrameLifetime &rhs) = delete;
+	StackFrameLifetime &operator=(StackFrameLifetime &rhs) = delete;
+
+	StackFrameLifetime(StackFrameLifetime &&rhs);
+
+	private:
+		StackTrace &_trace;
+		int _which;
 };
 
 struct Expression {

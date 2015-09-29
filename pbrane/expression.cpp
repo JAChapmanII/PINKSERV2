@@ -123,17 +123,41 @@ string Expression::prettyOneLine() const {
 }
 
 string StackTrace::toString() const {
-	return error + " [stacktrace: " + join(frames, " -> ") + "]";
+	return error + " [stacktrace: " + join(frames, "  ") + "]";
 }
 void StackTrace::except(string err) {
 	error = err;
 	throw *this;
 }
 
+StackFrameLifetime StackTrace::push(StackFrame frame) {
+	frames.push_back(frame);
+	return StackFrameLifetime{*this};
+}
+
+StackFrameLifetime::StackFrameLifetime(StackTrace &trace, int which)
+		: _trace{trace}, _which{which} {
+	if(_which < 0)
+		_which = _trace.frames.size() - 1;
+}
+StackFrameLifetime::~StackFrameLifetime() {
+	if(_trace.hasError || _which < 0)
+		return;
+	if(_trace.frames.size() > _which)
+		_trace.frames.erase(_trace.frames.begin() + _which);
+}
+
+StackFrameLifetime::StackFrameLifetime(StackFrameLifetime &&rhs)
+		: _trace{rhs._trace}, _which{rhs._which} {
+	rhs._which = -1;
+}
+
+
 Variable Expression::evaluate(Pvm &vm, string who) const {
 	StackTrace st; st.owner = who;
 	return evaluate(vm, st);
 }
+
 
 // TODO: ability to tag ExpressionTree as various types. string, int,
 // TODO: double, variable, function?
@@ -141,11 +165,10 @@ Variable Expression::evaluate(Pvm &vm, string who) const {
 // TODO: on throw, rollback changes. This will be a lot of work...
 
 // TODO: better timing control
-// TODO: max recursion depth? Just run in thread and abort after x time?
+// TODO: abort after Xms?
 Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 	if(this == nullptr) // TODO: something probably went wrong.... empty expression?
 		context.except("this == nullptr");
-	context.frames.push_back(this->type);
 
 	// might have side effects
 	// TODO: permissions on creation with = and => (mostly execute and owner)
@@ -163,6 +186,14 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 				result = this->args[i]->evaluate(vm, context);
 		return result;
 	}
+
+	// monitor stacktrace, skipping simple wrapper contexts
+	auto lifetime = context.push(this->type);
+
+	// TODO: configurable max recursion depth?
+	if(context.frames.size() > 32)
+		context.except("exceeded max recursion depth");
+
 
 	// ? and ? : operators
 	if(this->type == "?") {
@@ -267,7 +298,8 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 		} else {
 			try {
 				auto expr = Parser::parseCanonical(body);
-				context.frames.push_back(func);
+				context.frames.pop_back();
+				context.frames.push_back("!" + func);
 				result = expr->evaluate(vm, context);
 			} catch(ParseException e) {
 				context.except(e.msg + " @" + asString(e.idx));
