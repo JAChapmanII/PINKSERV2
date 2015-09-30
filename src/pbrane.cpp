@@ -323,8 +323,9 @@ int main(int argc, char **argv) {
 			if(target == pbrane.vars.getString("bot.nick"))
 				target = nick;
 
-			// TODO: proper environment for triggers
+			// TODO: simplify construction?
 			pbrane.vars.set("nick", nick);
+			pbrane.vars.set("where", target);
 			pbrane.vars.set("text", message);
 
 			// check for a special hook
@@ -369,6 +370,7 @@ int main(int argc, char **argv) {
 			// TODO: proper environment for triggers
 			pbrane.vars.set("nick", nick);
 			pbrane.vars.set("where", where);
+			pbrane.vars.erase("text");
 
 			auto results = pbrane.events.process(EventType::Join, pbrane.vm);
 			if(results.size() == 1)
