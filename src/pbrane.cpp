@@ -48,10 +48,9 @@ struct PrivateMessage {
 };
 typedef bool (*hook)(PrivateMessage pmsg);
 
-bool powerHook(PrivateMessage pmsg);
 bool regexHook(PrivateMessage pmsg);
 
-vector<hook> hooks = { &powerHook, &regexHook };
+vector<hook> hooks = { &regexHook };
 
 void prettyPrint(string arg);
 void teval(vector<string> args);
@@ -390,15 +389,6 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-bool powerHook(PrivateMessage pmsg) {
-	if(pmsg.message[0] == ':') // ignore starting colon
-		pmsg.message = pmsg.message.substr(1);
-	if(pmsg.message == (string)"!restart" && pmsg.bot.isOwner(pmsg.nick))
-		return pmsg.bot.done = true;
-	if(pmsg.message == (string)"!save")
-		return pmsg.bot.done = true;
-	return false;
-}
 bool regexHook(PrivateMessage pmsg) {
 	if(pmsg.message[0] != 's')
 		return false;

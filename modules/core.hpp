@@ -67,4 +67,7 @@ std::string bmess(std::vector<Variable> arguments);
 // #f: pol: pretty one line
 std::string pol(std::string body);
 
+// #f: restart: restart bot
+void restart(Bot *bot);
+
 #endif // MODULES_CORE_HPP

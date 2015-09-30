@@ -149,3 +149,8 @@ string pol(string body) {
 	return e->prettyOneLine();
 }
 
+void restart(Bot *bot) {
+	// TODO: perms?
+	bot->done = true;
+}
+
