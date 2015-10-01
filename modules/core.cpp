@@ -108,6 +108,13 @@ string rline(Bot *bot, string regex) {
 	return "<" + line.nick() + "> " + line.arguments;
 }
 
+string fsearch(Bot *bot, string regex) {
+	auto lines = bot->journal.ffetch(RegexPredicate{regex}, 1);
+	if(lines.empty()) return "no results";
+	auto line = lines.front();
+	return "<" + line.nick() + "> " + line.arguments;
+}
+
 string debug(string text) {
 	cerr << "debug: \"" << text << "\"" << endl;
 	try {
