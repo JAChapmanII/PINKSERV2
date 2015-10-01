@@ -70,11 +70,14 @@ struct Journal {
 
 	std::vector<Entry> fetch(EntryPredicate predicate = NoopPredicate,
 			int limit = -1);
+	std::vector<Entry> ffetch(EntryPredicate predicate = NoopPredicate,
+			int limit = -1);
 
 	sqlite_int64 size();
 
 	private:
 		void createTable();
+		std::vector<Entry> filter(std::string sql, EntryPredicate predicate, int limit);
 
 	private:
 		zidcu::Database &_db;

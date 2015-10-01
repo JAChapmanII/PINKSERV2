@@ -118,12 +118,12 @@ void Journal::log(sqlite_int64 ts, string msg) {
 	this->upsert(e);
 }
 
-vector<Entry> Journal::fetch(EntryPredicate predicate, int limit) {
+vector<Entry> Journal::filter(string sql, EntryPredicate predicate, int limit) {
 	createTable();
 	vector<Entry> results;
 	if(limit == 0) return results;
 
-	auto row = _db.execute("SELECT * FROM " + _table + " ORDER BY ts DESC");
+	auto row = _db.execute(sql);
 	while((limit >= 0 ? (int)results.size() < limit : true)
 			&& row.status() == SQLITE_ROW) {
 		Entry e{row.getLong(0), row.getLong(1), (SentType)row.getInteger(2),
@@ -138,6 +138,17 @@ vector<Entry> Journal::fetch(EntryPredicate predicate, int limit) {
 		throw make_except("sqite error: " + to_string(row.status()));
 	return results;
 }
+
+vector<Entry> Journal::fetch(EntryPredicate predicate, int limit) {
+	return this->filter("SELECT * FROM " + _table + " ORDER BY ts DESC",
+			predicate, limit);
+}
+
+vector<Entry> Journal::ffetch(EntryPredicate predicate, int limit) {
+	return this->filter("SELECT * FROM " + _table + " ORDER BY ts ASC",
+			predicate, limit);
+}
+
 
 sqlite_int64 Journal::size() {
 	createTable();
