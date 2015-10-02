@@ -122,7 +122,7 @@ sqlite_int64 fcount(Bot *bot, string regex) {
 }
 
 string fret(Bot *bot, long which, string regex) {
-	auto lines = bot->journal.ffetch(RegexPredicate{regex});
+	auto lines = bot->journal.ffetch(RegexPredicate{regex}, which + 1);
 	if(which >= (sqlite_int64)lines.size())
 		throw ("error: out of range " + to_string(which)
 			+ " >= " + to_string(lines.size()));
