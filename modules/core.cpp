@@ -1,6 +1,7 @@
 #include "core.hpp"
 using std::vector;
 using std::string;
+using std::to_string;
 
 #include <random>
 using std::uniform_int_distribution;
@@ -112,6 +113,20 @@ string fsearch(Bot *bot, string regex) {
 	auto lines = bot->journal.ffetch(RegexPredicate{regex}, 1);
 	if(lines.empty()) return "no results";
 	auto line = lines.front();
+	return "<" + line.nick() + "> " + line.arguments;
+}
+
+sqlite_int64 fcount(Bot *bot, string regex) {
+	auto lines = bot->journal.ffetch(RegexPredicate{regex});
+	return (sqlite_int64)lines.size();
+}
+
+string fret(Bot *bot, long which, string regex) {
+	auto lines = bot->journal.ffetch(RegexPredicate{regex});
+	if(which >= (sqlite_int64)lines.size())
+		throw ("error: out of range " + to_string(which)
+			+ " >= " + to_string(lines.size()));
+	auto line = lines[which];
 	return "<" + line.nick() + "> " + line.arguments;
 }
 

@@ -55,6 +55,12 @@ std::string rline(Bot *bot, std::string regex);
 // #f: fsearch: returns the first time a line was said (with nick info)
 std::string fsearch(Bot *bot, std::string regex);
 
+// #f: fcount: returns the number of times a line was said
+sqlite_int64 fcount(Bot *bot, std::string regex);
+
+// #f: fret: returns a specific time a line was said (with nick info)
+std::string fret(Bot *bot, long which, std::string regex);
+
 // #f: debug: prints result of parsing argument to cerr
 std::string debug(std::string text);
 
