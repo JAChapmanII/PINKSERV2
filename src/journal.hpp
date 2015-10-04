@@ -72,6 +72,7 @@ struct Journal {
 			int limit = -1);
 	std::vector<Entry> ffetch(EntryPredicate predicate = NoopPredicate,
 			int limit = -1);
+	Entry fetch(sqlite_int64 id);
 
 	sqlite_int64 size();
 

@@ -149,6 +149,21 @@ vector<Entry> Journal::ffetch(EntryPredicate predicate, int limit) {
 			predicate, limit);
 }
 
+Entry Journal::fetch(sqlite_int64 id) {
+	createTable();
+
+	auto row = _db.execute("SELECT * FROM " + _table + " WHERE id = ?1", id);
+	// TODO: correct return here
+	if(row.status() == SQLITE_DONE)
+		throw -1;
+	if(row.status() != SQLITE_ROW)
+		throw -2;
+
+	Entry e{row.getLong(0), row.getLong(1), (SentType)row.getInteger(2),
+		(ExecuteType)row.getInteger(3), row.getString(4), row.getString(5)};
+	return e;
+}
+
 
 sqlite_int64 Journal::size() {
 	createTable();
