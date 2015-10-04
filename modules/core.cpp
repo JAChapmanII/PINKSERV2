@@ -127,7 +127,13 @@ string fret(Bot *bot, long which, string regex) {
 		throw ("error: out of range " + to_string(which)
 			+ " >= " + to_string(lines.size()));
 	auto line = lines[which];
-	return "<" + line.nick() + "> " + line.arguments;
+	return to_string(line.id) + " <" + line.nick() + "> " + line.arguments;
+}
+
+string sline(Bot *bot, long which) {
+	// TODO: line out of range, not PRIVMSG?
+	auto line = bot->journal.fetch(which);
+	return to_string(line.id) + " <" + line.nick() + "> " + line.arguments;
 }
 
 string debug(string text) {

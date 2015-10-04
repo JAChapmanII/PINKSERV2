@@ -61,6 +61,9 @@ sqlite_int64 fcount(Bot *bot, std::string regex);
 // #f: fret: returns a specific time a line was said (with nick info)
 std::string fret(Bot *bot, long which, std::string regex);
 
+// #f: sline: return a specific line from the journal
+std::string sline(Bot *bot, long which);
+
 // #f: debug: prints result of parsing argument to cerr
 std::string debug(std::string text);
 
