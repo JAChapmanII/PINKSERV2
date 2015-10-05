@@ -133,7 +133,19 @@ string fret(Bot *bot, long which, string regex) {
 string sline(Bot *bot, long which) {
 	// TODO: line out of range, not PRIVMSG?
 	auto line = bot->journal.fetch(which);
-	return to_string(line.id) + " <" + line.nick() + "> " + line.arguments;
+	switch(line.type) {
+		case EntryType::Text:
+			return to_string(line.id) + " <" + line.nick() + "> " + line.arguments;
+			break;
+		case EntryType::Join:
+			return to_string(line.id) + " --> " + line.nick() + " joins " + line.where;
+			break;
+		case EntryType::Quit:
+		case EntryType::Part:
+			return to_string(line.id) + " <-- " + line.nick() + " leaves " + line.where;
+			break;
+	}
+	return "error: unknown entry type: " + to_string((int)line.type);
 }
 
 string debug(string text) {
