@@ -162,7 +162,10 @@ Variable Expression::evaluate(Pvm &vm, string who) const {
 // TODO: ability to tag ExpressionTree as various types. string, int,
 // TODO: double, variable, function?
 
-// TODO: on throw, rollback changes. This will be a lot of work...
+// TODO: on throw, rollback changes. Have object that stores locally in map,
+// TODO: then on destruction commits changes all at once to underlying VarStore
+// TODO: very easy local variables, just check name and don't save? But
+// TODO: sub-context...
 
 // TODO: better timing control
 // TODO: abort after Xms?
@@ -201,7 +204,6 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 
 		// if we have a ? : operator
 		if(this->args[1]->type == ":") {
-			// TODO: only evaluates one side...
 			if(cond.isFalse())
 				return this->args[1]->args[1]->evaluate(vm, context);
 			else
