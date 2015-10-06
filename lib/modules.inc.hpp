@@ -37,7 +37,7 @@ namespace modules {
 		template<> Variable coerce(std::vector<Variable> &vars);
 
 		template<typename Ret> Variable makeVariable(Ret ret) {
-			return Variable(ret, Permissions());
+			return Variable(ret);
 		}
 		template<> Variable makeVariable(sqlite_int64 var);
 		template<> Variable makeVariable(Variable var);

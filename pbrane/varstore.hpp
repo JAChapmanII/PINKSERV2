@@ -12,14 +12,12 @@ struct VarStore {
 			std::string permTableName = "var_perms");
 
 	Variable get(std::string name);
-	std::string getString(std::string name);
 	Variable set(std::string name, Variable var);
-	Variable set(std::string name, std::string val);
 
 	bool defined(std::string name);
 	void erase(std::string name);
 
-	std::vector<std::string> getList(std::string variable);
+	std::vector<Variable> getList(std::string variable);
 
 	void markExecutable(std::string name, bool x = true);
 	std::vector<std::string> getExecutable();

@@ -319,7 +319,7 @@ int main(int argc, char **argv) {
 			auto message = entry.arguments;
 			auto target = entry.where;
 
-			if(target == pbrane.vars.getString("bot.nick"))
+			if(target == pbrane.vars.get("bot.nick").toString())
 				target = nick;
 
 			// TODO: simplify construction?

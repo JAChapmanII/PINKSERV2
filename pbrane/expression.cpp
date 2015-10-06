@@ -212,7 +212,7 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 
 		// just ?, no false branch
 		if(cond.isFalse())
-			return Variable("", Permissions());
+			return Variable();
 
 		return this->args[1]->evaluate(vm, context);
 	}
@@ -242,7 +242,7 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 			body = this->args[1]->toString(); // TODO: requires Expression::toString
 
 		if(func == "null")
-			return Variable(body, Permissions());
+			return Variable(body);
 
 		auto res = vm.vars.set(func, body);
 		vm.vars.markExecutable(func);
@@ -269,7 +269,7 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 		if(!contains(modules::hfmap, func))
 			vm.vars.markExecutable(func);
 
-		string body = vm.vars.getString(func);
+		auto body = vm.vars.get(func).toString();
 
 		if(vm.debugFunctionBodies)
 			cerr << "! body: " << body << endl;
@@ -328,7 +328,7 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 
 			// if match equals, just return if we match
 			if(this->type == "=~")
-				return Variable(r.matches(rtext), Permissions());
+				return Variable(r.matches(rtext));
 
 			// wanted a replacement, but that's not the type of regex we have
 			if(r.type() != RegexType::Replace)
@@ -344,7 +344,7 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 
 	// simple strings an numbers
 	if(this->type == "str")
-		return Variable(this->text, Permissions());
+		return Variable(this->text);
 	if(this->type == "num")
 		return Variable::parse(this->text);
 
@@ -354,7 +354,7 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 		string result;
 		for(auto &i : this->args)
 			result += i->evaluate(vm, context).toString();
-		return Variable(result, Permissions());
+		return Variable(result);
 	}
 
 	// variable access
@@ -420,6 +420,6 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 	}
 
 	context.except("unknown node " + this->type + " -- bug " +
-			vm.vars.getString("bot.owner") + " to fix");
+			vm.vars.get("bot.owner").toString() + " to fix");
 }
 

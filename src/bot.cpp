@@ -74,7 +74,7 @@ void Bot::send(string network, string target, string line, bool send) {
 	line = escapeForPMSG(line); // TODO
 
 	auto maxLineLength = util::fromString<unsigned>(
-			vars.getString("bot.maxLineLength"));
+			vars.get("bot.maxLineLength").toString());
 	if(line.length() > maxLineLength)
 		line = line.substr(0, maxLineLength);
 
@@ -90,10 +90,10 @@ void Bot::send(string network, string target, string line, bool send) {
 }
 
 bool Bot::isOwner(std::string nick) {
-	return (nick == vars.getString("bot.owner"));
+	return (nick == vars.get("bot.owner").toString());
 }
 bool Bot::isAdmin(std::string nick) {
-	return util::contains(vars.getString("bot.admins"), " " + nick + " ");
+	return util::contains(vars.get("bot.admins").toString(), " " + nick + " ");
 }
 
 // TODO: eliminate

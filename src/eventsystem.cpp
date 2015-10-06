@@ -60,7 +60,7 @@ vector<Variable> EventSystem::process(EventType etype, Pvm &vm) {
 			auto expr = Parser::parseCanonical(body);
 			Variable res = expr->evaluate(vm, "");
 			// TODO: hack
-			if(res.type == Type::String && !res.value.s.empty())
+			if(res.type == Type::String && !res.value.empty())
 				output.push_back(res);
 		} catch(ParseException e) {
 			// TODO: remove

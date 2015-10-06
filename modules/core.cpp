@@ -25,13 +25,13 @@ string help(Bot *bot, string function) {
 	if(!function.empty()) {
 		if(!contains(global::moduleFunctionList, function))
 			return "error: requested function does not exist";
-		return bot->vars.getString(function + ".help");
+		return bot->vars.get(function + ".help").toString();
 	}
 	return join(global::moduleFunctionList, ", ");
 }
 
 string list(Bot *bot) {
-	auto ps = util::split(bot->vars.getString("bot.plist"));
+	auto ps = util::split(bot->vars.get("bot.plist").toString());
 	auto fs = bot->vars.getExecutable();
 	for(auto &n : ps)
 		fs.erase(std::remove(fs.begin(), fs.end(), n), fs.end());
@@ -68,8 +68,7 @@ string type(vector<Variable> arguments) {
 	string res;
 	for(auto arg : arguments) {
 		switch(arg.type) {
-			case Type::Integer: res += arg.toString() + ":Integer"; break;
-			case Type::Double: res += arg.toString() + ":Double"; break;
+			case Type::Number: res += arg.toString() + ":Number"; break;
 			case Type::Boolean: res += arg.toString() + ":Boolean"; break;
 			case Type::String: res += arg.toString() + ":String"; break;
 			default: res += "(" + arg.toString() + ":error)"; break;
@@ -172,7 +171,7 @@ string todo(Bot *bot, string text) {
 	return "error: couldn't save";
 }
 
-Variable toint(Variable var) { return var.asInteger(); }
+Variable toint(Variable var) { return var.asNumber(); }
 
 // TODO: vector of long
 string bmess(vector<Variable> arguments) {
@@ -180,7 +179,7 @@ string bmess(vector<Variable> arguments) {
 		return "error: bmess takes a list of bytes";
 	string res = "bmess: ";
 	for(auto &v : arguments)
-		res += (char)(v.asInteger().value.l & 0xFF);
+		res += (char)((long)v.toNumber() & 0xFF);
 	return res;
 }
 

@@ -42,7 +42,7 @@ string s(Bot *bot, string regex) {
 
 string push(Bot *bot, Word name, string regex) {
 	// remove name from plist, will be readded if needed
-	auto ps = util::split(bot->vars.getString("bot.plist"));
+	auto ps = util::split(bot->vars.get("bot.plist").toString());
 	ps.erase(std::remove(ps.begin(), ps.end(), name), ps.end());
 	bot->vars.set("bot.plist", util::join(ps, " "));
 
@@ -54,7 +54,7 @@ string push(Bot *bot, Word name, string regex) {
 	try {
 		Regex validate{regex};
 		auto s = "${ " + name + " => !s '" + reEscape(regex) + "' }";
-		auto r = bot->evaluate(s, bot->vars.getString("nick"));
+		auto r = bot->evaluate(s, bot->vars.get("nick").toString());
 
 		ps.push_back(name);
 		bot->vars.set("bot.plist", util::join(ps, " "));
@@ -66,5 +66,5 @@ string push(Bot *bot, Word name, string regex) {
 	throw string{"push: ran off edge?"};
 }
 
-string rlist(Bot *bot) { return bot->vars.getString("bot.plist"); }
+string rlist(Bot *bot) { return bot->vars.get("bot.plist").toString(); }
 

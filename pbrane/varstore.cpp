@@ -4,6 +4,9 @@ using std::to_string;
 using std::vector;
 using zidcu::Database;
 
+#include <algorithm>
+using std::transform;
+
 #include "err.hpp"
 
 #include <iostream>
@@ -14,27 +17,24 @@ VarStore::VarStore(Database &db, string varTableName, string permTableName)
 		: _db{db}, _varTable(varTableName), _permTable(permTableName) { }
 
 Variable VarStore::get(string name) {
-	return Variable(getString(name), Permissions());
-}
-string VarStore::getString(string name) {
 	createTables();
 	auto result = _db.executeScalar<string>(
 		"SELECT body FROM " + _varTable + " WHERE name = ?1",
 		name);
 
-	return (result ? *result : "");
+	if(result)
+		return Variable(*result);
+	else
+		return Variable();
 }
 Variable VarStore::set(string name, Variable var) {
-	return set(name, var.toString());
-}
-Variable VarStore::set(string name, string val) {
 	createTables();
 	auto tran = _db.transaction();
 	_db.executeVoid("INSERT OR IGNORE INTO " + _varTable + " VALUES(?1, ?2, 0)",
-			name, val);
+			name, var.toString());
 	_db.executeVoid("UPDATE " + _varTable + " SET body = ?1 WHERE name = ?2",
-			val, name);
-	return Variable(val, Permissions());
+			var.toString(), name);
+	return var;
 }
 bool VarStore::defined(string name) {
 	createTables();
@@ -61,9 +61,15 @@ void VarStore::createTables() {
 	_tablesCreated = true;
 }
 
-vector<string> VarStore::getList(string variable) {
+Variable makeVariable(string str);
+Variable makeVariable(string str) { return Variable::parse(str); }
+
+vector<Variable> VarStore::getList(string variable) {
 	string lists = get(variable).toString();
-	return makeList(lists);
+	auto list = makeList(lists);
+	vector<Variable> vars(list.size());
+	transform(list.begin(), list.end(), vars.begin(), makeVariable);
+	return vars;
 }
 
 void VarStore::markExecutable(string name, bool x) {

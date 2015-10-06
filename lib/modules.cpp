@@ -39,14 +39,14 @@ namespace modules {
 		template<> long coerce(vector<Variable> &vars) {
 			if(vars.empty())
 				throw string{"coerce: wanted int but has nothing"};
-			long var = vars.front().asInteger().value.l;
+			long var = (long)vars.front().asNumber().toNumber();
 			vars.erase(vars.begin());
 			return var;
 		}
 		template<> double coerce(vector<Variable> &vars) {
 			if(vars.empty())
 				throw string{"coerce: wanted int but has nothing"};
-			double var = vars.front().asDouble().value.d;
+			double var = (double)vars.front().asNumber().toNumber();
 			vars.erase(vars.begin());
 			return var;
 		}
@@ -65,7 +65,7 @@ namespace modules {
 		template<> Variable makeVariable(Variable var) { return var; }
 		template<> Variable makeVariable(sqlite_int64 var) {
 			// TODO: this is terrible
-			return Variable((long int)var, Permissions());
+			return Variable((long int)var);
 		}
 	}
 }
