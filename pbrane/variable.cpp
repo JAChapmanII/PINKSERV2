@@ -55,7 +55,7 @@ Variable::Variable(bool ivalue)
 	: type{Type::Boolean}, value{ivalue ? "true" : "false"} { }
 Variable::Variable(long ivalue) : type{Type::Number}, value{to_string(ivalue)} { }
 Variable::Variable(double ivalue) : type{Type::Number}, value{to_string(ivalue)} { }
-Variable::Variable(string ivalue) : type{Type::Number}, value{ivalue} { }
+Variable::Variable(string ivalue) : type{Type::String}, value{ivalue} { }
 Variable::Variable(const Variable &rhs) : type{rhs.type}, value{rhs.value} { }
 
 Variable Variable::asString() const {
@@ -284,8 +284,9 @@ bool Variable::isFalse() const {
 	return !(this->isTrue());
 }
 
+// TODO: implement this as template based on construct/parse and copy?
 Variable &Variable::operator=(const std::string &rhs) {
-	*this = this->asString();
+	this->type = Type::String;
 	this->value = rhs;
 	return *this;
 }
@@ -302,6 +303,8 @@ Variable Variable::parse(const string &rhs) {
 		return Variable(true);
 	if(rhs == "false")
 		return Variable(false);
+	if(rhs == "void")
+		return Variable();
 	bool notInteger = false;
 	for(char c : rhs)
 		if(c < '0' || c > '9')
