@@ -19,6 +19,24 @@ using util::trimWhitespace;
 using util::fromString;
 using util::endsWith;
 
+string typeToString(Type type) {
+	switch(type) {
+		case String: return "string";
+		case Number: return "number";
+		case Boolean: return "bool";
+		case Function: return "function";
+		case Void: return "void";
+	}
+	return "{invalid}";
+}
+Type typeFromString(string str) {
+	if(str == "string") return Type::String;
+	if(str == "number") return Type::Number;
+	if(str == "bool") return Type::Boolean;
+	if(str == "function") return Type::Function;
+	return Type::Void;
+}
+
 bool numberIsZero(Number d);
 bool numberIsZero(Number d) {
 	return abs(d) < numeric_limits<Number>::epsilon();

@@ -10,6 +10,9 @@ enum class Type { String, Number, Boolean, Function, Void };
 using Value = std::string;
 using Number = double;
 
+std::string typeToString(Type type);
+Type typeFromString(std::string str);
+
 class Variable {
 	public:
 		Variable(); // void constructor
