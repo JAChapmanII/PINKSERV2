@@ -8,8 +8,7 @@
 #include "permission.hpp"
 
 struct VarStore {
-	VarStore(zidcu::Database &db, std::string varTableName = "vars",
-			std::string permTableName = "var_perms");
+	VarStore(zidcu::Database &db, std::string varTableName = "vars");
 
 	Variable get(std::string name);
 	Variable set(std::string name, Variable var);
@@ -19,8 +18,7 @@ struct VarStore {
 
 	std::vector<Variable> getList(std::string variable);
 
-	void markExecutable(std::string name, bool x = true);
-	std::vector<std::string> getExecutable();
+	std::vector<std::string> getVariablesOfType(Type type);
 
 	private:
 		void createTables();
@@ -28,7 +26,7 @@ struct VarStore {
 	private:
 		zidcu::Database &_db;
 		std::string _varTable;
-		std::string _permTable;
+		// TODO: permissions
 		bool _tablesCreated{false};
 };
 

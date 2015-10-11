@@ -245,7 +245,9 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 			return Variable(body);
 
 		auto res = vm.vars.set(func, body);
-		vm.vars.markExecutable(func);
+		auto fVar = vm.vars.get(func);
+		fVar.type = Type::Function;
+		vm.vars.set(func, fVar);
 		return res;
 	}
 
@@ -266,8 +268,11 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 		if(!vm.vars.defined(func) && !contains(modules::hfmap, func))
 			context.except(func + " does not exist as a callable function");
 
-		if(!contains(modules::hfmap, func))
-			vm.vars.markExecutable(func);
+		if(!contains(modules::hfmap, func)) {
+			auto fVar = vm.vars.get(func);
+			fVar.type = Type::Function;
+			vm.vars.set(func, fVar);
+		}
 
 		auto body = vm.vars.get(func).toString();
 

@@ -13,19 +13,22 @@ using std::transform;
 using std::cerr;
 using std::endl;
 
-VarStore::VarStore(Database &db, string varTableName, string permTableName)
-		: _db{db}, _varTable(varTableName), _permTable(permTableName) { }
+VarStore::VarStore(Database &db, string varTableName)
+		: _db{db}, _varTable(varTableName) { }
 
 Variable VarStore::get(string name) {
 	createTables();
-	auto result = _db.executeScalar<string>(
-		"SELECT body FROM " + _varTable + " WHERE name = ?1",
+	auto row = _db.execute(
+		"SELECT body, type FROM " + _varTable + " WHERE name = ?1",
 		name);
+	if(row.status() == SQLITE_ROW) {
+		Variable var{};
+		var.type = typeFromString(row.getString(1));
+		var.value = row.getString(0);
+		return var;
+	}
 
-	if(result)
-		return Variable(*result);
-	else
-		return Variable();
+	return Variable{};
 }
 Variable VarStore::set(string name, Variable var) {
 	createTables();
@@ -55,9 +58,9 @@ void VarStore::createTables() {
 
 	auto tran = _db.transaction();
 	_db.executeVoid("CREATE TABLE IF NOT EXISTS " + _varTable
-		+ " (name text primary key, body text, execute bit)");
-	_db.executeVoid("CREATE INDEX IF NOT EXISTS " + _varTable + "_x_idx"
-		+ " ON " + _varTable + " (execute)");
+		+ " (name text primary key, body text, type text)");
+	_db.executeVoid("CREATE INDEX IF NOT EXISTS " + _varTable + "_type_idx"
+		+ " ON " + _varTable + " (type)");
 	_tablesCreated = true;
 }
 
@@ -72,22 +75,17 @@ vector<Variable> VarStore::getList(string variable) {
 	return vars;
 }
 
-void VarStore::markExecutable(string name, bool x) {
+vector<string> VarStore::getVariablesOfType(Type type) {
 	createTables();
-	auto tran = _db.transaction();
-	_db.executeVoid("UPDATE " + _varTable + " SET execute = ?1 WHERE name = ?2",
-			x ? 1 : 0, name);
-}
-vector<string> VarStore::getExecutable() {
-	createTables();
-	vector<string> executable;
-	auto results = _db.execute("SELECT * FROM " + _varTable + " WHERE execute = 1");
+	vector<string> vars;
+	auto results = _db.execute("SELECT * FROM " + _varTable + " WHERE type = ?1",
+			typeToString(type));
 	while(results.status() == SQLITE_ROW) {
-		executable.push_back(results.getString(0));
+		vars.push_back(results.getString(0));
 		results.step();
 	}
 	if(results.status() == SQLITE_DONE)
-		return executable;
+		return vars;
 
 	throw make_except("sqlite error: " + to_string(results.status()));
 }

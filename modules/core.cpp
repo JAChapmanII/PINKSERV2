@@ -32,7 +32,7 @@ string help(Bot *bot, string function) {
 
 string list(Bot *bot) {
 	auto ps = util::split(bot->vars.get("bot.plist").toString());
-	auto fs = bot->vars.getExecutable();
+	auto fs = bot->vars.getVariablesOfType(Type::Function);
 	for(auto &n : ps)
 		fs.erase(std::remove(fs.begin(), fs.end(), n), fs.end());
 	return util::join(fs);
