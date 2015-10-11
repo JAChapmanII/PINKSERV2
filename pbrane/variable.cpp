@@ -21,11 +21,11 @@ using util::endsWith;
 
 string typeToString(Type type) {
 	switch(type) {
-		case String: return "string";
-		case Number: return "number";
-		case Boolean: return "bool";
-		case Function: return "function";
-		case Void: return "void";
+		case Type::String: return "string";
+		case Type::Number: return "number";
+		case Type::Boolean: return "bool";
+		case Type::Function: return "function";
+		case Type::Void: return "void";
 	}
 	return "{invalid}";
 }
