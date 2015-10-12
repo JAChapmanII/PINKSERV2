@@ -33,10 +33,10 @@ Variable VarStore::get(string name) {
 Variable VarStore::set(string name, Variable var) {
 	createTables();
 	auto tran = _db.transaction();
-	_db.executeVoid("INSERT OR IGNORE INTO " + _varTable + " VALUES(?1, ?2, 0)",
-			name, var.toString());
-	_db.executeVoid("UPDATE " + _varTable + " SET body = ?1 WHERE name = ?2",
-			var.toString(), name);
+	_db.executeVoid("INSERT OR IGNORE INTO " + _varTable + " VALUES(?1, ?2, ?3)",
+			name, var.value, typeToString(var.type));
+	_db.executeVoid("UPDATE " + _varTable + " SET body = ?1, type = ?2 WHERE name = ?3",
+			var.value, typeToString(var.type), name);
 	return var;
 }
 bool VarStore::defined(string name) {
