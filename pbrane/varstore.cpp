@@ -80,6 +80,10 @@ vector<string> VarStore::getVariablesOfType(Type type) {
 	vector<string> vars;
 	auto results = _db.execute("SELECT name, type FROM " + _varTable + " WHERE type = ?1",
 			typeToString(type));
+	// TODO: I'm baffled by this... I've been out of my mind for days maybe that's it
+	// TODO: investigate and see if a previous query is not being closed?
+	// TODO: do get queries only work because they request one element?
+	// TODO: is type a kewyord?
 	while(results.status() == SQLITE_ROW) {
 		if(results.getString(1) != typeToString(type)) {
 			cerr << "added '" << results.getString(0) << "' : "
