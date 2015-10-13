@@ -68,10 +68,11 @@ string type(vector<Variable> arguments) {
 	string res;
 	for(auto arg : arguments) {
 		switch(arg.type) {
-			case Type::Number: res += arg.toString() + ":Number"; break;
-			case Type::Boolean: res += arg.toString() + ":Boolean"; break;
-			case Type::String: res += arg.toString() + ":String"; break;
-			default: res += "(" + arg.toString() + ":error)"; break;
+			case Type::Number: res += arg.value + ":Number"; break;
+			case Type::Boolean: res += arg.value + ":Boolean"; break;
+			case Type::String: res += arg.value + ":String"; break;
+			case Type::Function: res += arg.value + ":Function"; break;
+			default: res += "(" + arg.value + ":error)"; break;
 		}
 		res += " ";
 	}
