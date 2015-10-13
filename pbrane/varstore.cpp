@@ -78,10 +78,15 @@ vector<Variable> VarStore::getList(string variable) {
 vector<string> VarStore::getVariablesOfType(Type type) {
 	createTables();
 	vector<string> vars;
-	auto results = _db.execute("SELECT * FROM " + _varTable + " WHERE type = ?1",
+	auto results = _db.execute("SELECT name, type FROM " + _varTable + " WHERE type = ?1",
 			typeToString(type));
 	while(results.status() == SQLITE_ROW) {
-		vars.push_back(results.getString(0));
+		if(results.getString(1) != typeToString(type)) {
+			cerr << "added '" << results.getString(0) << "' : "
+				<< results.getString(1) << " != " << typeToString(type) << endl;
+		} else {
+			vars.push_back(results.getString(0));
+		}
 		results.step();
 	}
 	if(results.status() == SQLITE_DONE)
