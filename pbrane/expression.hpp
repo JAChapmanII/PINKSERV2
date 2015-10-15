@@ -11,6 +11,7 @@ using StackFrame = std::string;
 
 struct StackFrameLifetime;
 
+enum class ExceptionType { None, StackOverflow, FunctionDoesNotExist, Other };
 
 // may be thrown during Expression::evaluate
 struct StackTrace {
@@ -18,9 +19,12 @@ struct StackTrace {
 	bool hasError{false};
 	std::string error{};
 	std::string owner{};
+	ExceptionType type{ExceptionType::None};
+	std::string arg{};
 
 	std::string toString() const;
 	void except(std::string err);
+	void except(ExceptionType type, std::string err);
 
 	StackFrameLifetime push(StackFrame frame);
 };

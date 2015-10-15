@@ -140,13 +140,6 @@ void Bot::process(string network, string script, string nick, string target) {
 	if(script.empty())
 		return;
 
-	bool plainFunction = false;
-	string plainFName;
-	if(script[0] == '!')
-		plainFunction = true, plainFName = script.substr(1, script.find(" ") - 1);
-	// TODO: worst hack ever
-	string noF = plainFName + " does not exist as a callable function [stacktrace: !]";
-
 	static map<Context, string> contextMap;
 
 	if(script.substr(0, 2) == "::") {
@@ -162,12 +155,14 @@ void Bot::process(string network, string script, string nick, string target) {
 		contextMap[context] = "";
 	}
 
+	bool simpleCall{false};
 	string result = "";
 	try {
 		auto expr = Parser::parse(script);
 		if(!expr) {
 			cerr << "Bot::evaluate: \"" << script << "\" is null expr" << endl;
 		} else {
+			if(expr->type == "!") simpleCall = true;
 			result = expr->evaluate(vm, nick).toString();
 		}
 	} catch(ParseException e) {
@@ -183,17 +178,16 @@ void Bot::process(string network, string script, string nick, string target) {
 		}
 	} catch(StackTrace e) {
 		cerr << e.toString() << endl;
-		result = e.toString();
+		if(e.type == ExceptionType::FunctionDoesNotExist && simpleCall) {
+			cerr << "simple call to nonexistant function error supressed" << endl;
+		} else {
+			result = e.toString();
+		}
 	} catch(string &s) {
 		cerr << "string type error: " << s << endl;
 		result = s;
 	}
 
-
-	if(plainFunction && result == noF) {
-		cerr << "simple call to nonexistant function error supressed" << endl;
-		return;
-	}
 	// assume we can run the script
 	this->send(network, target, result, true);
 }

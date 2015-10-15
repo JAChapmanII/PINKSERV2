@@ -125,10 +125,12 @@ string Expression::prettyOneLine() const {
 string StackTrace::toString() const {
 	return error + " [stacktrace: " + join(frames, "  ") + "]";
 }
-void StackTrace::except(string err) {
+void StackTrace::except(ExceptionType t, std::string err) {
 	error = err;
+	type = t;
 	throw *this;
 }
+void StackTrace::except(string err) { this->except(ExceptionType::Other, err); }
 
 StackFrameLifetime StackTrace::push(StackFrame frame) {
 	frames.push_back(frame);
@@ -265,8 +267,11 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 		if(this->args[0]->type != "var")
 			context.except("rhs of ! is not a variable");
 		string func = this->args[0]->args[0]->evaluate(vm, context).toString();
-		if(!vm.vars.defined(func) && !contains(modules::hfmap, func))
-			context.except(func + " does not exist as a callable function");
+		if(!vm.vars.defined(func) && !contains(modules::hfmap, func)) {
+			context.arg = func;
+			context.except(ExceptionType::FunctionDoesNotExist,
+					func + " does not exist as a callable function");
+		}
 
 		if(!contains(modules::hfmap, func)) {
 			auto fVar = vm.vars.get(func);
