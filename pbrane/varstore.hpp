@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include "db.hpp"
 #include "variable.hpp"
 #include "permission.hpp"
@@ -28,6 +29,44 @@ struct VarStore {
 		std::string _varTable;
 		// TODO: permissions
 		bool _tablesCreated{false};
+};
+
+struct LocalVarStore {
+	LocalVarStore();
+
+	Variable get(std::string name);
+	Variable set(std::string name, Variable var);
+
+	bool defined(std::string name);
+	void erase(std::string name);
+
+	std::vector<Variable> getList(std::string variable);
+
+	std::vector<std::string> getVariablesOfType(Type type);
+
+	private:
+		std::map<std::string, Variable> _vars{};
+};
+
+struct TransactionalVarStore : public VarStore {
+	TransactionalVarStore(VarStore &store);
+
+	Variable get(std::string name);
+	Variable set(std::string name, Variable var);
+
+	bool defined(std::string name);
+	void erase(std::string name);
+
+	std::vector<Variable> getList(std::string variable);
+
+	std::vector<std::string> getVariablesOfType(Type type);
+
+	void abort();
+
+	private:
+		VarStore &_store;
+		LocalVarStore _lstore{};
+		bool _commit{true};
 };
 
 #endif // VARSTORE_HPP

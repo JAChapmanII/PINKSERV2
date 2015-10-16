@@ -13,6 +13,17 @@ using std::transform;
 using std::cerr;
 using std::endl;
 
+Variable makeVariable(string str);
+Variable makeVariable(string str) { return Variable::parse(str); }
+
+template<typename Store> vector<Variable> getList(Store &store, string variable) {
+	string lists = store.get(variable).toString();
+	auto list = makeList(lists);
+	vector<Variable> vars(list.size());
+	transform(list.begin(), list.end(), vars.begin(), makeVariable);
+	return vars;
+}
+
 VarStore::VarStore(Database &db, string varTableName)
 		: _db{db}, _varTable(varTableName) { }
 
@@ -64,15 +75,8 @@ void VarStore::createTables() {
 	_tablesCreated = true;
 }
 
-Variable makeVariable(string str);
-Variable makeVariable(string str) { return Variable::parse(str); }
-
 vector<Variable> VarStore::getList(string variable) {
-	string lists = get(variable).toString();
-	auto list = makeList(lists);
-	vector<Variable> vars(list.size());
-	transform(list.begin(), list.end(), vars.begin(), makeVariable);
-	return vars;
+	return ::getList(*this, variable);
 }
 
 vector<string> VarStore::getVariablesOfType(Type type) {
@@ -97,5 +101,36 @@ vector<string> VarStore::getVariablesOfType(Type type) {
 		return vars;
 
 	throw make_except("sqlite error: " + to_string(results.status()));
+}
+
+LocalVarStore::LocalVarStore() { }
+
+Variable LocalVarStore::get(string name) {
+	if(this->defined(name))
+		return _vars[name];
+	return Variable{};
+}
+Variable LocalVarStore::set(string name, Variable var) {
+	return _vars[name] = var;
+}
+
+bool LocalVarStore::defined(string name) {
+	return _vars.find(name) != _vars.end();
+}
+void LocalVarStore::erase(string name) {
+	if(!this->defined(name))
+		return;
+	_vars.erase(_vars.find(name));
+}
+
+vector<Variable> LocalVarStore::getList(string variable) {
+	return ::getList(*this, variable);
+}
+
+vector<string> LocalVarStore::getVariablesOfType(Type type) {
+	// TODO: currently would be very inefficient...
+	throw make_except("not implemented");
+	vector<string> vars;
+	return vars;
 }
 
