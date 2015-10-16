@@ -48,7 +48,7 @@ struct LocalVarStore {
 		std::map<std::string, Variable> _vars{};
 };
 
-struct TransactionalVarStore : public VarStore {
+struct TransactionalVarStore {
 	TransactionalVarStore(VarStore &store);
 
 	Variable get(std::string name);

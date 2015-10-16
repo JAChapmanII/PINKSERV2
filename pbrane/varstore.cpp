@@ -134,3 +134,46 @@ vector<string> LocalVarStore::getVariablesOfType(Type type) {
 	return vars;
 }
 
+
+// TODO: caching?
+TransactionalVarStore::TransactionalVarStore(VarStore &store) : _store{store} { }
+// TODO: destructor that commits
+
+Variable TransactionalVarStore::get(string name) {
+	if(_lstore.defined(name))
+		return _lstore.get(name);
+	if(_store.defined(name))
+		return _store.get(name);
+	return Variable{};
+}
+Variable TransactionalVarStore::set(string name, Variable var) {
+	return _lstore.set(name, var);
+}
+
+bool TransactionalVarStore::defined(string name) {
+	if(_lstore.defined(name))
+		return true;
+	return _store.defined(name);
+}
+void TransactionalVarStore::erase(string name) {
+	// TODO: need to mark as erades? void?
+	throw make_except("not implemented");
+}
+
+vector<Variable> TransactionalVarStore::getList(string variable) {
+	// TODO
+	throw make_except("not implemented");
+	vector<Variable> vars;
+	return vars;
+}
+
+vector<string> TransactionalVarStore::getVariablesOfType(Type type) {
+	// TODO
+	throw make_except("not implemented");
+	vector<string> vars;
+	return vars;
+}
+
+void TransactionalVarStore::abort() { _commit = false; }
+
+
