@@ -49,7 +49,7 @@ struct Bot {
 		Journal journal;
 		EventSystem events;
 		Dictionary dictionary;
-		VarStore vars;
+		SqlVarStore vars;
 		Pvm vm;
 		ngramStore ngStore;
 		TODOs todos;

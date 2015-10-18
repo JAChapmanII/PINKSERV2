@@ -26,10 +26,10 @@ template<typename Store> vector<Variable> getList(Store &store, string variable)
 	return vars;
 }
 
-VarStore::VarStore(Database &db, string varTableName)
+SqlVarStore::SqlVarStore(Database &db, string varTableName)
 		: _db{db}, _varTable(varTableName) { }
 
-Variable VarStore::get(string name) {
+Variable SqlVarStore::get(string name) {
 	createTables();
 	auto row = _db.execute(
 		"SELECT body, type FROM " + _varTable + " WHERE name = ?1",
@@ -43,7 +43,7 @@ Variable VarStore::get(string name) {
 
 	return Variable{};
 }
-Variable VarStore::set(string name, Variable var) {
+Variable SqlVarStore::set(string name, Variable var) {
 	createTables();
 	auto tran = _db.transaction();
 	_db.executeVoid("INSERT OR IGNORE INTO " + _varTable + " VALUES(?1, ?2, ?3)",
@@ -52,7 +52,7 @@ Variable VarStore::set(string name, Variable var) {
 			var.value, typeToString(var.type), name);
 	return var;
 }
-bool VarStore::defined(string name) {
+bool SqlVarStore::defined(string name) {
 	createTables();
 	auto result = _db.executeScalar<int>(
 			"SELECT COUNT(1) FROM " + _varTable + " WHERE name = ?1",
@@ -60,13 +60,13 @@ bool VarStore::defined(string name) {
 	if(!result) throw make_except("expected count value");
 	return *result;
 }
-void VarStore::erase(string name) {
+void SqlVarStore::erase(string name) {
 	createTables();
 	_db.executeVoid("DELETE FROM " + _varTable + " WHERE name = ?1",
 			name);
 }
 
-void VarStore::createTables() {
+void SqlVarStore::createTables() {
 	if(_tablesCreated) return;
 
 	auto tran = _db.transaction();
@@ -77,11 +77,11 @@ void VarStore::createTables() {
 	_tablesCreated = true;
 }
 
-vector<Variable> VarStore::getList(string variable) {
+vector<Variable> SqlVarStore::getList(string variable) {
 	return ::getList(*this, variable);
 }
 
-vector<string> VarStore::get() {
+vector<string> SqlVarStore::get() {
 	createTables();
 	vector<string> vars;
 	auto results = _db.execute("SELECT name, type FROM " + _varTable);
@@ -95,7 +95,7 @@ vector<string> VarStore::get() {
 	throw make_except("sqlite error: " + to_string(results.status()));
 
 }
-vector<string> VarStore::getVariablesOfType(Type type) {
+vector<string> SqlVarStore::getVariablesOfType(Type type) {
 	createTables();
 	vector<string> vars;
 	auto results = _db.execute("SELECT name, type FROM " + _varTable + " WHERE type = ?1",

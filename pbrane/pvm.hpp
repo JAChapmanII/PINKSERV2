@@ -15,12 +15,12 @@ struct Pvm {
 	bool debugFunctionBodies{false};
 
 	// variable store
-	VarStore vars;
+	VarStore &vars;
 
 	// store of injected functions
 	std::map<std::string, InjectedFunction> functions{};
 
-	Pvm(VarStore ivars, bool idBF = false)
+	Pvm(VarStore &ivars, bool idBF = false)
 		: debugFunctionBodies{idBF}, vars{ivars} { }
 };
 

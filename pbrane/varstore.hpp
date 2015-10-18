@@ -9,7 +9,22 @@
 #include "permission.hpp"
 
 struct VarStore {
-	VarStore(zidcu::Database &db, std::string varTableName = "vars");
+	virtual ~VarStore() { }
+
+	virtual Variable get(std::string name) = 0;
+	virtual Variable set(std::string name, Variable var) = 0;
+
+	virtual bool defined(std::string name) = 0;
+	virtual void erase(std::string name) = 0;
+
+	virtual std::vector<Variable> getList(std::string variable) = 0;
+
+	virtual std::vector<std::string> get() = 0;
+	virtual std::vector<std::string> getVariablesOfType(Type type) = 0;
+};
+
+struct SqlVarStore : public VarStore {
+	SqlVarStore(zidcu::Database &db, std::string varTableName = "vars");
 
 	Variable get(std::string name);
 	Variable set(std::string name, Variable var);
@@ -32,7 +47,7 @@ struct VarStore {
 		bool _tablesCreated{false};
 };
 
-struct LocalVarStore {
+struct LocalVarStore : public VarStore {
 	LocalVarStore();
 
 	Variable get(std::string name);
@@ -50,7 +65,7 @@ struct LocalVarStore {
 		std::map<std::string, Variable> _vars{};
 };
 
-struct TransactionalVarStore {
+struct TransactionalVarStore : public VarStore {
 	TransactionalVarStore(VarStore &store);
 	~TransactionalVarStore();
 
