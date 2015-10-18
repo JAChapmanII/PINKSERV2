@@ -19,6 +19,7 @@ struct VarStore {
 
 	std::vector<Variable> getList(std::string variable);
 
+	std::vector<std::string> get();
 	std::vector<std::string> getVariablesOfType(Type type);
 
 	private:
@@ -42,6 +43,7 @@ struct LocalVarStore {
 
 	std::vector<Variable> getList(std::string variable);
 
+	std::vector<std::string> get();
 	std::vector<std::string> getVariablesOfType(Type type);
 
 	private:
@@ -50,6 +52,7 @@ struct LocalVarStore {
 
 struct TransactionalVarStore {
 	TransactionalVarStore(VarStore &store);
+	~TransactionalVarStore();
 
 	Variable get(std::string name);
 	Variable set(std::string name, Variable var);
@@ -59,6 +62,7 @@ struct TransactionalVarStore {
 
 	std::vector<Variable> getList(std::string variable);
 
+	std::vector<std::string> get();
 	std::vector<std::string> getVariablesOfType(Type type);
 
 	void abort();

@@ -7,6 +7,8 @@ using zidcu::Database;
 #include <algorithm>
 using std::transform;
 
+#include <set>
+
 #include "err.hpp"
 
 #include <iostream>
@@ -79,6 +81,20 @@ vector<Variable> VarStore::getList(string variable) {
 	return ::getList(*this, variable);
 }
 
+vector<string> VarStore::get() {
+	createTables();
+	vector<string> vars;
+	auto results = _db.execute("SELECT name, type FROM " + _varTable);
+	while(results.status() == SQLITE_ROW) {
+		vars.push_back(results.getString(0));
+		results.step();
+	}
+	if(results.status() == SQLITE_DONE)
+		return vars;
+
+	throw make_except("sqlite error: " + to_string(results.status()));
+
+}
 vector<string> VarStore::getVariablesOfType(Type type) {
 	createTables();
 	vector<string> vars;
@@ -127,7 +143,14 @@ vector<Variable> LocalVarStore::getList(string variable) {
 	return ::getList(*this, variable);
 }
 
-vector<string> LocalVarStore::getVariablesOfType(Type type) {
+vector<string> LocalVarStore::get() {
+	vector<string> vars;
+	vars.reserve(_vars.size());
+	for(auto &var : _vars)
+		vars.push_back(var.first);
+	return vars;
+}
+vector<string> LocalVarStore::getVariablesOfType(Type ) {
 	// TODO: currently would be very inefficient...
 	throw make_except("not implemented");
 	vector<string> vars;
@@ -138,6 +161,15 @@ vector<string> LocalVarStore::getVariablesOfType(Type type) {
 // TODO: caching?
 TransactionalVarStore::TransactionalVarStore(VarStore &store) : _store{store} { }
 // TODO: destructor that commits
+TransactionalVarStore::~TransactionalVarStore() {
+	if(!_commit)
+		return;
+
+	auto lvars = _lstore.get();
+	for(auto &var : lvars)
+		_store.set(var, _lstore.get(var));
+	// TODO: handle deletes
+}
 
 Variable TransactionalVarStore::get(string name) {
 	if(_lstore.defined(name))
@@ -155,15 +187,29 @@ bool TransactionalVarStore::defined(string name) {
 		return true;
 	return _store.defined(name);
 }
-void TransactionalVarStore::erase(string name) {
+void TransactionalVarStore::erase(string ) {
 	// TODO: need to mark as erades? void?
 	throw make_except("not implemented");
 }
 
-vector<Variable> TransactionalVarStore::getList(string variable) {
+vector<Variable> TransactionalVarStore::getList(string ) {
 	// TODO
 	throw make_except("not implemented");
 	vector<Variable> vars;
+	return vars;
+}
+
+vector<string> TransactionalVarStore::get() {
+	auto svars = _store.get();
+	auto lvars = _lstore.get(); // TODO: handling deletes?
+	std::set<string> unique{};
+	for(auto &v : svars) unique.insert(v);
+	for(auto &v : lvars) unique.insert(v);
+
+	vector<string> vars;
+	vars.reserve(unique.size());
+	for(auto &v : unique)
+		vars.push_back(v);
 	return vars;
 }
 
