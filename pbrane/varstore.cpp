@@ -6,8 +6,10 @@ using zidcu::Database;
 
 #include <algorithm>
 using std::transform;
+using std::set_difference;
 
-#include <set>
+#include <iterator>
+using std::inserter;
 
 #include "err.hpp"
 
@@ -160,7 +162,6 @@ vector<string> LocalVarStore::getVariablesOfType(Type ) {
 
 // TODO: caching?
 TransactionalVarStore::TransactionalVarStore(VarStore &store) : _store{store} { }
-// TODO: destructor that commits
 TransactionalVarStore::~TransactionalVarStore() {
 	if(!_commit)
 		return;
@@ -187,9 +188,8 @@ bool TransactionalVarStore::defined(string name) {
 		return true;
 	return _store.defined(name);
 }
-void TransactionalVarStore::erase(string ) {
-	// TODO: need to mark as erades? void?
-	throw make_except("not implemented");
+void TransactionalVarStore::erase(string name) {
+	_erased.insert(name);
 }
 
 vector<Variable> TransactionalVarStore::getList(string ) {
@@ -222,4 +222,13 @@ vector<string> TransactionalVarStore::getVariablesOfType(Type type) {
 
 void TransactionalVarStore::abort() { _commit = false; }
 
+vector<string> TransactionalVarStore::getLocal() {
+	auto lvars = _lstore.get();
+
+	vector<string> vars{};
+	set_difference(lvars.begin(), lvars.end(),
+			_erased.begin(), _erased.end(),
+			inserter(vars, vars.begin()));
+	return vars;
+}
 

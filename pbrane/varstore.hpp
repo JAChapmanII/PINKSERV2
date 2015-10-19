@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include "db.hpp"
 #include "variable.hpp"
 #include "permission.hpp"
@@ -83,8 +84,12 @@ struct TransactionalVarStore : public VarStore {
 	void abort();
 
 	private:
+		std::vector<std::string> getLocal();
+
+	private:
 		VarStore &_store;
 		LocalVarStore _lstore{};
+		std::set<std::string> _erased{};
 		bool _commit{true};
 };
 
