@@ -18,7 +18,7 @@ template<typename T> T util::split(std::string str, std::string on) {
 	return fields;
 }
 template<typename T> std::string util::join(T strsB, T strsE, std::string with) {
-	if(strsE - strsB < 1)
+	if(strsE == strsB) // TODO: begin after end?
 		return "";
 	std::string res;
 	for(auto i = strsB; i != strsE; ++i)
