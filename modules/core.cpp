@@ -34,7 +34,7 @@ string list(Bot *bot) {
 	auto ps = util::split(bot->vars.get("bot.plist").toString());
 	auto fs = bot->vars.getVariablesOfType(Type::Function);
 	for(auto &n : ps)
-		fs.erase(std::remove(fs.begin(), fs.end(), n), fs.end());
+		fs.erase(n);
 	return util::join(fs);
 }
 

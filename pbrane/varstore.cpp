@@ -1,7 +1,6 @@
 #include "varstore.hpp"
 using std::string;
 using std::to_string;
-using std::vector;
 using zidcu::Database;
 
 #include <algorithm>
@@ -71,12 +70,12 @@ void SqlVarStore::createTables() {
 	_tablesCreated = true;
 }
 
-vector<string> SqlVarStore::get() {
+std::set<string> SqlVarStore::get() {
 	createTables();
-	vector<string> vars;
+	std::set<string> vars;
 	auto results = _db.execute("SELECT name, type FROM " + _varTable);
 	while(results.status() == SQLITE_ROW) {
-		vars.push_back(results.getString(0));
+		vars.insert(results.getString(0));
 		results.step();
 	}
 	if(results.status() == SQLITE_DONE)
@@ -85,9 +84,9 @@ vector<string> SqlVarStore::get() {
 	throw make_except("sqlite error: " + to_string(results.status()));
 
 }
-vector<string> SqlVarStore::getVariablesOfType(Type type) {
+std::set<string> SqlVarStore::getVariablesOfType(Type type) {
 	createTables();
-	vector<string> vars;
+	std::set<string> vars;
 	auto results = _db.execute("SELECT name, type FROM " + _varTable + " WHERE type = ?1",
 			typeToString(type));
 	// TODO: I'm baffled by this... I've been out of my mind for days maybe that's it
@@ -99,7 +98,7 @@ vector<string> SqlVarStore::getVariablesOfType(Type type) {
 			cerr << "added '" << results.getString(0) << "' : "
 				<< results.getString(1) << " != " << typeToString(type) << endl;
 		} else {
-			vars.push_back(results.getString(0));
+			vars.insert(results.getString(0));
 		}
 		results.step();
 	}
@@ -129,17 +128,16 @@ void LocalVarStore::erase(string name) {
 	_vars.erase(_vars.find(name));
 }
 
-vector<string> LocalVarStore::get() {
-	vector<string> vars;
-	vars.reserve(_vars.size());
+std::set<string> LocalVarStore::get() {
+	std::set<string> vars;
 	for(auto &var : _vars)
-		vars.push_back(var.first);
+		vars.insert(var.first);
 	return vars;
 }
-vector<string> LocalVarStore::getVariablesOfType(Type ) {
+std::set<string> LocalVarStore::getVariablesOfType(Type ) {
 	// TODO: currently would be very inefficient...
 	throw make_except("not implemented");
-	vector<string> vars;
+	std::set<string> vars;
 	return vars;
 }
 
@@ -176,33 +174,36 @@ void TransactionalVarStore::erase(string name) {
 	_erased.insert(name);
 }
 
-vector<string> TransactionalVarStore::get() {
+std::set<string> TransactionalVarStore::get() {
 	auto svars = _store.get();
 	auto lvars = _lstore.get(); // TODO: handling deletes?
-	std::set<string> unique{};
-	for(auto &v : svars) unique.insert(v);
-	for(auto &v : lvars) unique.insert(v);
 
-	vector<string> vars;
-	vars.reserve(unique.size());
-	for(auto &v : unique)
-		vars.push_back(v);
+	std::set<string> combined{};
+	set_union(svars.begin(), svars.end(),
+			lvars.begin(), lvars.end(),
+			inserter(combined, combined.begin()));
+
+	std::set<string> vars{};
+	set_difference(combined.begin(), combined.end(),
+			_erased.begin(), _erased.end(),
+			inserter(vars, vars.begin()));
+
 	return vars;
 }
 
-vector<string> TransactionalVarStore::getVariablesOfType(Type type) {
+std::set<string> TransactionalVarStore::getVariablesOfType(Type type) {
 	// TODO
 	throw make_except("not implemented");
-	vector<string> vars;
+	std::set<string> vars;
 	return vars;
 }
 
 void TransactionalVarStore::abort() { _commit = false; }
 
-vector<string> TransactionalVarStore::getLocal() {
+std::set<string> TransactionalVarStore::getLocal() {
 	auto lvars = _lstore.get();
 
-	vector<string> vars{};
+	std::set<string> vars{};
 	set_difference(lvars.begin(), lvars.end(),
 			_erased.begin(), _erased.end(),
 			inserter(vars, vars.begin()));

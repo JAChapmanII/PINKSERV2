@@ -2,7 +2,6 @@
 #define VARSTORE_HPP
 
 #include <string>
-#include <vector>
 #include <map>
 #include <set>
 #include "db.hpp"
@@ -18,8 +17,8 @@ struct VarStore {
 	virtual bool defined(std::string name) = 0;
 	virtual void erase(std::string name) = 0;
 
-	virtual std::vector<std::string> get() = 0;
-	virtual std::vector<std::string> getVariablesOfType(Type type) = 0;
+	virtual std::set<std::string> get() = 0;
+	virtual std::set<std::string> getVariablesOfType(Type type) = 0;
 };
 
 struct SqlVarStore : public VarStore {
@@ -31,8 +30,8 @@ struct SqlVarStore : public VarStore {
 	bool defined(std::string name);
 	void erase(std::string name);
 
-	std::vector<std::string> get();
-	std::vector<std::string> getVariablesOfType(Type type);
+	std::set<std::string> get();
+	std::set<std::string> getVariablesOfType(Type type);
 
 	private:
 		void createTables();
@@ -53,8 +52,8 @@ struct LocalVarStore : public VarStore {
 	bool defined(std::string name);
 	void erase(std::string name);
 
-	std::vector<std::string> get();
-	std::vector<std::string> getVariablesOfType(Type type);
+	std::set<std::string> get();
+	std::set<std::string> getVariablesOfType(Type type);
 
 	private:
 		std::map<std::string, Variable> _vars{};
@@ -70,13 +69,13 @@ struct TransactionalVarStore : public VarStore {
 	bool defined(std::string name);
 	void erase(std::string name);
 
-	std::vector<std::string> get();
-	std::vector<std::string> getVariablesOfType(Type type);
+	std::set<std::string> get();
+	std::set<std::string> getVariablesOfType(Type type);
 
 	void abort();
 
 	private:
-		std::vector<std::string> getLocal();
+		std::set<std::string> getLocal();
 
 	private:
 		VarStore &_store;
