@@ -18,8 +18,6 @@ struct VarStore {
 	virtual bool defined(std::string name) = 0;
 	virtual void erase(std::string name) = 0;
 
-	virtual std::vector<Variable> getList(std::string variable) = 0;
-
 	virtual std::vector<std::string> get() = 0;
 	virtual std::vector<std::string> getVariablesOfType(Type type) = 0;
 };
@@ -32,8 +30,6 @@ struct SqlVarStore : public VarStore {
 
 	bool defined(std::string name);
 	void erase(std::string name);
-
-	std::vector<Variable> getList(std::string variable);
 
 	std::vector<std::string> get();
 	std::vector<std::string> getVariablesOfType(Type type);
@@ -57,8 +53,6 @@ struct LocalVarStore : public VarStore {
 	bool defined(std::string name);
 	void erase(std::string name);
 
-	std::vector<Variable> getList(std::string variable);
-
 	std::vector<std::string> get();
 	std::vector<std::string> getVariablesOfType(Type type);
 
@@ -75,8 +69,6 @@ struct TransactionalVarStore : public VarStore {
 
 	bool defined(std::string name);
 	void erase(std::string name);
-
-	std::vector<Variable> getList(std::string variable);
 
 	std::vector<std::string> get();
 	std::vector<std::string> getVariablesOfType(Type type);

@@ -20,14 +20,6 @@ using std::endl;
 Variable makeVariable(string str);
 Variable makeVariable(string str) { return Variable::parse(str); }
 
-template<typename Store> vector<Variable> getList(Store &store, string variable) {
-	string lists = store.get(variable).toString();
-	auto list = makeList(lists);
-	vector<Variable> vars(list.size());
-	transform(list.begin(), list.end(), vars.begin(), makeVariable);
-	return vars;
-}
-
 SqlVarStore::SqlVarStore(Database &db, string varTableName)
 		: _db{db}, _varTable(varTableName) { }
 
@@ -77,10 +69,6 @@ void SqlVarStore::createTables() {
 	_db.executeVoid("CREATE INDEX IF NOT EXISTS " + _varTable + "_type_idx"
 		+ " ON " + _varTable + " (type)");
 	_tablesCreated = true;
-}
-
-vector<Variable> SqlVarStore::getList(string variable) {
-	return ::getList(*this, variable);
 }
 
 vector<string> SqlVarStore::get() {
@@ -141,10 +129,6 @@ void LocalVarStore::erase(string name) {
 	_vars.erase(_vars.find(name));
 }
 
-vector<Variable> LocalVarStore::getList(string variable) {
-	return ::getList(*this, variable);
-}
-
 vector<string> LocalVarStore::get() {
 	vector<string> vars;
 	vars.reserve(_vars.size());
@@ -190,13 +174,6 @@ bool TransactionalVarStore::defined(string name) {
 }
 void TransactionalVarStore::erase(string name) {
 	_erased.insert(name);
-}
-
-vector<Variable> TransactionalVarStore::getList(string ) {
-	// TODO
-	throw make_except("not implemented");
-	vector<Variable> vars;
-	return vars;
 }
 
 vector<string> TransactionalVarStore::get() {
