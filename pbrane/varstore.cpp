@@ -151,10 +151,13 @@ TransactionalVarStore::~TransactionalVarStore() {
 	auto lvars = _lstore.get();
 	for(auto &var : lvars)
 		_store.set(var, _lstore.get(var));
-	// TODO: handle deletes
+	for(auto &var : _erased)
+		_store.erase(var);
 }
 
 Variable TransactionalVarStore::get(string name) {
+	if(_erased.count(name) > 0)
+		return Variable{};
 	if(_lstore.defined(name))
 		return _lstore.get(name);
 	if(_store.defined(name))
@@ -162,27 +165,34 @@ Variable TransactionalVarStore::get(string name) {
 	return Variable{};
 }
 Variable TransactionalVarStore::set(string name, Variable var) {
+	_erased.erase(name);
 	return _lstore.set(name, var);
 }
 
 bool TransactionalVarStore::defined(string name) {
+	if(_erased.count(name) > 0)
+		return false;
 	if(_lstore.defined(name))
 		return true;
 	return _store.defined(name);
 }
 void TransactionalVarStore::erase(string name) {
 	_erased.insert(name);
+	if(_lstore.defined(name))
+		_lstore.erase(name);
 }
 
 std::set<string> TransactionalVarStore::get() {
 	auto svars = _store.get();
-	auto lvars = _lstore.get(); // TODO: handling deletes?
+	auto lvars = _lstore.get();
 
+	// merge together backing and local vars
 	std::set<string> combined{};
 	set_union(svars.begin(), svars.end(),
 			lvars.begin(), lvars.end(),
 			inserter(combined, combined.begin()));
 
+	// strip out erased variables
 	std::set<string> vars{};
 	set_difference(combined.begin(), combined.end(),
 			_erased.begin(), _erased.end(),
@@ -199,14 +209,4 @@ std::set<string> TransactionalVarStore::getVariablesOfType(Type type) {
 }
 
 void TransactionalVarStore::abort() { _commit = false; }
-
-std::set<string> TransactionalVarStore::getLocal() {
-	auto lvars = _lstore.get();
-
-	std::set<string> vars{};
-	set_difference(lvars.begin(), lvars.end(),
-			_erased.begin(), _erased.end(),
-			inserter(vars, vars.begin()));
-	return vars;
-}
 

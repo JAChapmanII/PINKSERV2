@@ -75,9 +75,6 @@ struct TransactionalVarStore : public VarStore {
 	void abort();
 
 	private:
-		std::set<std::string> getLocal();
-
-	private:
 		VarStore &_store;
 		LocalVarStore _lstore{};
 		std::set<std::string> _erased{};
