@@ -134,10 +134,13 @@ std::set<string> LocalVarStore::get() {
 		vars.insert(var.first);
 	return vars;
 }
-std::set<string> LocalVarStore::getVariablesOfType(Type ) {
-	// TODO: currently would be very inefficient...
-	throw make_except("not implemented");
+std::set<string> LocalVarStore::getVariablesOfType(Type type) {
+	// TODO: this really isn't very efficient... change to
+	// TODO: map<type, map<string, var>>? Way it's used isn't so bad
 	std::set<string> vars;
+	for(auto &var : _vars)
+		if(var.second.type == type)
+			vars.insert(var.first);
 	return vars;
 }
 
@@ -186,10 +189,23 @@ std::set<string> TransactionalVarStore::get() {
 	auto svars = _store.get();
 	auto lvars = _lstore.get();
 
+	return this->filterErased(svars, lvars);
+}
+
+std::set<string> TransactionalVarStore::getVariablesOfType(Type type) {
+	auto svars = _store.getVariablesOfType(type);
+	auto lvars = _lstore.getVariablesOfType(type);
+
+	return this->filterErased(svars, lvars);
+}
+
+void TransactionalVarStore::abort() { _commit = false; }
+
+std::set<string> TransactionalVarStore::filterErased(
+		std::set<string> &a, std::set<string> &b) {
 	// merge together backing and local vars
 	std::set<string> combined{};
-	set_union(svars.begin(), svars.end(),
-			lvars.begin(), lvars.end(),
+	set_union(a.begin(), a.end(), b.begin(), b.end(),
 			inserter(combined, combined.begin()));
 
 	// strip out erased variables
@@ -200,13 +216,4 @@ std::set<string> TransactionalVarStore::get() {
 
 	return vars;
 }
-
-std::set<string> TransactionalVarStore::getVariablesOfType(Type type) {
-	// TODO
-	throw make_except("not implemented");
-	std::set<string> vars;
-	return vars;
-}
-
-void TransactionalVarStore::abort() { _commit = false; }
 

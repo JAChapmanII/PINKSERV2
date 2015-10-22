@@ -75,6 +75,11 @@ struct TransactionalVarStore : public VarStore {
 	void abort();
 
 	private:
+		// return (a U b) - erased
+		std::set<std::string> filterErased(
+				std::set<std::string> &a, std::set<std::string> &b);
+
+	private:
 		VarStore &_store;
 		LocalVarStore _lstore{};
 		std::set<std::string> _erased{};
