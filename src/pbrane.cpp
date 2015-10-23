@@ -96,7 +96,7 @@ void teval(vector<string> args) {
 				// TODO: other exception types...
 			} catch(ParseException e) {
 				cout << e.pretty() << endl;
-			} catch(StackTrace e) {
+			} catch(StackTrace &e) {
 				cout << e.toString() << endl;
 			} catch(string &s) {
 				cout << "\t: " << s << endl;
@@ -127,7 +127,7 @@ void teval(vector<string> args) {
 			// TODO: other exception types
 		} catch(ParseException e) {
 			cerr << e.pretty() << endl;
-		} catch(StackTrace e) {
+		} catch(StackTrace &e) {
 			cout << e.toString() << endl;
 		} catch(string &s) {
 			cerr << "\texception: " << s << endl;

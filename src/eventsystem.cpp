@@ -65,7 +65,7 @@ vector<Variable> EventSystem::process(EventType etype, Pvm &vm) {
 		} catch(ParseException e) {
 			// TODO: remove
 			cerr << "EventSystem::process: " << e.pretty() << endl;
-		} catch(StackTrace e) {
+		} catch(StackTrace &e) {
 			cerr << "EventSystem::process: " << e.toString() << endl;
 		} catch(string &s) {
 			cerr << "EventSystem::process: " << s << endl; // TODO

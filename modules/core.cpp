@@ -158,7 +158,7 @@ string debug(string text) {
 			cerr << "expr: " << endl << expr->pretty() << endl;
 	} catch(ParseException e) {
 		cerr << e.pretty() << endl;
-	} catch(StackTrace e) {
+	} catch(StackTrace &e) {
 		cerr << e.toString() << endl;
 	} catch(string &s) {
 		cerr << "string type error: " << s << endl;

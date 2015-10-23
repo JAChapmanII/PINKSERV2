@@ -109,7 +109,7 @@ string Bot::evaluate(string script, string nick) {
 	} catch(ParseException e) {
 		cerr << e.pretty() << endl;
 		return e.msg + " @" + util::asString(e.idx);
-	} catch(StackTrace e) {
+	} catch(StackTrace &e) {
 		cerr << e.toString() << endl;
 		return e.toString();
 	} catch(string &s) {
@@ -176,7 +176,7 @@ void Bot::process(string network, string script, string nick, string target) {
 			this->send(network, target, ":" + lines[2].substr(3) + "  " + lines[0], true);
 			return;
 		}
-	} catch(StackTrace e) {
+	} catch(StackTrace &e) {
 		cerr << e.toString() << endl;
 		if(e.type == ExceptionType::FunctionDoesNotExist && simpleCall) {
 			cerr << "simple call to nonexistant function error supressed" << endl;
