@@ -4,9 +4,6 @@ using std::string;
 using std::unique_ptr;
 using std::to_string;
 
-#include <memory>
-using std::move;
-
 #include <map>
 using std::map;
 
@@ -123,7 +120,7 @@ string Expression::prettyOneLine() const {
 }
 
 string StackTrace::toString() const {
-	return error + " [stacktrace: " + join(frames, "  ") + "]";
+	return error + " [stacktrace: " + join(frames, " ") + "]";
 }
 void StackTrace::except(ExceptionType t, std::string err) {
 	error = err;
@@ -145,8 +142,9 @@ StackFrameLifetime::StackFrameLifetime(StackTrace &trace, int which)
 StackFrameLifetime::~StackFrameLifetime() {
 	if(_trace.hasError || _which < 0)
 		return;
-	if(_trace.frames.size() > _which)
-		_trace.frames.erase(_trace.frames.begin() + _which);
+	if(_trace.frames.size() != _which + 1)
+		throw make_except("TODO");
+	_trace.frames.pop_back();
 }
 
 StackFrameLifetime::StackFrameLifetime(StackFrameLifetime &&rhs)
@@ -154,10 +152,34 @@ StackFrameLifetime::StackFrameLifetime(StackFrameLifetime &&rhs)
 	rhs._which = -1;
 }
 
+void ExpressionContext::except(string err) {
+	trace.except(err);
+}
+void ExpressionContext::except(ExceptionType type, string err) {
+	trace.except(type, err);
+}
+
 
 Variable Expression::evaluate(Pvm &vm, string who) const {
-	StackTrace st; st.owner = who;
-	return evaluate(vm, st);
+	StackTrace st;
+	st.owner = who;
+
+	TransactionalVarStore tvs{vm.vars};
+	Pvm nvm{tvs, vm.debugFunctionBodies};
+	nvm.functions = vm.functions; // TODO: messy
+
+	// TODO: bleh, vm has to get in somehow?
+	st.push("#");
+
+	ExpressionContext context{st, nvm};
+
+	try {
+		return evaluate(context);
+	} catch(StackTrace &trace) {
+		cerr << "abort" << endl;
+		tvs.abort();
+		throw;
+	}
 }
 
 
@@ -171,7 +193,7 @@ Variable Expression::evaluate(Pvm &vm, string who) const {
 
 // TODO: better timing control
 // TODO: abort after Xms?
-Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
+Variable Expression::evaluate(ExpressionContext &context) const {
 	if(this == nullptr) // TODO: something probably went wrong.... empty expression?
 		context.except("this == nullptr");
 
@@ -180,7 +202,7 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 
 	// simple wrappers
 	if(this->type == "${}" || this->type == "()" || this->type == "{}")
-		return this->args[0]->evaluate(vm, context);
+		return this->args[0]->evaluate(context);
 
 	// multiple expressions
 	if(this->type == ";") {
@@ -188,35 +210,39 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 		Variable result;
 		for(int i = 0; i < (int)this->args.size(); ++i)
 			if(this->args[i])
-				result = this->args[i]->evaluate(vm, context);
+				result = this->args[i]->evaluate(context);
 		return result;
 	}
 
 	// monitor stacktrace, skipping simple wrapper contexts
-	auto lifetime = context.push(this->type);
+	auto lifetime = context.trace.push(this->type);
+	auto &vm = context.vm;
+	auto &trace = context.trace;
+	auto &frame = trace.frames.back();
+	auto &vars = context.vm.vars;
 
 	// TODO: configurable max recursion depth?
-	if(context.frames.size() > 32)
+	if(trace.frames.size() > 32)
 		context.except("exceeded max recursion depth");
 
 
 	// ? and ? : operators
 	if(this->type == "?") {
-		Variable cond = this->args[0]->evaluate(vm, context);
+		Variable cond = this->args[0]->evaluate(context);
 
 		// if we have a ? : operator
 		if(this->args[1]->type == ":") {
 			if(cond.isFalse())
-				return this->args[1]->args[1]->evaluate(vm, context);
+				return this->args[1]->args[1]->evaluate(context);
 			else
-				return this->args[1]->args[0]->evaluate(vm, context);
+				return this->args[1]->args[0]->evaluate(context);
 		}
 
 		// just ?, no false branch
 		if(cond.isFalse())
 			return Variable();
 
-		return this->args[1]->evaluate(vm, context);
+		return this->args[1]->evaluate(context);
 	}
 
 	if(this->type == "=") {
@@ -225,14 +251,14 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 
 		// get var name and the contents
 		// note: we don't actually evaluate the $, but it's argument
-		string var = this->args[0]->args[0]->evaluate(vm, context).toString();
-		Variable result = this->args[1]->evaluate(vm, context);
+		string var = this->args[0]->args[0]->evaluate(context).toString();
+		Variable result = this->args[1]->evaluate(context);
 
 		// if assigning to null, don't really assign
 		if(var == "null")
 			return result;
 
-		return vm.vars.set(var, result); // TODO: perms?
+		return vars.set(var, result); // TODO: perms?
 	}
 
 	// see = implementation above for comments
@@ -240,67 +266,67 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 		if(this->args[0]->type != "var")
 			context.except("lhs of => is not a variable");
 
-		string func = this->args[0]->args[0]->evaluate(vm, context).toString(),
+		string func = this->args[0]->args[0]->evaluate(context).toString(),
 			body = this->args[1]->toString(); // TODO: requires Expression::toString
 
 		if(func == "null")
 			return Variable(body);
 
-		auto res = vm.vars.set(func, body);
-		auto fVar = vm.vars.get(func);
+		auto res = vars.set(func, body);
+		auto fVar = vars.get(func);
 		fVar.type = Type::Function;
-		vm.vars.set(func, fVar);
+		vars.set(func, fVar);
 		return res;
 	}
 
 	// function calls, special :D
 	if(this->type == "!") {
 		// store $ variables incase they're clobbered
-		Variable oargs = vm.vars.get("args");
+		Variable oargs = vars.get("args");
 		map<string, Variable> ovars;
 		for(int i = 0; i < 10; ++i) {
 			auto v = "$" + to_string(i);
-			if(vm.vars.defined(v))
-				ovars[v] = vm.vars.get(v);
+			if(vars.defined(v))
+				ovars[v] = vars.get(v);
 		}
 
 		if(this->args[0]->type != "var")
 			context.except("rhs of ! is not a variable");
-		string func = this->args[0]->args[0]->evaluate(vm, context).toString();
-		if(!vm.vars.defined(func) && !contains(modules::hfmap, func)) {
-			context.arg = func;
-			context.except(ExceptionType::FunctionDoesNotExist,
+		string func = this->args[0]->args[0]->evaluate(context).toString();
+		if(!vars.defined(func) && !contains(modules::hfmap, func)) {
+			trace.arg = func;
+			trace.except(ExceptionType::FunctionDoesNotExist,
 					func + " does not exist as a callable function");
 		}
 
 		if(!contains(modules::hfmap, func)) {
-			auto fVar = vm.vars.get(func);
+			auto fVar = vars.get(func);
 			fVar.type = Type::Function;
-			vm.vars.set(func, fVar);
+			vars.set(func, fVar);
 		}
 
-		auto body = vm.vars.get(func).toString();
+		auto body = vars.get(func).toString();
 
 		if(vm.debugFunctionBodies)
 			cerr << "! body: " << body << endl;
-		ensurePermission(Permission::Execute, context.owner, func);
+		ensurePermission(Permission::Execute, trace.owner, func);
 
 		// figure out the result of the arguments
 		vector<Variable> argVars;
 		for(unsigned i = 1; i < args.size(); ++i)
-			argVars.push_back(args[i]->evaluate(vm, context));
+			argVars.push_back(args[i]->evaluate(context));
 
 		auto argsstr = util::join(argVars, " ");
 
 		// clear out argument variables
 		for(int i = 0; i < 10; ++i)
-			vm.vars.erase("$" + asString(i + 1));
+			vars.erase("$" + asString(i + 1));
 
 		// set the argument values
-		vm.vars.set("args", argsstr);
-		vm.vars.set("$0", func);
+		vars.set("args", argsstr);
+		vars.set("$0", func);
 		for(unsigned i = 0; i < args.size() - 1; ++i)
-			vm.vars.set("$" + asString(i + 1), argVars[i]);
+			vars.set("$" + asString(i + 1), argVars[i]);
 
 		Variable result;
 
@@ -310,18 +336,20 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 		} else {
 			try {
 				auto expr = Parser::parseCanonical(body);
-				context.frames.pop_back();
-				context.frames.push_back("!" + func);
-				result = expr->evaluate(vm, context);
+
+				// rewrite frame name to be correct
+				trace.frames.back() = "!" + func;
+
+				result = expr->evaluate(context);
 			} catch(ParseException e) {
 				context.except(e.msg + " @" + asString(e.idx));
 			}
 		}
 
 		// restort $ variables
-		vm.vars.set("args", oargs);
+		vars.set("args", oargs);
 		for(auto &e : ovars)
-			vm.vars.set(e.first, e.second);
+			vars.set(e.first, e.second);
 
 		return result;
 	}
@@ -331,10 +359,10 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 	// TODO: regex is reinterpreting the argument escapes?
 	// TODO: $text =~ ':o/|\o:' behaves like ':o/|o:'
 	if(this->type == "=~" || this->type == "~") {
-		string result, rtext = this->args[0]->evaluate(vm, context).toString();
+		string result, rtext = this->args[0]->evaluate(context).toString();
 		// TODO: may throw, wrap into StackTrace
 		try {
-			Regex r(this->args[1]->evaluate(vm, context).toString());
+			Regex r(this->args[1]->evaluate(context).toString());
 
 			// if match equals, just return if we match
 			if(this->type == "=~")
@@ -346,7 +374,7 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 
 			// TODO: group variables, r0, r1, etc
 			bool matches = r.execute(rtext, result);
-			return vm.vars.set("r_", result); // TODO: read-only
+			return vars.set("r_", result); // TODO: read-only
 		} catch(string &e) {
 			context.except(e);
 		}
@@ -363,73 +391,77 @@ Variable Expression::evaluate(Pvm &vm, StackTrace &context) const {
 	if(this->type == "'" || this->type == "\"" || this->type == "strcat") {
 		string result;
 		for(auto &i : this->args)
-			result += i->evaluate(vm, context).toString();
+			result += i->evaluate(context).toString();
 		return Variable(result);
 	}
 
 	// variable access
 	if(this->type == "var") {
-		string var = this->args[0]->evaluate(vm, context).toString();
+		string var = this->args[0]->evaluate(context).toString();
 		if(var == "true")
 			return Variable::parse("true");
 		if(var == "false")
 			return Variable::parse("false");
-		if(!vm.vars.defined(var))
-			return vm.vars.set(var, "0");
-		return vm.vars.get(var);
+		if(!vars.defined(var))
+			return vars.set(var, "0");
+		return vars.get(var);
 	}
 
 	// TODO: de-int this. double? Only when "appropriate"?
 	/*
 	if(this->fragment.isSpecial("^")) {
-		return asString(pow(fromString<long>(this->child->evaluate(vm, context)),
-				fromString<long>(this->rchild->evaluate(vm, context))));
+		return asString(pow(fromString<long>(this->child->evaluate(context)),
+				fromString<long>(this->rchild->evaluate(context))));
 	}
 	*/
 
-	if(this->type == "+")
-		return this->args[0]->evaluate(vm, context) + this->args[1]->evaluate(vm, context);
-	if(this->type == "-")
-		return this->args[0]->evaluate(vm, context) - this->args[1]->evaluate(vm, context);
-	if(this->type == "*")
-		return this->args[0]->evaluate(vm, context) * this->args[1]->evaluate(vm, context);
-	if(this->type == "/")
-		return this->args[0]->evaluate(vm, context) / this->args[1]->evaluate(vm, context);
-	if(this->type == "%")
-		return this->args[0]->evaluate(vm, context) % this->args[1]->evaluate(vm, context);
+	try {
+		if(this->type == "+")
+			return this->args[0]->evaluate(context) + this->args[1]->evaluate(context);
+		if(this->type == "-")
+			return this->args[0]->evaluate(context) - this->args[1]->evaluate(context);
+		if(this->type == "*")
+			return this->args[0]->evaluate(context) * this->args[1]->evaluate(context);
+		if(this->type == "/")
+			return this->args[0]->evaluate(context) / this->args[1]->evaluate(context);
+		if(this->type == "%")
+			return this->args[0]->evaluate(context) % this->args[1]->evaluate(context);
 
-	vector<string> comparisons = { "==", "!=", "<=", ">=", "<", ">" };
-	for(auto c : comparisons)
-		if(this->type == c)
-			return this->args[0]->evaluate(vm, context).compare(
-					this->args[1]->evaluate(vm, context), c);
+		vector<string> comparisons = { "==", "!=", "<=", ">=", "<", ">" };
+		for(auto c : comparisons)
+			if(this->type == c)
+				return this->args[0]->evaluate(context).compare(
+						this->args[1]->evaluate(context), c);
 
-	// TODO: un-double this? Also, unstring for == and ~=
-	if(this->type == "&&")
-		return this->args[0]->evaluate(vm, context) & this->args[1]->evaluate(vm, context);
-	if(this->type == "||")
-		return this->args[0]->evaluate(vm, context) | this->args[1]->evaluate(vm, context);
+		// TODO: un-double this? Also, unstring for == and ~=
+		if(this->type == "&&")
+			return this->args[0]->evaluate(context) & this->args[1]->evaluate(context);
+		if(this->type == "||")
+			return this->args[0]->evaluate(context) | this->args[1]->evaluate(context);
 
-	vector<string> compoundOpAssigns = { "+", "-", "*", "/", "%", "^", "~" };
-	for(auto op : compoundOpAssigns) {
-		if(this->type == (op + "=")) {
-			Expression opExpr(op);
-			// push back copies of the arguments
-			for(int i = 0; i < 2; ++i)
-				opExpr.args.push_back(
-						unique_ptr<Expression>(new Expression(*this->args[i].get())));
+		vector<string> compoundOpAssigns = { "+", "-", "*", "/", "%", "^", "~" };
+		for(auto op : compoundOpAssigns) {
+			if(this->type == (op + "=")) {
+				Expression opExpr(op);
+				// push back copies of the arguments
+				for(int i = 0; i < 2; ++i)
+					opExpr.args.push_back(
+							unique_ptr<Expression>(new Expression(*this->args[i].get())));
 
-			Variable result = opExpr.evaluate(vm, context);
+				Variable result = opExpr.evaluate(context);
 
-			// steal args from opExpr to avoid a copy, since we don't need opExpr
-			// anymore anyway
-			Expression assign("=", opExpr.args);
-			assign.args[1] = unique_ptr<Expression>(new Expression("str", result.toString()));
-			return assign.evaluate(vm, context);
+				// steal args from opExpr to avoid a copy, since we don't need opExpr
+				// anymore anyway
+				Expression assign("=", opExpr.args);
+				assign.args[1] = unique_ptr<Expression>(new Expression("str", result.toString()));
+				return assign.evaluate(context);
+			}
 		}
+	} catch(string &err) {
+		trace.except(err);
 	}
 
 	context.except("unknown node " + this->type + " -- bug " +
-			vm.vars.get("bot.owner").toString() + " to fix");
+			vars.get("bot.owner").toString() + " to fix");
 }
 

@@ -7,11 +7,11 @@
 #include "variable.hpp"
 #include "pvm.hpp"
 
+enum class ExceptionType { None, StackOverflow, FunctionDoesNotExist, Other };
+
 using StackFrame = std::string;
 
 struct StackFrameLifetime;
-
-enum class ExceptionType { None, StackOverflow, FunctionDoesNotExist, Other };
 
 // may be thrown during Expression::evaluate
 struct StackTrace {
@@ -41,6 +41,16 @@ struct StackFrameLifetime {
 	private:
 		StackTrace &_trace;
 		int _which;
+};
+
+struct ExpressionContext {
+	StackTrace &trace;
+	Pvm &vm;
+
+	ExpressionContext(StackTrace &itrace, Pvm &ivm) : trace{itrace}, vm{ivm} { }
+
+	void except(std::string err);
+	void except(ExceptionType type, std::string err);
 };
 
 struct Expression {
@@ -75,7 +85,7 @@ struct Expression {
 	Variable evaluate(Pvm &vm, std::string who) const;
 
 	private:
-		Variable evaluate(Pvm &vm, StackTrace &context) const;
+		Variable evaluate(ExpressionContext &context) const;
 };
 
 std::string reEscape(std::string str);
