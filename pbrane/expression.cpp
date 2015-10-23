@@ -2,6 +2,7 @@
 using std::vector;
 using std::string;
 using std::unique_ptr;
+using std::make_unique;
 using std::to_string;
 
 #include <map>
@@ -218,7 +219,6 @@ Variable Expression::evaluate(ExpressionContext &context) const {
 	auto lifetime = context.trace.push(this->type);
 	auto &vm = context.vm;
 	auto &trace = context.trace;
-	auto &frame = trace.frames.back();
 	auto &vars = context.vm.vars;
 
 	// TODO: configurable max recursion depth?
@@ -416,28 +416,27 @@ Variable Expression::evaluate(ExpressionContext &context) const {
 	*/
 
 	try {
-		if(this->type == "+")
-			return this->args[0]->evaluate(context) + this->args[1]->evaluate(context);
-		if(this->type == "-")
-			return this->args[0]->evaluate(context) - this->args[1]->evaluate(context);
-		if(this->type == "*")
-			return this->args[0]->evaluate(context) * this->args[1]->evaluate(context);
-		if(this->type == "/")
-			return this->args[0]->evaluate(context) / this->args[1]->evaluate(context);
-		if(this->type == "%")
-			return this->args[0]->evaluate(context) % this->args[1]->evaluate(context);
+		static vector<string> comparisons = { "==", "!=", "<=", ">=", "<", ">" };
+		static vector<string> binaryOps{ "+", "-", "*", "/", "%", "&&", "||" };
 
-		vector<string> comparisons = { "==", "!=", "<=", ">=", "<", ">" };
-		for(auto c : comparisons)
-			if(this->type == c)
-				return this->args[0]->evaluate(context).compare(
-						this->args[1]->evaluate(context), c);
+		if(contains(comparisons, this->type) || contains(binaryOps, this->type)) {
+			auto left = this->args[0]->evaluate(context),
+				right = this->args[1]->evaluate(context);
 
-		// TODO: un-double this? Also, unstring for == and ~=
-		if(this->type == "&&")
-			return this->args[0]->evaluate(context) & this->args[1]->evaluate(context);
-		if(this->type == "||")
-			return this->args[0]->evaluate(context) | this->args[1]->evaluate(context);
+			if(this->type == "+") return left + right;
+			if(this->type == "-") return left - right;
+			if(this->type == "*") return left * right;
+			if(this->type == "/") return left / right;
+			if(this->type == "%") return left % right;
+
+			// TODO: un-double this? Also, unstring for == and ~=
+			// TODO: this is not lazy?
+			if(this->type == "&&") return left & right;
+			if(this->type == "||") return left | right;
+
+			// not a binary op, must be comparison
+			return left.compare(right, this->type);
+		}
 
 		vector<string> compoundOpAssigns = { "+", "-", "*", "/", "%", "^", "~" };
 		for(auto op : compoundOpAssigns) {
@@ -445,15 +444,15 @@ Variable Expression::evaluate(ExpressionContext &context) const {
 				Expression opExpr(op);
 				// push back copies of the arguments
 				for(int i = 0; i < 2; ++i)
-					opExpr.args.push_back(
-							unique_ptr<Expression>(new Expression(*this->args[i].get())));
+					opExpr.args.push_back(make_unique<Expression>(*this->args[i].get()));
 
-				Variable result = opExpr.evaluate(context);
+				// TODO: add context frame?
+				auto result = opExpr.evaluate(context);
 
 				// steal args from opExpr to avoid a copy, since we don't need opExpr
 				// anymore anyway
 				Expression assign("=", opExpr.args);
-				assign.args[1] = unique_ptr<Expression>(new Expression("str", result.toString()));
+				assign.args[1] = make_unique<Expression>("str", result.toString());
 				return assign.evaluate(context);
 			}
 		}
