@@ -6,6 +6,7 @@
 #include <memory>
 #include "variable.hpp"
 #include "pvm.hpp"
+#include "clock.hpp"
 
 enum class ExceptionType { None, StackOverflow, FunctionDoesNotExist, Other };
 
@@ -46,6 +47,7 @@ struct StackFrameLifetime {
 struct ExpressionContext {
 	StackTrace &trace;
 	Pvm &vm;
+	sqlite_int64 start{Clock::now()};
 
 	ExpressionContext(StackTrace &itrace, Pvm &ivm) : trace{itrace}, vm{ivm} { }
 

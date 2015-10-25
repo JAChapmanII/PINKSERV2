@@ -187,10 +187,7 @@ Variable Expression::evaluate(Pvm &vm, string who) const {
 // TODO: ability to tag ExpressionTree as various types. string, int,
 // TODO: double, variable, function?
 
-// TODO: on throw, rollback changes. Have object that stores locally in map,
-// TODO: then on destruction commits changes all at once to underlying VarStore
-// TODO: very easy local variables, just check name and don't save? But
-// TODO: sub-context...
+// TODO: recursive transactions for variable changes? Expose commit to script
 
 // TODO: better timing control
 // TODO: abort after Xms?
@@ -225,6 +222,9 @@ Variable Expression::evaluate(ExpressionContext &context) const {
 	if(trace.frames.size() > 32)
 		context.except("exceeded max recursion depth");
 
+	// TODO: configurable max execution time? ms instead?
+	if(Clock::now() > context.start + 2)
+		context.except("exceeded max execution time");
 
 	// ? and ? : operators
 	if(this->type == "?") {
