@@ -194,3 +194,12 @@ void restart(Bot *bot) {
 	bot->done = true;
 }
 
+string lastlog(Bot *bot) {
+	auto here = bot->vars.get("where").toString();
+	auto lines = bot->journal.fetch([=](Entry &e) {
+			return e.type == EntryType::Text && e.where == here;
+		}, 100);
+	// TODO: push this data to pastebin/umiki
+	return "success";
+}
+

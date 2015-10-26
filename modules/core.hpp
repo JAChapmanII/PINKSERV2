@@ -82,4 +82,7 @@ std::string pol(std::string body);
 // #f: restart: restart bot
 void restart(Bot *bot);
 
+// #f: lastlog: get the last few lines from a channel
+std::string lastlog(Bot *bot);
+
 #endif // MODULES_CORE_HPP
