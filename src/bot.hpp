@@ -27,6 +27,8 @@ struct Options {
 struct Bot;
 using ExtraSetup = std::function<void(Bot *)>;
 
+// TODO: ignore list
+// TODO: min speak time/quiet?
 struct Bot {
 	Bot(zidcu::Database &idb, Options iopts, Clock iclock, ExtraSetup setup);
 	~Bot();

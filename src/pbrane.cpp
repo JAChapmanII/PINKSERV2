@@ -15,21 +15,12 @@ using std::vector;
 #include <random>
 using std::random_device;
 
-#include <map>
-using std::map;
-
-#include "global.hpp"
 #include "config.hpp"
-#include "journal.hpp"
 #include "modules.hpp"
 #include "util.hpp"
-using util::contains;
 using util::fromString;
-using util::asString;
 using util::split;
 using util::startsWith;
-using util::trim;
-#include "eventsystem.hpp"
 #include "expression.hpp"
 #include "parser.hpp"
 #include "regex.hpp"
