@@ -15,7 +15,6 @@ using std::vector;
 #include <random>
 using std::random_device;
 
-#include "config.hpp"
 #include "modules.hpp"
 #include "util.hpp"
 using util::fromString;
@@ -29,6 +28,10 @@ using zidcu::Database;
 #include "bot.hpp"
 #include "sed.hpp"
 #include "ngram.hpp"
+
+namespace config {
+	static string databaseFileName = "PINKSERV2.db";
+}
 
 struct PrivateMessage {
 	string network{};
