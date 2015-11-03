@@ -5,6 +5,11 @@ excercize in play and learning.
 
 
 Building:
+	This is a huge mess right now. I would not attempt it unless you're
+	familiar enough with both c++ and the project itself to figure it out on
+	your own. You're always free to hit me up if it's taking me too long to
+	update these instructions though.
+
 	First of all, you may wish to change some constants in src/config.cpp .
 	This will eventually move to a simple config file that doesn't require
 	recompilation to see changes.
