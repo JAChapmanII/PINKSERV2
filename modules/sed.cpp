@@ -10,11 +10,17 @@ using modules::Word;
 string s(Bot *bot, string regex) {
 	try {
 		Regex r{regex};
+		auto here = bot->vars.get("where").toString();
 		auto entries = bot->journal.fetch(AndPredicate{
 			[=](Entry &e) {
 				// only replace on non-executed things
 				if(e.etype == ExecuteType::Hook || e.etype == ExecuteType::Function
 						|| e.etype == ExecuteType::Unknown)
+					return false;
+				// only find things in the same channel
+				// TODO: same channel but different server needs handled
+				// TODO: optionally specify different channel/server?
+				if(e.where != here)
 					return false;
 				// if a nick was specified as a flag and it's not who said it, skip
 				if(!r.flags().empty() && r.flags() != e.nick())
