@@ -9,11 +9,10 @@ using std::exception;
 
 #include <boost/regex.hpp>
 
-#include "util.hpp"
+#include "sekisa/util.hpp"
 using util::split;
 using util::join;
-#include "global.hpp"
-#include "err.hpp"
+#include "sekisa/err.hpp"
 
 #include <iostream>
 using std::cerr;

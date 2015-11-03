@@ -10,9 +10,9 @@ using std::endl;
 #include <map>
 using std::map;
 
-#include "util.hpp"
-#include "parser.hpp"
-#include "expression.hpp"
+#include "sekisa/util.hpp"
+#include "pbrane/parser.hpp"
+#include "pbrane/expression.hpp"
 
 
 void sqlTrace(void *a, const char *b);

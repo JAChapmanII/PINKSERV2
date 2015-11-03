@@ -5,7 +5,7 @@
 #include <string>
 #include <map>
 #include <sqlite3.h>
-#include "db.hpp"
+#include "sekisa/db.hpp"
 
 using word_t = sqlite_int64;
 using count_t = sqlite_int64;

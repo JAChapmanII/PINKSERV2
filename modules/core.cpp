@@ -12,22 +12,31 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-#include "global.hpp"
-#include "util.hpp"
+#include "pbrane/modules.hpp"
+#include "sekisa/util.hpp"
 using util::contains;
 using util::join;
-#include "parser.hpp"
-#include "expression.hpp"
+#include "pbrane/parser.hpp"
+#include "pbrane/expression.hpp"
 
 Entry regexRandomEntry(Bot &bot, string regex);
 
 string help(Bot *bot, string function) {
 	if(!function.empty()) {
-		if(!contains(global::moduleFunctionList, function))
-			return "error: requested function does not exist";
-		return bot->vars.get(function + ".help").toString();
+		if(bot->vars.defined(function + ".help"))
+			return bot->vars.get(function + ".help").toString();
+
+		return "error: requested function help does not exist";
 	}
-	return join(global::moduleFunctionList, ", ");
+
+	if(modules::hfmap.empty())
+		return "error: no module functions exist";
+
+	// TODO: join with lambda for toString?
+	string res{""};
+	for(auto &func : modules::hfmap)
+		res += func.first + ", ";
+	return res.substr(res.length() - 2);
 }
 
 string list(Bot *bot) {

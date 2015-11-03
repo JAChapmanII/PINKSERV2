@@ -10,8 +10,8 @@ using zidcu::Statement;
 using std::uniform_int_distribution;
 using std::mt19937_64;
 
-#include "util.hpp"
-#include "err.hpp"
+#include "sekisa/util.hpp"
+#include "sekisa/err.hpp"
 
 #include <iostream>
 using std::cerr;

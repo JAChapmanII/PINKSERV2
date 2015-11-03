@@ -5,7 +5,7 @@
 #include <vector>
 #include <functional>
 #include <sqlite3.h>
-#include "db.hpp"
+#include "sekisa/db.hpp"
 
 enum class EntryType { Text, Join, Quit, Part, Nick, Invalid };
 enum class ExecuteType { None, Hook, Function, Sent, Unknown };

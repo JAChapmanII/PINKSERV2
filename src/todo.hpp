@@ -2,7 +2,7 @@
 #define TODO_HPP
 
 #include <string>
-#include "db.hpp"
+#include "sekisa/db.hpp"
 #include "journal.hpp"
 
 struct TODOs {

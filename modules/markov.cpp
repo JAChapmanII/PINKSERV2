@@ -9,7 +9,7 @@ using std::generate_canonical;
 using std::cerr;
 using std::endl;
 
-#include "util.hpp"
+#include "sekisa/util.hpp"
 
 
 // TODO: turn into pbrane variable

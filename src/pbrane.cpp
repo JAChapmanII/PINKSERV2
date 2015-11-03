@@ -15,16 +15,19 @@ using std::vector;
 #include <random>
 using std::random_device;
 
-#include "modules.hpp"
-#include "util.hpp"
+#include "sekisa/util.hpp"
 using util::fromString;
 using util::split;
 using util::startsWith;
-#include "expression.hpp"
-#include "parser.hpp"
-#include "regex.hpp"
-#include "db.hpp"
+#include "sekisa/db.hpp"
 using zidcu::Database;
+
+#include "pbrane/modules.hpp"
+#include "pbrane/modules_gen.hpp"
+#include "pbrane/expression.hpp"
+#include "pbrane/parser.hpp"
+#include "pbrane/regex.hpp"
+
 #include "bot.hpp"
 #include "sed.hpp"
 #include "ngram.hpp"
@@ -66,7 +69,7 @@ void teval(vector<string> args) {
 	Database db{config::databaseFileName};
 	Options opts{};
 	opts.seed = seed;
-	Bot pbrane{db, opts, Clock{}, modules::init};
+	Bot pbrane{db, opts, Clock{}, modules::init<Bot>};
 
 	pbrane.vars.set("bot.owner", "jac");
 	pbrane.vars.set("bot.admins", "jac");
@@ -269,7 +272,7 @@ int main(int argc, char **argv) {
 	}
 
 	Database db{config::databaseFileName};
-	Bot pbrane{db, opts, Clock{}, modules::init};
+	Bot pbrane{db, opts, Clock{}, modules::init<Bot>};
 
 	// while there is more input coming
 	while(!cin.eof() && !pbrane.done) {

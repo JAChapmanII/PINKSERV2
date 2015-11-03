@@ -2,7 +2,7 @@
 #define MODULES_CORE_HPP
 
 #include <vector>
-#include "variable.hpp"
+#include "pbrane/variable.hpp"
 #include "bot.hpp"
 
 // #m: core: core functions

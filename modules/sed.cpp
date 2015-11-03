@@ -2,10 +2,10 @@
 using std::string;
 using modules::Word;
 
-#include "regex.hpp"
+#include "pbrane/regex.hpp"
+#include "pbrane/expression.hpp"
+#include "sekisa/util.hpp"
 #include "journal.hpp"
-#include "expression.hpp"
-#include "util.hpp"
 
 string s(Bot *bot, string regex) {
 	try {

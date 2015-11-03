@@ -1,7 +1,6 @@
 # places to find and put files
 SDIR=src
 LDIR=lib
-PDIR=pbrane
 MDIR=modules
 ODIR=obj
 BDIR=bin
@@ -12,11 +11,10 @@ BIN=pbrane
 OBJS:= \
 	$(patsubst ${SDIR}/%.cpp,${ODIR}/%.o,$(wildcard ${SDIR}/*.cpp)) \
 	$(patsubst ${LDIR}/%.cpp,${ODIR}/%.o,$(wildcard ${LDIR}/*.cpp)) \
-	$(patsubst ${PDIR}/%.cpp,${ODIR}/%.o,$(wildcard ${PDIR}/*.cpp)) \
 	$(patsubst ${MDIR}/%.cpp,${ODIR}/%.o,$(wildcard ${MDIR}/*.cpp))
 
-CXXFLAGS=-std=c++1y -I${SDIR} -I${LDIR} -I${PDIR} -I${MDIR}
-LDFLAGS=-lboost_regex -lsqlite3
+CXXFLAGS=-std=c++1y -I${SDIR} -I${LDIR} -I${MDIR}
+LDFLAGS=-lboost_regex -lsqlite3 -lcurl -lpbrane -lsekisa
 # -lgmp -lgmpxx
 
 ifndef release
@@ -37,7 +35,7 @@ CXXFLAGS+=-pg
 LDFLAGS+=-pg
 endif
 
-all: dir ${BDIR}/${BIN}
+all: dir ${LDIR}/modules.cpp.gen ${SDIR} ${BDIR}/${BIN}
 dir:
 	mkdir -p ${SDIR} ${ODIR} ${BDIR}
 
@@ -45,15 +43,11 @@ ${BDIR}/${BIN}: ${OBJS}
 	${CXX} -o $@ $^ ${LDFLAGS}
 
 ${LDIR}/modules.cpp.gen: ${MDIR}/*.hpp
-	${BDIR}/makemods
-${ODIR}/modules.o: ${LDIR}/modules.cpp ${LDIR}/modules.cpp.gen
-	${CXX} -c -o $@ $< ${CXXFLAGS}
+	~/src/pbrane/bin/makemods $@
 
 ${ODIR}/%.o: ${SDIR}/%.cpp
 	${CXX} -c -o $@ $^ ${CXXFLAGS}
 ${ODIR}/%.o: ${LDIR}/%.cpp
-	${CXX} -c -o $@ $^ ${CXXFLAGS}
-${ODIR}/%.o: ${PDIR}/%.cpp
 	${CXX} -c -o $@ $^ ${CXXFLAGS}
 ${ODIR}/%.o: ${MDIR}/%.cpp
 	${CXX} -c -o $@ $^ ${CXXFLAGS}

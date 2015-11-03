@@ -3,7 +3,7 @@
 
 #include <string>
 #include <sqlite3.h>
-#include "db.hpp"
+#include "sekisa/db.hpp"
 
 enum class Anchor { Start, End, Count, ReservedCount = 0x100 };
 

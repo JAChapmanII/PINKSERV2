@@ -3,9 +3,9 @@
 
 #include <string>
 #include <vector>
-#include "variable.hpp"
+#include "pbrane/variable.hpp"
+#include "pbrane/modules.hpp"
 #include "bot.hpp"
-#include "modules.hpp"
 
 // #m: events: event functions
 

@@ -3,9 +3,9 @@
 
 #include <string>
 #include <vector>
-#include "db.hpp"
-#include "variable.hpp"
-#include "pvm.hpp"
+#include "sekisa/db.hpp"
+#include "pbrane/variable.hpp"
+#include "pbrane/pvm.hpp"
 
 enum class EventType { Text, Join, Leave, Nick, BotStartup, BotShutdown };
 using Event = std::string;

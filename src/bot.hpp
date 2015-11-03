@@ -5,13 +5,13 @@
 #include <random>
 #include <string>
 #include <vector>
-#include "db.hpp"
+#include "sekisa/clock.hpp"
+#include "sekisa/db.hpp"
+#include "pbrane/pvm.hpp"
 #include "dictionary.hpp"
 #include "journal.hpp"
-#include "pvm.hpp"
 #include "eventsystem.hpp"
 #include "ngram.hpp"
-#include "clock.hpp"
 #include "todo.hpp"
 
 struct Options {

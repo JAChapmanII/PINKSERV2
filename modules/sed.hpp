@@ -2,8 +2,8 @@
 #define MODULES_SED_HPP
 
 #include <string>
+#include "pbrane/modules.hpp"
 #include "bot.hpp"
-#include "modules.hpp"
 
 // #m: sed: regex related functionality
 

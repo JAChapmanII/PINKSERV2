@@ -4,10 +4,10 @@ using std::string;
 using std::to_string;
 using zidcu::Database;
 
-#include "expression.hpp"
-#include "parser.hpp"
-#include "db.hpp"
-#include "err.hpp"
+#include "pbrane/expression.hpp"
+#include "pbrane/parser.hpp"
+#include "sekisa/db.hpp"
+#include "sekisa/err.hpp"
 
 #include <iostream>
 using std::cerr;
