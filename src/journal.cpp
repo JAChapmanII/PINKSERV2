@@ -139,12 +139,12 @@ vector<Entry> Journal::filter(string sql, EntryPredicate predicate, int limit) {
 }
 
 vector<Entry> Journal::fetch(EntryPredicate predicate, int limit) {
-	return this->filter("SELECT * FROM " + _table + " ORDER BY ts DESC",
+	return this->filter("SELECT * FROM " + _table + " ORDER BY ts DESC, id DESC",
 			predicate, limit);
 }
 
 vector<Entry> Journal::ffetch(EntryPredicate predicate, int limit) {
-	return this->filter("SELECT * FROM " + _table + " ORDER BY ts ASC",
+	return this->filter("SELECT * FROM " + _table + " ORDER BY ts ASC, id ASC",
 			predicate, limit);
 }
 
