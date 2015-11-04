@@ -16,6 +16,7 @@ using std::endl;
 #include "sekisa/util.hpp"
 using util::contains;
 using util::join;
+#include "sekisa/web.hpp"
 #include "pbrane/parser.hpp"
 #include "pbrane/expression.hpp"
 
@@ -208,7 +209,25 @@ string lastlog(Bot *bot) {
 	auto lines = bot->journal.fetch([=](Entry &e) {
 			return e.type == EntryType::Text && e.where == here;
 		}, 100);
-	// TODO: push this data to pastebin/umiki
-	return "success";
+
+	// TODO: format this data better
+	string log{""};
+	for(int i = lines.size() - 1; i >= 0; --i) {
+		auto &line = lines[i];
+		log += to_string(line.id) + " <" + line.nick() + "> " + line.arguments + "\n";
+	}
+
+	if(!bot->vars.defined("bot.umiki.key"))
+		throw string{"bug jac, api key does not exist"};
+
+	// TODO: handle grabbing the api_key better...
+	auto apiKey = bot->vars.get("bot.umiki.key").toString();
+
+	auto response = web::post("https://serv2.pink/api/umiki/v1", {
+			{ "api_key", apiKey }, { "content", log }
+		});
+
+	// TODO: strip out just the url part...
+	return to_string(response.code) + " " + response.body;
 }
 
