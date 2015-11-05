@@ -7,6 +7,8 @@ using std::to_string;
 using std::uniform_int_distribution;
 using std::uniform_real_distribution;
 
+#include <cstdlib>
+
 #include <iostream>
 using std::cout;
 using std::cerr;
@@ -204,6 +206,21 @@ void restart(Bot *bot) {
 	bot->done = true;
 }
 
+string umiki(Bot *bot, string content) {
+	if(!bot->vars.defined("bot.umiki.key"))
+		throw string{"bug jac, api key does not exist"};
+
+	// TODO: handle grabbing the api_key better...
+	auto apiKey = bot->vars.get("bot.umiki.key").toString();
+
+	auto response = web::post("https://serv2.pink/api/umiki/v1", {
+			{ "api_key", apiKey }, { "content", content }
+		});
+
+	// TODO: strip out just the url part...
+	return to_string(response.code) + " " + response.body;
+}
+
 string lastlog(Bot *bot) {
 	auto here = bot->vars.get("where").toString();
 	auto lines = bot->journal.fetch([=](Entry &e) {
@@ -217,17 +234,36 @@ string lastlog(Bot *bot) {
 		log += to_string(line.id) + " <" + line.nick() + "> " + line.arguments + "\n";
 	}
 
-	if(!bot->vars.defined("bot.umiki.key"))
-		throw string{"bug jac, api key does not exist"};
+	return umiki(bot, log);
+}
 
-	// TODO: handle grabbing the api_key better...
-	auto apiKey = bot->vars.get("bot.umiki.key").toString();
+string context(Bot *bot, long which) {
+	auto here = bot->vars.get("where").toString();
+	// TODO: this isn't garaunteed to give us 20 on either side
+	// TODO: store if we've seen id yet, and how many lines we have saved?
+	auto lines = bot->journal.fetch([=](Entry &e) {
+			return (abs(e.id - which) <= 1000)
+				&& e.type == EntryType::Text
+				&& e.where == here;
+		}, 100);
 
-	auto response = web::post("https://serv2.pink/api/umiki/v1", {
-			{ "api_key", apiKey }, { "content", log }
-		});
+	long occursAt = find_if(lines.begin(), lines.end(), [=](Entry &e) {
+			return e.id == which;
+		}) - lines.begin();
 
-	// TODO: strip out just the url part...
-	return to_string(response.code) + " " + response.body;
+	vector<Entry> filteredLines{};
+	for(long i = 0; i < (long)lines.size(); ++i)
+		if(abs(occursAt - i) < 20)
+			filteredLines.push_back(lines[i]);
+	lines = filteredLines;
+
+	// TODO: format this data better, deduplicate logic
+	string log{""};
+	for(int i = lines.size() - 1; i >= 0; --i) {
+		auto &line = lines[i];
+		log += to_string(line.id) + " <" + line.nick() + "> " + line.arguments + "\n";
+	}
+
+	return umiki(bot, log);
 }
 

@@ -82,7 +82,13 @@ std::string pol(std::string body);
 // #f: restart: restart bot
 void restart(Bot *bot);
 
+// #f: umiki: store some stuff in umiki
+std::string umiki(Bot *bot, std::string content);
+
 // #f: lastlog: get the last few lines from a channel
 std::string lastlog(Bot *bot);
+
+// #f: context: get context around a specific line
+std::string context(Bot *bot, long which);
 
 #endif // MODULES_CORE_HPP
