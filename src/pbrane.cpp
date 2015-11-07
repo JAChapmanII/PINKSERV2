@@ -51,6 +51,12 @@ vector<hook> hooks = { &regexHook };
 
 void prettyPrint(string arg);
 void teval(vector<string> args);
+void setupBot(Bot *bot);
+
+void setupBot(Bot *bot) {
+	modules::init<Bot>(bot);
+	cerr << "    dictionary size: " << bot->dictionary.size() << endl;
+}
 
 void prettyPrint(string arg) {
 	cout << arg << endl;
@@ -69,7 +75,7 @@ void teval(vector<string> args) {
 	Database db{config::databaseFileName};
 	Options opts{};
 	opts.seed = seed;
-	Bot pbrane{db, opts, Clock{}, modules::init<Bot>};
+	Bot pbrane{db, opts, Clock{}, setupBot};
 
 	pbrane.vars.set("bot.owner", "jac");
 	pbrane.vars.set("bot.admins", "jac");
@@ -272,7 +278,7 @@ int main(int argc, char **argv) {
 	}
 
 	Database db{config::databaseFileName};
-	Bot pbrane{db, opts, Clock{}, modules::init<Bot>};
+	Bot pbrane{db, opts, Clock{}, setupBot};
 
 	// while there is more input coming
 	while(!cin.eof() && !pbrane.done) {
