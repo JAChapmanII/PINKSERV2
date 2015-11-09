@@ -239,12 +239,30 @@ string lastlog(Bot *bot) {
 
 string context(Bot *bot, long which) {
 	auto here = bot->vars.get("where").toString();
+	bool foundWhich{false};
+	long countSoFar{0};
 	// TODO: this isn't garaunteed to give us 20 on either side
 	// TODO: store if we've seen id yet, and how many lines we have saved?
-	auto lines = bot->journal.fetch([=](Entry &e) {
-			return (abs(e.id - which) <= 1000)
-				&& e.type == EntryType::Text
-				&& e.where == here;
+	auto lines = bot->journal.fetch([&](Entry &e) {
+			if(e.type != EntryType::Text || e.where != here)
+				return false;
+
+			if(!foundWhich && e.id == which) {
+				foundWhich = true;
+				countSoFar = 0;
+			}
+
+			// can return exact number after finding which
+			countSoFar++;
+			if(foundWhich && countSoFar > 20)
+				return false;
+
+			// before finding which, it's all guess work...
+			return (abs(e.id - which) <= 2000);
+			// TODO: we could run fetch and ffetch, one for each 'side', but
+			// TODO: ineffecient. If we parallize this, we sort of break
+			// TODO: capturing and the inherent ordering of processing.
+			// TODO: may be better handled straight in journal
 		}, 100);
 
 	long occursAt = find_if(lines.begin(), lines.end(), [=](Entry &e) {
