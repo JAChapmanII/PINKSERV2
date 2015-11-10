@@ -43,7 +43,7 @@ ${BDIR}/${BIN}: ${OBJS}
 	${CXX} -o $@ $^ ${LDFLAGS}
 
 # TODO: fix dependency here, src/pbrane.cpp does not see it
-${LDIR}/modules.cpp.gen: ${MDIR}/*.hpp
+${LDIR}/modules.cpp.gen: ${MDIR}/*
 	~/src/pbrane/bin/makemods $@
 
 ${ODIR}/%.o: ${SDIR}/%.cpp
