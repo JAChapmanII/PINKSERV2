@@ -35,11 +35,8 @@ string help(Bot *bot, string function) {
 	if(modules::hfmap.empty())
 		return "error: no module functions exist";
 
-	// TODO: join with lambda for toString?
-	string res{""};
-	for(auto &func : modules::hfmap)
-		res += func.first + ", ";
-	return res.substr(res.length() - 2);
+	return util::join(modules::hfmap, ", ",
+			[](auto entry) { return entry.first; });
 }
 
 string list(Bot *bot) {
