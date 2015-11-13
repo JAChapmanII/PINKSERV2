@@ -46,8 +46,9 @@ struct PrivateMessage {
 typedef bool (*hook)(PrivateMessage pmsg);
 
 bool regexHook(PrivateMessage pmsg);
+bool perfHook(PrivateMessage pmsg);
 
-vector<hook> hooks = { &regexHook };
+vector<hook> hooks = { &regexHook, &perfHook };
 
 void prettyPrint(string arg);
 void teval(vector<string> args);
@@ -402,6 +403,71 @@ bool regexHook(PrivateMessage pmsg) {
 
 	auto regex = pmsg.message.substr(1);
 	pmsg.bot.send(pmsg.network, pmsg.target, s(&pmsg.bot, regex), true);
+
+	return true;
+}
+
+#include <time.h>
+
+bool perfHook(PrivateMessage pmsg) {
+	// TODO: lots of duplicated logic...
+	static string pname{"!perf "};
+	if(!util::startsWith(pmsg.message, pname))
+		return false;
+
+	auto script = pmsg.message.substr(pname.size());
+	string result{""};
+
+	bool triedParse{false}, triedEval{false};
+	clock_t startParse, endParse;
+	clock_t startEval, endEval;
+
+	clock_t start = clock();
+
+	bool simpleCall{false};
+	try {
+		// TODO: RAII wrapper?
+		triedParse = true;
+		startParse = clock();
+		auto expr = Parser::parse(script);
+		endParse = clock();
+
+		if(!expr) {
+			result = "Parser::parse(script) result is null";
+		} else {
+			if(expr->type == "!") simpleCall = true;
+			triedEval = true;
+			startEval = clock();
+			result = expr->evaluate(pmsg.bot.vm, pmsg.nick).toString();
+			endEval = clock();
+		}
+	} catch(ParseException e) {
+		result = e.msg + " @" + util::asString(e.idx);
+		endParse = clock();
+	} catch(StackTrace &e) {
+		if(e.type == ExceptionType::FunctionDoesNotExist && simpleCall) {
+			result = "simple call to nonexistant function error supressed";
+		} else {
+			result = e.toString();
+		}
+		endEval = clock();
+	} catch(string &s) {
+		result = s;
+		if(triedParse)
+			endParse = clock();
+		if(triedEval)
+			endEval = clock();
+	}
+
+	clock_t end = clock();
+
+	result = string{"["}
+		+ (triedParse ? "parse(" + to_string(endParse - startParse) + ") " : "")
+		+ (triedEval ? "eval(" + to_string(endEval - startEval) + ") " : "")
+		+ "total(" + to_string(end - start) + ")"
+		+ "] " + result;
+
+	pmsg.bot.send(pmsg.network, pmsg.target, result, true);
 
 	return true;
 }
