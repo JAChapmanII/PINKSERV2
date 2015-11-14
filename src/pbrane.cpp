@@ -461,10 +461,14 @@ bool perfHook(PrivateMessage pmsg) {
 
 	clock_t end = clock();
 
+	double  parseMs = (double)(endParse - startParse)  / CLOCKS_PER_SEC * 1000,
+			evalMs = (double)(endEval - startEval) / CLOCKS_PER_SEC * 1000,
+			totalMs = (double)(end - start) / CLOCKS_PER_SEC *  1000;
+
 	result = string{"["}
-		+ (triedParse ? "parse(" + to_string(endParse - startParse) + ") " : "")
-		+ (triedEval ? "eval(" + to_string(endEval - startEval) + ") " : "")
-		+ "total(" + to_string(end - start) + ")"
+		+ (triedParse ? "parse(" + to_string(parseMs) + ") " : "")
+		+ (triedEval ? "eval(" + to_string(evalMs) + ") " : "")
+		+ "total(" + to_string(totalMs) + ")"
 		+ "] " + result;
 
 	pmsg.bot.send(pmsg.network, pmsg.target, result, true);
