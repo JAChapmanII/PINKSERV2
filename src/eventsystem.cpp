@@ -14,6 +14,35 @@ using std::cerr;
 using std::endl;
 
 
+string toHumanReadable(EventType type) {
+	switch(type) {
+		case EventType::Text: return "text";
+		case EventType::Join: return "join";
+		case EventType::Leave: return "leave";
+		case EventType::Nick: return "nick";
+		case EventType::BotStartup: return "startup";
+		case EventType::BotShutdown: return "shutdown";
+	}
+	return "invalid";
+}
+EventType fromHumanReadable(string str) {
+	if(str == (string)"text")
+		return EventType::Text;
+	if(str == (string)"join")
+		return EventType::Join;
+	if(str == (string)"leave")
+		return EventType::Leave;
+	if(str == (string)"nick")
+		return EventType::Nick;
+	if(str == (string)"startup")
+		return EventType::BotStartup;
+	if(str == (string)"shutdown")
+		return EventType::BotShutdown;
+
+	return EventType::Invalid;
+}
+
+
 EventSystem::EventSystem(Database &db, bool debug, string table)
 	: _db{db}, _table{table}, _debug{debug} { }
 

@@ -5,20 +5,11 @@ using std::string;
 #include "eventsystem.hpp"
 
 string on(Bot *bot, modules::Word type, string body) {
-	if((string)type == (string)"text") {
-		bot->events.push(EventType::Text, Event{body});
-	} else if((string)type == (string)"join") {
-		bot->events.push(EventType::Join, Event{body});
-	} else if((string)type == (string)"leave") {
-		bot->events.push(EventType::Leave, Event{body});
-	} else if((string)type == (string)"nick") {
-		bot->events.push(EventType::Nick, Event{body});
-	} else if((string)type == (string)"startup") {
-		bot->events.push(EventType::BotStartup, Event{body});
-	} else if((string)type == (string)"shutdown") {
-		bot->events.push(EventType::BotShutdown, Event{body});
-	} else
+	auto eventType = fromHumanReadable((string)type);
+	if(eventType == EventType::Invalid)
 		throw (string)"invalid trigger type";
+
+	bot->events.push(eventType, Event{body});
 	return "success";
 }
 

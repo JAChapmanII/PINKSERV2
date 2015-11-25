@@ -3,12 +3,16 @@
 
 #include <string>
 #include <vector>
-#include "sekisa/db.hpp"
+#include <sekisa/db.hpp>
 #include "pbrane/variable.hpp"
 #include "pbrane/pvm.hpp"
 
-enum class EventType { Text, Join, Leave, Nick, BotStartup, BotShutdown };
+enum class EventType { Text, Join, Leave, Nick, BotStartup, BotShutdown,
+	Invalid = 63 };
 using Event = std::string;
+
+std::string toHumanReadable(EventType type);
+EventType fromHumanReadable(std::string str);
 
 // TODO: timed events
 
