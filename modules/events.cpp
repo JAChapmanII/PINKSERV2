@@ -18,7 +18,10 @@ Variable in(Bot *, vector<Variable>) {
 }
 
 long eventCount(Bot *bot) { return bot->events.eventsSize(EventType::Text); }
-string getEvent(Bot *bot, long id) { return bot->events.getEvent(id); }
+string getEvent(Bot *bot, long id) {
+	return toHumanReadable(bot->events.getEventType(id))
+		+ ": " + bot->events.getEvent(id);
+}
 
 long eraseEvent(Bot *bot, long id) {
 	bot->events.deleteEvent(id);

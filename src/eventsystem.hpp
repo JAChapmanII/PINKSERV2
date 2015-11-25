@@ -25,6 +25,7 @@ struct EventSystem {
 
 	int eventsSize(EventType type);
 	Event getEvent(int id);
+	EventType getEventType(int id);
 	void deleteEvent(int id);
 
 	private:

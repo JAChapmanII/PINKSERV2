@@ -115,6 +115,12 @@ Event EventSystem::getEvent(int id) {
 			"SELECT body FROM " + _table + " WHERE id = ?1", id)
 		.value_or("");
 }
+EventType EventSystem::getEventType(int id) {
+	this->createTables();
+	return (EventType)_db.executeScalar<int>(
+			"SELECT type FROM " + _table + " WHERE id = ?1", id)
+		.value_or((int)EventType::Invalid);
+}
 void EventSystem::deleteEvent(int id) {
 	this->createTables();
 	cerr << "EventSystem::deleteEvent(" << id << "): deleting \""
